@@ -55,7 +55,6 @@ namespace IronJS.Compiler
 
             switch (node.Type)
             {
-
                 case EcmaParser.WITH:
                     return BuildWith(node);
 
