@@ -1,12 +1,7 @@
-IronJS.Tests/bin/**/*
-IronJS.Tests/obj/**/*
-IronJS/bin/**/*
-IronJS/obj/**/*
-IronJS.Console/bin/**/*
-IronJS.Console/obj/**/*
-*.suo
-TestResults/**/*
-TestResults
+Src/IronJS/bin/**/*
+Src/IronJS/obj/**/*
+Src/TestResults/**/*
+Build/**/*
 *.dia~
 *.user
-Build/**/*
+*.suo
