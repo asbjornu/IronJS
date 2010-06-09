@@ -46,7 +46,7 @@
     <Reference Include="Antlr3.Runtime">
       <HintPath>..\Libs\Antlr3.Runtime.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Dynamic, Version=0.9.6.20, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.Dynamic, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Libs\Microsoft.Dynamic.dll</HintPath>
     </Reference>
