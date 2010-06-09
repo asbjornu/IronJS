@@ -1,5 +1,7 @@
 Src/IronJS/bin/**/*
 Src/IronJS/obj/**/*
+Src/IronJS.REPL/bin/**/*
+Src/IronJS.REPL/obj/**/*
 Src/TestResults/**/*
 Build/**/*
 *.dia~

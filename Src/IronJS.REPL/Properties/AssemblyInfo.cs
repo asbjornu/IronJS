@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("IronJS")]
-[assembly: AssemblyDescription("IronJS - A JavaScript implementation for the DLR")]
+[assembly: AssemblyTitle("IronJS.REPL")]
+[assembly: AssemblyDescription("IronJS Read-Eval-Print-Loop")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("IronJS")]
 [assembly: AssemblyProduct("IronJS")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("658b052d-bd0f-42b9-a085-f59b812f6108")]
+[assembly: Guid("a7c63728-3980-4b8d-ac5a-7a19b90a4974")]
 
 // Version information for an assembly consists of the following four values:
 //
