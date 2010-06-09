@@ -9,3 +9,4 @@ TestResults/**/*
 TestResults
 *.dia~
 *.user
+Build/**/*
