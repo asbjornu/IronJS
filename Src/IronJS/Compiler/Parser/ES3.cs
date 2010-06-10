@@ -5,7 +5,7 @@ using System.Text;
 
 namespace IronJS.Compiler.Parser
 {
-    public class ES3
+    public class ES3 : IParser
     {
 
     }
