@@ -61,13 +61,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\Ast\BinaryOp.cs" />
+    <Compile Include="Compiler\Ast\INode.cs" />
+    <Compile Include="Compiler\Ast\Nodes\Binary.cs" />
+    <Compile Include="Compiler\Ast\Nodes\Identifier.cs" />
+    <Compile Include="Compiler\Ast\Nodes\Literal.cs" />
+    <Compile Include="Compiler\Ast\Nodes\Node.cs" />
+    <Compile Include="Compiler\Ast\Nodes\Pass.cs" />
+    <Compile Include="Compiler\Ast\Nodes\Var.cs" />
+    <Compile Include="Compiler\Ast\Position.cs" />
+    <Compile Include="Compiler\Ast\UnaryOp.cs" />
+    <Compile Include="Compiler\Parser\AntlrEcma3.cs" />
     <Compile Include="Compiler\Parser\Xebic\ES3Lexer.Action.cs" />
     <Compile Include="Compiler\Parser\Xebic\ES3Lexer.cs" />
     <Compile Include="Compiler\Parser\Xebic\ES3Parser.Action.cs" />
     <Compile Include="Compiler\Parser\Xebic\ES3Parser.cs" />
     <Compile Include="Compiler\Parser\IParser.cs" />
+    <Compile Include="Extensions\Antlr.cs" />
+    <Compile Include="Compiler\Parser\StringConvert.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
