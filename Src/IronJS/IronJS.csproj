@@ -68,7 +68,12 @@
     <Compile Include="Compiler\Parser\IParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\VTwin\VTwin.csproj">
+      <Project>{39C08058-EA18-4628-88CD-72B22279FF7F}</Project>
+      <Name>VTwin</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
