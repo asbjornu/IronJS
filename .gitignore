@@ -1,5 +1,3 @@
-Src/VTwin/bin/**/*
-Src/VTwin/obj/**/*
 Src/IronJS/bin/**/*
 Src/IronJS/obj/**/*
 Src/IronJS.REPL/bin/**/*
