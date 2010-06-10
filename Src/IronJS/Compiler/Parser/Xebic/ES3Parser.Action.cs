@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using Antlr.Runtime;
 using Antlr.Runtime.Tree;
 
-namespace IronJS.Compiler.Parser.ES3
+namespace IronJS.Compiler.Parser.Xebic
 {
 	using IToken = Antlr.Runtime.IToken;
 
@@ -14,7 +14,7 @@ namespace IronJS.Compiler.Parser.ES3
 	/// This partial class is complementary to the parser generated with ANTLR from the JavaScript.g grammar.
 	/// It implements the actions used in the parser.
 	/// </summary>
-	partial class Parser
+	partial class ES3Parser
 	{
 		/// <summary>
 		/// Is a RuleReturnScope node candidate for the left-hand-side of an assignment expression?

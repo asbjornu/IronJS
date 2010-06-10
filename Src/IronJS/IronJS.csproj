@@ -61,18 +61,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compiler\Parser\ES3\Lexer.Action.cs" />
-    <Compile Include="Compiler\Parser\ES3\Lexer.cs" />
-    <Compile Include="Compiler\Parser\ES3\Parser.Action.cs" />
-    <Compile Include="Compiler\Parser\ES3\Parser.cs" />
+    <Compile Include="Compiler\Parser\Xebic\ES3Lexer.Action.cs" />
+    <Compile Include="Compiler\Parser\Xebic\ES3Lexer.cs" />
+    <Compile Include="Compiler\Parser\Xebic\ES3Parser.Action.cs" />
+    <Compile Include="Compiler\Parser\Xebic\ES3Parser.cs" />
     <Compile Include="Compiler\Parser\IParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\VTwin\VTwin.csproj">
-      <Project>{39C08058-EA18-4628-88CD-72B22279FF7F}</Project>
-      <Name>VTwin</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

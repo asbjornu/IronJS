@@ -11,9 +11,9 @@ using IList = System.Collections.IList;
 using ArrayList = System.Collections.ArrayList;
 using Stack = Antlr.Runtime.Collections.StackList;
 
-namespace IronJS.Compiler.Parser.ES3
+namespace IronJS.Compiler.Parser.Xebic
 {
-    partial class Lexer : Antlr.Runtime.Lexer
+    partial class ES3Lexer : Antlr.Runtime.Lexer
     {
         public const int PACKAGE = 52;
         public const int FUNCTION = 17;
@@ -187,15 +187,15 @@ namespace IronJS.Compiler.Parser.ES3
         // delegates
         // delegators
 
-        public Lexer()
+        public ES3Lexer()
         {
             InitializeCyclicDFAs();
         }
-        public Lexer(ICharStream input)
+        public ES3Lexer(ICharStream input)
             : this(input, null)
         {
         }
-        public Lexer(ICharStream input, RecognizerSharedState state)
+        public ES3Lexer(ICharStream input, RecognizerSharedState state)
             : base(input, state)
         {
             InitializeCyclicDFAs();

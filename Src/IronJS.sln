@@ -5,8 +5,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronJS", "IronJS\IronJS.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronJS.REPL", "IronJS.REPL\IronJS.REPL.csproj", "{8081869B-0EC8-41D9-8CDD-2B56F94D379E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTwin", "VTwin\VTwin.csproj", "{39C08058-EA18-4628-88CD-72B22279FF7F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,14 +31,6 @@ Global
 		{8081869B-0EC8-41D9-8CDD-2B56F94D379E}.Release|Mixed Platforms.ActiveCfg = Release|x64
 		{8081869B-0EC8-41D9-8CDD-2B56F94D379E}.Release|x64.ActiveCfg = Release|x64
 		{8081869B-0EC8-41D9-8CDD-2B56F94D379E}.Release|x64.Build.0 = Release|x64
-		{39C08058-EA18-4628-88CD-72B22279FF7F}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{39C08058-EA18-4628-88CD-72B22279FF7F}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
-		{39C08058-EA18-4628-88CD-72B22279FF7F}.Debug|x64.ActiveCfg = Debug|x64
-		{39C08058-EA18-4628-88CD-72B22279FF7F}.Debug|x64.Build.0 = Debug|x64
-		{39C08058-EA18-4628-88CD-72B22279FF7F}.Release|Any CPU.ActiveCfg = Release|x64
-		{39C08058-EA18-4628-88CD-72B22279FF7F}.Release|Mixed Platforms.ActiveCfg = Release|x64
-		{39C08058-EA18-4628-88CD-72B22279FF7F}.Release|x64.ActiveCfg = Release|x64
-		{39C08058-EA18-4628-88CD-72B22279FF7F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

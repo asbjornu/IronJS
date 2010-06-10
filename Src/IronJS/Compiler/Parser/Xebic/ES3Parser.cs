@@ -12,9 +12,9 @@ using IList = System.Collections.IList;
 using ArrayList = System.Collections.ArrayList;
 using Stack = Antlr.Runtime.Collections.StackList;
 
-namespace IronJS.Compiler.Parser.ES3
+namespace IronJS.Compiler.Parser.Xebic
 {
-    partial class Parser : Antlr.Runtime.Parser
+    partial class ES3Parser : Antlr.Runtime.Parser
     {
         public static readonly string[] tokenNames = new string[] 
 	    {
@@ -365,12 +365,12 @@ namespace IronJS.Compiler.Parser.ES3
 
 
 
-        public Parser(ITokenStream input)
+        public ES3Parser(ITokenStream input)
             : this(input, new RecognizerSharedState())
         {
         }
 
-        public Parser(ITokenStream input, RecognizerSharedState state)
+        public ES3Parser(ITokenStream input, RecognizerSharedState state)
             : base(input, state)
         {
             InitializeCyclicDFAs();
@@ -391,7 +391,7 @@ namespace IronJS.Compiler.Parser.ES3
 
         override public string[] TokenNames
         {
-            get { return Parser.tokenNames; }
+            get { return ES3Parser.tokenNames; }
         }
 
         override public string GrammarFileName
@@ -412,20 +412,20 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "token"
         // ES3.g3:302:1: token : ( reservedWord | Identifier | punctuator | numericLiteral | StringLiteral );
-        public Parser.token_return token() // throws RecognitionException [1]
+        public ES3Parser.token_return token() // throws RecognitionException [1]
         {
-            Parser.token_return retval = new Parser.token_return();
+            ES3Parser.token_return retval = new ES3Parser.token_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken Identifier2 = null;
             IToken StringLiteral5 = null;
-            Parser.reservedWord_return reservedWord1 = default(Parser.reservedWord_return);
+            ES3Parser.reservedWord_return reservedWord1 = default(ES3Parser.reservedWord_return);
 
-            Parser.punctuator_return punctuator3 = default(Parser.punctuator_return);
+            ES3Parser.punctuator_return punctuator3 = default(ES3Parser.punctuator_return);
 
-            Parser.numericLiteral_return numericLiteral4 = default(Parser.numericLiteral_return);
+            ES3Parser.numericLiteral_return numericLiteral4 = default(ES3Parser.numericLiteral_return);
 
 
             object Identifier2_tree = null;
@@ -675,19 +675,19 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "reservedWord"
         // ES3.g3:312:1: reservedWord : ( keyword | futureReservedWord | NULL | booleanLiteral );
-        public Parser.reservedWord_return reservedWord() // throws RecognitionException [1]
+        public ES3Parser.reservedWord_return reservedWord() // throws RecognitionException [1]
         {
-            Parser.reservedWord_return retval = new Parser.reservedWord_return();
+            ES3Parser.reservedWord_return retval = new ES3Parser.reservedWord_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken NULL8 = null;
-            Parser.keyword_return keyword6 = default(Parser.keyword_return);
+            ES3Parser.keyword_return keyword6 = default(ES3Parser.keyword_return);
 
-            Parser.futureReservedWord_return futureReservedWord7 = default(Parser.futureReservedWord_return);
+            ES3Parser.futureReservedWord_return futureReservedWord7 = default(ES3Parser.futureReservedWord_return);
 
-            Parser.booleanLiteral_return booleanLiteral9 = default(Parser.booleanLiteral_return);
+            ES3Parser.booleanLiteral_return booleanLiteral9 = default(ES3Parser.booleanLiteral_return);
 
 
             object NULL8_tree = null;
@@ -867,9 +867,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "keyword"
         // ES3.g3:323:1: keyword : ( BREAK | CASE | CATCH | CONTINUE | DEFAULT | DELETE | DO | ELSE | FINALLY | FOR | FUNCTION | IF | IN | INSTANCEOF | NEW | RETURN | SWITCH | THIS | THROW | TRY | TYPEOF | VAR | VOID | WHILE | WITH );
-        public Parser.keyword_return keyword() // throws RecognitionException [1]
+        public ES3Parser.keyword_return keyword() // throws RecognitionException [1]
         {
-            Parser.keyword_return retval = new Parser.keyword_return();
+            ES3Parser.keyword_return retval = new ES3Parser.keyword_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -933,9 +933,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "futureReservedWord"
         // ES3.g3:355:1: futureReservedWord : ( ABSTRACT | BOOLEAN | BYTE | CHAR | CLASS | CONST | DEBUGGER | DOUBLE | ENUM | EXPORT | EXTENDS | FINAL | FLOAT | GOTO | IMPLEMENTS | IMPORT | INT | INTERFACE | LONG | NATIVE | PACKAGE | PRIVATE | PROTECTED | PUBLIC | SHORT | STATIC | SUPER | SYNCHRONIZED | THROWS | TRANSIENT | VOLATILE );
-        public Parser.futureReservedWord_return futureReservedWord() // throws RecognitionException [1]
+        public ES3Parser.futureReservedWord_return futureReservedWord() // throws RecognitionException [1]
         {
-            Parser.futureReservedWord_return retval = new Parser.futureReservedWord_return();
+            ES3Parser.futureReservedWord_return retval = new ES3Parser.futureReservedWord_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -999,9 +999,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "punctuator"
         // ES3.g3:433:1: punctuator : ( LBRACE | RBRACE | LPAREN | RPAREN | LBRACK | RBRACK | DOT | SEMIC | COMMA | LT | GT | LTE | GTE | EQ | NEQ | SAME | NSAME | ADD | SUB | MUL | MOD | INC | DEC | SHL | SHR | SHU | AND | OR | XOR | NOT | INV | LAND | LOR | QUE | COLON | ASSIGN | ADDASS | SUBASS | MULASS | MODASS | SHLASS | SHRASS | SHUASS | ANDASS | ORASS | XORASS | DIV | DIVASS );
-        public Parser.punctuator_return punctuator() // throws RecognitionException [1]
+        public ES3Parser.punctuator_return punctuator() // throws RecognitionException [1]
         {
-            Parser.punctuator_return retval = new Parser.punctuator_return();
+            ES3Parser.punctuator_return retval = new ES3Parser.punctuator_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -1065,9 +1065,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "literal"
         // ES3.g3:488:1: literal : ( NULL | booleanLiteral | numericLiteral | StringLiteral | RegularExpressionLiteral );
-        public Parser.literal_return literal() // throws RecognitionException [1]
+        public ES3Parser.literal_return literal() // throws RecognitionException [1]
         {
-            Parser.literal_return retval = new Parser.literal_return();
+            ES3Parser.literal_return retval = new ES3Parser.literal_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -1075,9 +1075,9 @@ namespace IronJS.Compiler.Parser.ES3
             IToken NULL13 = null;
             IToken StringLiteral16 = null;
             IToken RegularExpressionLiteral17 = null;
-            Parser.booleanLiteral_return booleanLiteral14 = default(Parser.booleanLiteral_return);
+            ES3Parser.booleanLiteral_return booleanLiteral14 = default(ES3Parser.booleanLiteral_return);
 
-            Parser.numericLiteral_return numericLiteral15 = default(Parser.numericLiteral_return);
+            ES3Parser.numericLiteral_return numericLiteral15 = default(ES3Parser.numericLiteral_return);
 
 
             object NULL13_tree = null;
@@ -1223,9 +1223,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "booleanLiteral"
         // ES3.g3:496:1: booleanLiteral : ( TRUE | FALSE );
-        public Parser.booleanLiteral_return booleanLiteral() // throws RecognitionException [1]
+        public ES3Parser.booleanLiteral_return booleanLiteral() // throws RecognitionException [1]
         {
-            Parser.booleanLiteral_return retval = new Parser.booleanLiteral_return();
+            ES3Parser.booleanLiteral_return retval = new ES3Parser.booleanLiteral_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -1289,9 +1289,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "numericLiteral"
         // ES3.g3:543:1: numericLiteral : ( DecimalLiteral | OctalIntegerLiteral | HexIntegerLiteral );
-        public Parser.numericLiteral_return numericLiteral() // throws RecognitionException [1]
+        public ES3Parser.numericLiteral_return numericLiteral() // throws RecognitionException [1]
         {
-            Parser.numericLiteral_return retval = new Parser.numericLiteral_return();
+            ES3Parser.numericLiteral_return retval = new ES3Parser.numericLiteral_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -1355,9 +1355,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "primaryExpression"
         // ES3.g3:631:1: primaryExpression : ( THIS | Identifier | literal | arrayLiteral | objectLiteral | lpar= LPAREN expression RPAREN -> ^( PAREXPR[$lpar, \"PAREXPR\"] expression ) );
-        public Parser.primaryExpression_return primaryExpression() // throws RecognitionException [1]
+        public ES3Parser.primaryExpression_return primaryExpression() // throws RecognitionException [1]
         {
-            Parser.primaryExpression_return retval = new Parser.primaryExpression_return();
+            ES3Parser.primaryExpression_return retval = new ES3Parser.primaryExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -1366,13 +1366,13 @@ namespace IronJS.Compiler.Parser.ES3
             IToken THIS20 = null;
             IToken Identifier21 = null;
             IToken RPAREN26 = null;
-            Parser.literal_return literal22 = default(Parser.literal_return);
+            ES3Parser.literal_return literal22 = default(ES3Parser.literal_return);
 
-            Parser.arrayLiteral_return arrayLiteral23 = default(Parser.arrayLiteral_return);
+            ES3Parser.arrayLiteral_return arrayLiteral23 = default(ES3Parser.arrayLiteral_return);
 
-            Parser.objectLiteral_return objectLiteral24 = default(Parser.objectLiteral_return);
+            ES3Parser.objectLiteral_return objectLiteral24 = default(ES3Parser.objectLiteral_return);
 
-            Parser.expression_return expression25 = default(Parser.expression_return);
+            ES3Parser.expression_return expression25 = default(ES3Parser.expression_return);
 
 
             object lpar_tree = null;
@@ -1575,9 +1575,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "arrayLiteral"
         // ES3.g3:640:1: arrayLiteral : lb= LBRACK ( arrayItem ( COMMA arrayItem )* )? RBRACK -> ^( ARRAY[$lb, \"ARRAY\"] ( arrayItem )* ) ;
-        public Parser.arrayLiteral_return arrayLiteral() // throws RecognitionException [1]
+        public ES3Parser.arrayLiteral_return arrayLiteral() // throws RecognitionException [1]
         {
-            Parser.arrayLiteral_return retval = new Parser.arrayLiteral_return();
+            ES3Parser.arrayLiteral_return retval = new ES3Parser.arrayLiteral_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -1585,9 +1585,9 @@ namespace IronJS.Compiler.Parser.ES3
             IToken lb = null;
             IToken COMMA28 = null;
             IToken RBRACK30 = null;
-            Parser.arrayItem_return arrayItem27 = default(Parser.arrayItem_return);
+            ES3Parser.arrayItem_return arrayItem27 = default(ES3Parser.arrayItem_return);
 
-            Parser.arrayItem_return arrayItem29 = default(Parser.arrayItem_return);
+            ES3Parser.arrayItem_return arrayItem29 = default(ES3Parser.arrayItem_return);
 
 
             object lb_tree = null;
@@ -1746,14 +1746,14 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "arrayItem"
         // ES3.g3:645:1: arrayItem : (expr= assignmentExpression | {...}?) -> ^( ITEM ( $expr)? ) ;
-        public Parser.arrayItem_return arrayItem() // throws RecognitionException [1]
+        public ES3Parser.arrayItem_return arrayItem() // throws RecognitionException [1]
         {
-            Parser.arrayItem_return retval = new Parser.arrayItem_return();
+            ES3Parser.arrayItem_return retval = new ES3Parser.arrayItem_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.assignmentExpression_return expr = default(Parser.assignmentExpression_return);
+            ES3Parser.assignmentExpression_return expr = default(ES3Parser.assignmentExpression_return);
 
 
             RewriteRuleSubtreeStream stream_assignmentExpression = new RewriteRuleSubtreeStream(adaptor, "rule assignmentExpression");
@@ -1876,9 +1876,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "objectLiteral"
         // ES3.g3:650:1: objectLiteral : lb= LBRACE ( nameValuePair ( COMMA nameValuePair )* )? RBRACE -> ^( OBJECT[$lb, \"OBJECT\"] ( nameValuePair )* ) ;
-        public Parser.objectLiteral_return objectLiteral() // throws RecognitionException [1]
+        public ES3Parser.objectLiteral_return objectLiteral() // throws RecognitionException [1]
         {
-            Parser.objectLiteral_return retval = new Parser.objectLiteral_return();
+            ES3Parser.objectLiteral_return retval = new ES3Parser.objectLiteral_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -1886,9 +1886,9 @@ namespace IronJS.Compiler.Parser.ES3
             IToken lb = null;
             IToken COMMA32 = null;
             IToken RBRACE34 = null;
-            Parser.nameValuePair_return nameValuePair31 = default(Parser.nameValuePair_return);
+            ES3Parser.nameValuePair_return nameValuePair31 = default(ES3Parser.nameValuePair_return);
 
-            Parser.nameValuePair_return nameValuePair33 = default(Parser.nameValuePair_return);
+            ES3Parser.nameValuePair_return nameValuePair33 = default(ES3Parser.nameValuePair_return);
 
 
             object lb_tree = null;
@@ -2038,17 +2038,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "nameValuePair"
         // ES3.g3:655:1: nameValuePair : propertyName COLON assignmentExpression -> ^( NAMEDVALUE propertyName assignmentExpression ) ;
-        public Parser.nameValuePair_return nameValuePair() // throws RecognitionException [1]
+        public ES3Parser.nameValuePair_return nameValuePair() // throws RecognitionException [1]
         {
-            Parser.nameValuePair_return retval = new Parser.nameValuePair_return();
+            ES3Parser.nameValuePair_return retval = new ES3Parser.nameValuePair_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken COLON36 = null;
-            Parser.propertyName_return propertyName35 = default(Parser.propertyName_return);
+            ES3Parser.propertyName_return propertyName35 = default(ES3Parser.propertyName_return);
 
-            Parser.assignmentExpression_return assignmentExpression37 = default(Parser.assignmentExpression_return);
+            ES3Parser.assignmentExpression_return assignmentExpression37 = default(ES3Parser.assignmentExpression_return);
 
 
             object COLON36_tree = null;
@@ -2136,16 +2136,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "propertyName"
         // ES3.g3:660:1: propertyName : ( Identifier | StringLiteral | numericLiteral );
-        public Parser.propertyName_return propertyName() // throws RecognitionException [1]
+        public ES3Parser.propertyName_return propertyName() // throws RecognitionException [1]
         {
-            Parser.propertyName_return retval = new Parser.propertyName_return();
+            ES3Parser.propertyName_return retval = new ES3Parser.propertyName_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken Identifier38 = null;
             IToken StringLiteral39 = null;
-            Parser.numericLiteral_return numericLiteral40 = default(Parser.numericLiteral_return);
+            ES3Parser.numericLiteral_return numericLiteral40 = default(ES3Parser.numericLiteral_return);
 
 
             object Identifier38_tree = null;
@@ -2254,18 +2254,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "memberExpression"
         // ES3.g3:675:1: memberExpression : ( primaryExpression | functionExpression | newExpression );
-        public Parser.memberExpression_return memberExpression() // throws RecognitionException [1]
+        public ES3Parser.memberExpression_return memberExpression() // throws RecognitionException [1]
         {
-            Parser.memberExpression_return retval = new Parser.memberExpression_return();
+            ES3Parser.memberExpression_return retval = new ES3Parser.memberExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.primaryExpression_return primaryExpression41 = default(Parser.primaryExpression_return);
+            ES3Parser.primaryExpression_return primaryExpression41 = default(ES3Parser.primaryExpression_return);
 
-            Parser.functionExpression_return functionExpression42 = default(Parser.functionExpression_return);
+            ES3Parser.functionExpression_return functionExpression42 = default(ES3Parser.functionExpression_return);
 
-            Parser.newExpression_return newExpression43 = default(Parser.newExpression_return);
+            ES3Parser.newExpression_return newExpression43 = default(ES3Parser.newExpression_return);
 
 
 
@@ -2384,15 +2384,15 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "newExpression"
         // ES3.g3:681:1: newExpression : NEW primaryExpression ;
-        public Parser.newExpression_return newExpression() // throws RecognitionException [1]
+        public ES3Parser.newExpression_return newExpression() // throws RecognitionException [1]
         {
-            Parser.newExpression_return retval = new Parser.newExpression_return();
+            ES3Parser.newExpression_return retval = new ES3Parser.newExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken NEW44 = null;
-            Parser.primaryExpression_return primaryExpression45 = default(Parser.primaryExpression_return);
+            ES3Parser.primaryExpression_return primaryExpression45 = default(ES3Parser.primaryExpression_return);
 
 
             object NEW44_tree = null;
@@ -2448,9 +2448,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "arguments"
         // ES3.g3:686:1: arguments : LPAREN ( assignmentExpression ( COMMA assignmentExpression )* )? RPAREN -> ^( ARGS ( assignmentExpression )* ) ;
-        public Parser.arguments_return arguments() // throws RecognitionException [1]
+        public ES3Parser.arguments_return arguments() // throws RecognitionException [1]
         {
-            Parser.arguments_return retval = new Parser.arguments_return();
+            ES3Parser.arguments_return retval = new ES3Parser.arguments_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -2458,9 +2458,9 @@ namespace IronJS.Compiler.Parser.ES3
             IToken LPAREN46 = null;
             IToken COMMA48 = null;
             IToken RPAREN50 = null;
-            Parser.assignmentExpression_return assignmentExpression47 = default(Parser.assignmentExpression_return);
+            ES3Parser.assignmentExpression_return assignmentExpression47 = default(ES3Parser.assignmentExpression_return);
 
-            Parser.assignmentExpression_return assignmentExpression49 = default(Parser.assignmentExpression_return);
+            ES3Parser.assignmentExpression_return assignmentExpression49 = default(ES3Parser.assignmentExpression_return);
 
 
             object LPAREN46_tree = null;
@@ -2610,9 +2610,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "leftHandSideExpression"
         // ES3.g3:691:1: leftHandSideExpression : ( memberExpression -> memberExpression ) ( arguments -> ^( CALL $leftHandSideExpression arguments ) | LBRACK expression RBRACK -> ^( BYINDEX $leftHandSideExpression expression ) | DOT Identifier -> ^( BYFIELD $leftHandSideExpression Identifier ) )* ;
-        public Parser.leftHandSideExpression_return leftHandSideExpression() // throws RecognitionException [1]
+        public ES3Parser.leftHandSideExpression_return leftHandSideExpression() // throws RecognitionException [1]
         {
-            Parser.leftHandSideExpression_return retval = new Parser.leftHandSideExpression_return();
+            ES3Parser.leftHandSideExpression_return retval = new ES3Parser.leftHandSideExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -2621,11 +2621,11 @@ namespace IronJS.Compiler.Parser.ES3
             IToken RBRACK55 = null;
             IToken DOT56 = null;
             IToken Identifier57 = null;
-            Parser.memberExpression_return memberExpression51 = default(Parser.memberExpression_return);
+            ES3Parser.memberExpression_return memberExpression51 = default(ES3Parser.memberExpression_return);
 
-            Parser.arguments_return arguments52 = default(Parser.arguments_return);
+            ES3Parser.arguments_return arguments52 = default(ES3Parser.arguments_return);
 
-            Parser.expression_return expression54 = default(Parser.expression_return);
+            ES3Parser.expression_return expression54 = default(ES3Parser.expression_return);
 
 
             object LBRACK53_tree = null;
@@ -2868,16 +2868,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "postfixExpression"
         // ES3.g3:713:1: postfixExpression : leftHandSideExpression ( postfixOperator )? ;
-        public Parser.postfixExpression_return postfixExpression() // throws RecognitionException [1]
+        public ES3Parser.postfixExpression_return postfixExpression() // throws RecognitionException [1]
         {
-            Parser.postfixExpression_return retval = new Parser.postfixExpression_return();
+            ES3Parser.postfixExpression_return retval = new ES3Parser.postfixExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.leftHandSideExpression_return leftHandSideExpression58 = default(Parser.leftHandSideExpression_return);
+            ES3Parser.leftHandSideExpression_return leftHandSideExpression58 = default(ES3Parser.leftHandSideExpression_return);
 
-            Parser.postfixOperator_return postfixOperator59 = default(Parser.postfixOperator_return);
+            ES3Parser.postfixOperator_return postfixOperator59 = default(ES3Parser.postfixOperator_return);
 
 
 
@@ -2953,9 +2953,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "postfixOperator"
         // ES3.g3:717:1: postfixOperator : (op= INC | op= DEC );
-        public Parser.postfixOperator_return postfixOperator() // throws RecognitionException [1]
+        public ES3Parser.postfixOperator_return postfixOperator() // throws RecognitionException [1]
         {
-            Parser.postfixOperator_return retval = new Parser.postfixOperator_return();
+            ES3Parser.postfixOperator_return retval = new ES3Parser.postfixOperator_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -3047,18 +3047,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "unaryExpression"
         // ES3.g3:726:1: unaryExpression : ( postfixExpression | unaryOperator unaryExpression );
-        public Parser.unaryExpression_return unaryExpression() // throws RecognitionException [1]
+        public ES3Parser.unaryExpression_return unaryExpression() // throws RecognitionException [1]
         {
-            Parser.unaryExpression_return retval = new Parser.unaryExpression_return();
+            ES3Parser.unaryExpression_return retval = new ES3Parser.unaryExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.postfixExpression_return postfixExpression60 = default(Parser.postfixExpression_return);
+            ES3Parser.postfixExpression_return postfixExpression60 = default(ES3Parser.postfixExpression_return);
 
-            Parser.unaryOperator_return unaryOperator61 = default(Parser.unaryOperator_return);
+            ES3Parser.unaryOperator_return unaryOperator61 = default(ES3Parser.unaryOperator_return);
 
-            Parser.unaryExpression_return unaryExpression62 = default(Parser.unaryExpression_return);
+            ES3Parser.unaryExpression_return unaryExpression62 = default(ES3Parser.unaryExpression_return);
 
 
 
@@ -3150,9 +3150,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "unaryOperator"
         // ES3.g3:731:1: unaryOperator : ( DELETE | VOID | TYPEOF | INC | DEC | op= ADD | op= SUB | INV | NOT );
-        public Parser.unaryOperator_return unaryOperator() // throws RecognitionException [1]
+        public ES3Parser.unaryOperator_return unaryOperator() // throws RecognitionException [1]
         {
-            Parser.unaryOperator_return retval = new Parser.unaryOperator_return();
+            ES3Parser.unaryOperator_return retval = new ES3Parser.unaryOperator_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -3379,17 +3379,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "multiplicativeExpression"
         // ES3.g3:747:1: multiplicativeExpression : unaryExpression ( ( MUL | DIV | MOD ) unaryExpression )* ;
-        public Parser.multiplicativeExpression_return multiplicativeExpression() // throws RecognitionException [1]
+        public ES3Parser.multiplicativeExpression_return multiplicativeExpression() // throws RecognitionException [1]
         {
-            Parser.multiplicativeExpression_return retval = new Parser.multiplicativeExpression_return();
+            ES3Parser.multiplicativeExpression_return retval = new ES3Parser.multiplicativeExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken set71 = null;
-            Parser.unaryExpression_return unaryExpression70 = default(Parser.unaryExpression_return);
+            ES3Parser.unaryExpression_return unaryExpression70 = default(ES3Parser.unaryExpression_return);
 
-            Parser.unaryExpression_return unaryExpression72 = default(Parser.unaryExpression_return);
+            ES3Parser.unaryExpression_return unaryExpression72 = default(ES3Parser.unaryExpression_return);
 
 
             object set71_tree = null;
@@ -3489,17 +3489,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "additiveExpression"
         // ES3.g3:755:1: additiveExpression : multiplicativeExpression ( ( ADD | SUB ) multiplicativeExpression )* ;
-        public Parser.additiveExpression_return additiveExpression() // throws RecognitionException [1]
+        public ES3Parser.additiveExpression_return additiveExpression() // throws RecognitionException [1]
         {
-            Parser.additiveExpression_return retval = new Parser.additiveExpression_return();
+            ES3Parser.additiveExpression_return retval = new ES3Parser.additiveExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken set74 = null;
-            Parser.multiplicativeExpression_return multiplicativeExpression73 = default(Parser.multiplicativeExpression_return);
+            ES3Parser.multiplicativeExpression_return multiplicativeExpression73 = default(ES3Parser.multiplicativeExpression_return);
 
-            Parser.multiplicativeExpression_return multiplicativeExpression75 = default(Parser.multiplicativeExpression_return);
+            ES3Parser.multiplicativeExpression_return multiplicativeExpression75 = default(ES3Parser.multiplicativeExpression_return);
 
 
             object set74_tree = null;
@@ -3599,17 +3599,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "shiftExpression"
         // ES3.g3:763:1: shiftExpression : additiveExpression ( ( SHL | SHR | SHU ) additiveExpression )* ;
-        public Parser.shiftExpression_return shiftExpression() // throws RecognitionException [1]
+        public ES3Parser.shiftExpression_return shiftExpression() // throws RecognitionException [1]
         {
-            Parser.shiftExpression_return retval = new Parser.shiftExpression_return();
+            ES3Parser.shiftExpression_return retval = new ES3Parser.shiftExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken set77 = null;
-            Parser.additiveExpression_return additiveExpression76 = default(Parser.additiveExpression_return);
+            ES3Parser.additiveExpression_return additiveExpression76 = default(ES3Parser.additiveExpression_return);
 
-            Parser.additiveExpression_return additiveExpression78 = default(Parser.additiveExpression_return);
+            ES3Parser.additiveExpression_return additiveExpression78 = default(ES3Parser.additiveExpression_return);
 
 
             object set77_tree = null;
@@ -3709,17 +3709,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "relationalExpression"
         // ES3.g3:771:1: relationalExpression : shiftExpression ( ( LT | GT | LTE | GTE | INSTANCEOF | IN ) shiftExpression )* ;
-        public Parser.relationalExpression_return relationalExpression() // throws RecognitionException [1]
+        public ES3Parser.relationalExpression_return relationalExpression() // throws RecognitionException [1]
         {
-            Parser.relationalExpression_return retval = new Parser.relationalExpression_return();
+            ES3Parser.relationalExpression_return retval = new ES3Parser.relationalExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken set80 = null;
-            Parser.shiftExpression_return shiftExpression79 = default(Parser.shiftExpression_return);
+            ES3Parser.shiftExpression_return shiftExpression79 = default(ES3Parser.shiftExpression_return);
 
-            Parser.shiftExpression_return shiftExpression81 = default(Parser.shiftExpression_return);
+            ES3Parser.shiftExpression_return shiftExpression81 = default(ES3Parser.shiftExpression_return);
 
 
             object set80_tree = null;
@@ -3819,17 +3819,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "relationalExpressionNoIn"
         // ES3.g3:775:1: relationalExpressionNoIn : shiftExpression ( ( LT | GT | LTE | GTE | INSTANCEOF ) shiftExpression )* ;
-        public Parser.relationalExpressionNoIn_return relationalExpressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.relationalExpressionNoIn_return relationalExpressionNoIn() // throws RecognitionException [1]
         {
-            Parser.relationalExpressionNoIn_return retval = new Parser.relationalExpressionNoIn_return();
+            ES3Parser.relationalExpressionNoIn_return retval = new ES3Parser.relationalExpressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken set83 = null;
-            Parser.shiftExpression_return shiftExpression82 = default(Parser.shiftExpression_return);
+            ES3Parser.shiftExpression_return shiftExpression82 = default(ES3Parser.shiftExpression_return);
 
-            Parser.shiftExpression_return shiftExpression84 = default(Parser.shiftExpression_return);
+            ES3Parser.shiftExpression_return shiftExpression84 = default(ES3Parser.shiftExpression_return);
 
 
             object set83_tree = null;
@@ -3929,17 +3929,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "equalityExpression"
         // ES3.g3:783:1: equalityExpression : relationalExpression ( ( EQ | NEQ | SAME | NSAME ) relationalExpression )* ;
-        public Parser.equalityExpression_return equalityExpression() // throws RecognitionException [1]
+        public ES3Parser.equalityExpression_return equalityExpression() // throws RecognitionException [1]
         {
-            Parser.equalityExpression_return retval = new Parser.equalityExpression_return();
+            ES3Parser.equalityExpression_return retval = new ES3Parser.equalityExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken set86 = null;
-            Parser.relationalExpression_return relationalExpression85 = default(Parser.relationalExpression_return);
+            ES3Parser.relationalExpression_return relationalExpression85 = default(ES3Parser.relationalExpression_return);
 
-            Parser.relationalExpression_return relationalExpression87 = default(Parser.relationalExpression_return);
+            ES3Parser.relationalExpression_return relationalExpression87 = default(ES3Parser.relationalExpression_return);
 
 
             object set86_tree = null;
@@ -4039,17 +4039,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "equalityExpressionNoIn"
         // ES3.g3:787:1: equalityExpressionNoIn : relationalExpressionNoIn ( ( EQ | NEQ | SAME | NSAME ) relationalExpressionNoIn )* ;
-        public Parser.equalityExpressionNoIn_return equalityExpressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.equalityExpressionNoIn_return equalityExpressionNoIn() // throws RecognitionException [1]
         {
-            Parser.equalityExpressionNoIn_return retval = new Parser.equalityExpressionNoIn_return();
+            ES3Parser.equalityExpressionNoIn_return retval = new ES3Parser.equalityExpressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken set89 = null;
-            Parser.relationalExpressionNoIn_return relationalExpressionNoIn88 = default(Parser.relationalExpressionNoIn_return);
+            ES3Parser.relationalExpressionNoIn_return relationalExpressionNoIn88 = default(ES3Parser.relationalExpressionNoIn_return);
 
-            Parser.relationalExpressionNoIn_return relationalExpressionNoIn90 = default(Parser.relationalExpressionNoIn_return);
+            ES3Parser.relationalExpressionNoIn_return relationalExpressionNoIn90 = default(ES3Parser.relationalExpressionNoIn_return);
 
 
             object set89_tree = null;
@@ -4149,17 +4149,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "bitwiseANDExpression"
         // ES3.g3:795:1: bitwiseANDExpression : equalityExpression ( AND equalityExpression )* ;
-        public Parser.bitwiseANDExpression_return bitwiseANDExpression() // throws RecognitionException [1]
+        public ES3Parser.bitwiseANDExpression_return bitwiseANDExpression() // throws RecognitionException [1]
         {
-            Parser.bitwiseANDExpression_return retval = new Parser.bitwiseANDExpression_return();
+            ES3Parser.bitwiseANDExpression_return retval = new ES3Parser.bitwiseANDExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken AND92 = null;
-            Parser.equalityExpression_return equalityExpression91 = default(Parser.equalityExpression_return);
+            ES3Parser.equalityExpression_return equalityExpression91 = default(ES3Parser.equalityExpression_return);
 
-            Parser.equalityExpression_return equalityExpression93 = default(Parser.equalityExpression_return);
+            ES3Parser.equalityExpression_return equalityExpression93 = default(ES3Parser.equalityExpression_return);
 
 
             object AND92_tree = null;
@@ -4249,17 +4249,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "bitwiseANDExpressionNoIn"
         // ES3.g3:799:1: bitwiseANDExpressionNoIn : equalityExpressionNoIn ( AND equalityExpressionNoIn )* ;
-        public Parser.bitwiseANDExpressionNoIn_return bitwiseANDExpressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.bitwiseANDExpressionNoIn_return bitwiseANDExpressionNoIn() // throws RecognitionException [1]
         {
-            Parser.bitwiseANDExpressionNoIn_return retval = new Parser.bitwiseANDExpressionNoIn_return();
+            ES3Parser.bitwiseANDExpressionNoIn_return retval = new ES3Parser.bitwiseANDExpressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken AND95 = null;
-            Parser.equalityExpressionNoIn_return equalityExpressionNoIn94 = default(Parser.equalityExpressionNoIn_return);
+            ES3Parser.equalityExpressionNoIn_return equalityExpressionNoIn94 = default(ES3Parser.equalityExpressionNoIn_return);
 
-            Parser.equalityExpressionNoIn_return equalityExpressionNoIn96 = default(Parser.equalityExpressionNoIn_return);
+            ES3Parser.equalityExpressionNoIn_return equalityExpressionNoIn96 = default(ES3Parser.equalityExpressionNoIn_return);
 
 
             object AND95_tree = null;
@@ -4349,17 +4349,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "bitwiseXORExpression"
         // ES3.g3:803:1: bitwiseXORExpression : bitwiseANDExpression ( XOR bitwiseANDExpression )* ;
-        public Parser.bitwiseXORExpression_return bitwiseXORExpression() // throws RecognitionException [1]
+        public ES3Parser.bitwiseXORExpression_return bitwiseXORExpression() // throws RecognitionException [1]
         {
-            Parser.bitwiseXORExpression_return retval = new Parser.bitwiseXORExpression_return();
+            ES3Parser.bitwiseXORExpression_return retval = new ES3Parser.bitwiseXORExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken XOR98 = null;
-            Parser.bitwiseANDExpression_return bitwiseANDExpression97 = default(Parser.bitwiseANDExpression_return);
+            ES3Parser.bitwiseANDExpression_return bitwiseANDExpression97 = default(ES3Parser.bitwiseANDExpression_return);
 
-            Parser.bitwiseANDExpression_return bitwiseANDExpression99 = default(Parser.bitwiseANDExpression_return);
+            ES3Parser.bitwiseANDExpression_return bitwiseANDExpression99 = default(ES3Parser.bitwiseANDExpression_return);
 
 
             object XOR98_tree = null;
@@ -4449,17 +4449,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "bitwiseXORExpressionNoIn"
         // ES3.g3:807:1: bitwiseXORExpressionNoIn : bitwiseANDExpressionNoIn ( XOR bitwiseANDExpressionNoIn )* ;
-        public Parser.bitwiseXORExpressionNoIn_return bitwiseXORExpressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.bitwiseXORExpressionNoIn_return bitwiseXORExpressionNoIn() // throws RecognitionException [1]
         {
-            Parser.bitwiseXORExpressionNoIn_return retval = new Parser.bitwiseXORExpressionNoIn_return();
+            ES3Parser.bitwiseXORExpressionNoIn_return retval = new ES3Parser.bitwiseXORExpressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken XOR101 = null;
-            Parser.bitwiseANDExpressionNoIn_return bitwiseANDExpressionNoIn100 = default(Parser.bitwiseANDExpressionNoIn_return);
+            ES3Parser.bitwiseANDExpressionNoIn_return bitwiseANDExpressionNoIn100 = default(ES3Parser.bitwiseANDExpressionNoIn_return);
 
-            Parser.bitwiseANDExpressionNoIn_return bitwiseANDExpressionNoIn102 = default(Parser.bitwiseANDExpressionNoIn_return);
+            ES3Parser.bitwiseANDExpressionNoIn_return bitwiseANDExpressionNoIn102 = default(ES3Parser.bitwiseANDExpressionNoIn_return);
 
 
             object XOR101_tree = null;
@@ -4549,17 +4549,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "bitwiseORExpression"
         // ES3.g3:811:1: bitwiseORExpression : bitwiseXORExpression ( OR bitwiseXORExpression )* ;
-        public Parser.bitwiseORExpression_return bitwiseORExpression() // throws RecognitionException [1]
+        public ES3Parser.bitwiseORExpression_return bitwiseORExpression() // throws RecognitionException [1]
         {
-            Parser.bitwiseORExpression_return retval = new Parser.bitwiseORExpression_return();
+            ES3Parser.bitwiseORExpression_return retval = new ES3Parser.bitwiseORExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken OR104 = null;
-            Parser.bitwiseXORExpression_return bitwiseXORExpression103 = default(Parser.bitwiseXORExpression_return);
+            ES3Parser.bitwiseXORExpression_return bitwiseXORExpression103 = default(ES3Parser.bitwiseXORExpression_return);
 
-            Parser.bitwiseXORExpression_return bitwiseXORExpression105 = default(Parser.bitwiseXORExpression_return);
+            ES3Parser.bitwiseXORExpression_return bitwiseXORExpression105 = default(ES3Parser.bitwiseXORExpression_return);
 
 
             object OR104_tree = null;
@@ -4649,17 +4649,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "bitwiseORExpressionNoIn"
         // ES3.g3:815:1: bitwiseORExpressionNoIn : bitwiseXORExpressionNoIn ( OR bitwiseXORExpressionNoIn )* ;
-        public Parser.bitwiseORExpressionNoIn_return bitwiseORExpressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.bitwiseORExpressionNoIn_return bitwiseORExpressionNoIn() // throws RecognitionException [1]
         {
-            Parser.bitwiseORExpressionNoIn_return retval = new Parser.bitwiseORExpressionNoIn_return();
+            ES3Parser.bitwiseORExpressionNoIn_return retval = new ES3Parser.bitwiseORExpressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken OR107 = null;
-            Parser.bitwiseXORExpressionNoIn_return bitwiseXORExpressionNoIn106 = default(Parser.bitwiseXORExpressionNoIn_return);
+            ES3Parser.bitwiseXORExpressionNoIn_return bitwiseXORExpressionNoIn106 = default(ES3Parser.bitwiseXORExpressionNoIn_return);
 
-            Parser.bitwiseXORExpressionNoIn_return bitwiseXORExpressionNoIn108 = default(Parser.bitwiseXORExpressionNoIn_return);
+            ES3Parser.bitwiseXORExpressionNoIn_return bitwiseXORExpressionNoIn108 = default(ES3Parser.bitwiseXORExpressionNoIn_return);
 
 
             object OR107_tree = null;
@@ -4749,17 +4749,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "logicalANDExpression"
         // ES3.g3:823:1: logicalANDExpression : bitwiseORExpression ( LAND bitwiseORExpression )* ;
-        public Parser.logicalANDExpression_return logicalANDExpression() // throws RecognitionException [1]
+        public ES3Parser.logicalANDExpression_return logicalANDExpression() // throws RecognitionException [1]
         {
-            Parser.logicalANDExpression_return retval = new Parser.logicalANDExpression_return();
+            ES3Parser.logicalANDExpression_return retval = new ES3Parser.logicalANDExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken LAND110 = null;
-            Parser.bitwiseORExpression_return bitwiseORExpression109 = default(Parser.bitwiseORExpression_return);
+            ES3Parser.bitwiseORExpression_return bitwiseORExpression109 = default(ES3Parser.bitwiseORExpression_return);
 
-            Parser.bitwiseORExpression_return bitwiseORExpression111 = default(Parser.bitwiseORExpression_return);
+            ES3Parser.bitwiseORExpression_return bitwiseORExpression111 = default(ES3Parser.bitwiseORExpression_return);
 
 
             object LAND110_tree = null;
@@ -4849,17 +4849,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "logicalANDExpressionNoIn"
         // ES3.g3:827:1: logicalANDExpressionNoIn : bitwiseORExpressionNoIn ( LAND bitwiseORExpressionNoIn )* ;
-        public Parser.logicalANDExpressionNoIn_return logicalANDExpressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.logicalANDExpressionNoIn_return logicalANDExpressionNoIn() // throws RecognitionException [1]
         {
-            Parser.logicalANDExpressionNoIn_return retval = new Parser.logicalANDExpressionNoIn_return();
+            ES3Parser.logicalANDExpressionNoIn_return retval = new ES3Parser.logicalANDExpressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken LAND113 = null;
-            Parser.bitwiseORExpressionNoIn_return bitwiseORExpressionNoIn112 = default(Parser.bitwiseORExpressionNoIn_return);
+            ES3Parser.bitwiseORExpressionNoIn_return bitwiseORExpressionNoIn112 = default(ES3Parser.bitwiseORExpressionNoIn_return);
 
-            Parser.bitwiseORExpressionNoIn_return bitwiseORExpressionNoIn114 = default(Parser.bitwiseORExpressionNoIn_return);
+            ES3Parser.bitwiseORExpressionNoIn_return bitwiseORExpressionNoIn114 = default(ES3Parser.bitwiseORExpressionNoIn_return);
 
 
             object LAND113_tree = null;
@@ -4949,17 +4949,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "logicalORExpression"
         // ES3.g3:831:1: logicalORExpression : logicalANDExpression ( LOR logicalANDExpression )* ;
-        public Parser.logicalORExpression_return logicalORExpression() // throws RecognitionException [1]
+        public ES3Parser.logicalORExpression_return logicalORExpression() // throws RecognitionException [1]
         {
-            Parser.logicalORExpression_return retval = new Parser.logicalORExpression_return();
+            ES3Parser.logicalORExpression_return retval = new ES3Parser.logicalORExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken LOR116 = null;
-            Parser.logicalANDExpression_return logicalANDExpression115 = default(Parser.logicalANDExpression_return);
+            ES3Parser.logicalANDExpression_return logicalANDExpression115 = default(ES3Parser.logicalANDExpression_return);
 
-            Parser.logicalANDExpression_return logicalANDExpression117 = default(Parser.logicalANDExpression_return);
+            ES3Parser.logicalANDExpression_return logicalANDExpression117 = default(ES3Parser.logicalANDExpression_return);
 
 
             object LOR116_tree = null;
@@ -5049,17 +5049,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "logicalORExpressionNoIn"
         // ES3.g3:835:1: logicalORExpressionNoIn : logicalANDExpressionNoIn ( LOR logicalANDExpressionNoIn )* ;
-        public Parser.logicalORExpressionNoIn_return logicalORExpressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.logicalORExpressionNoIn_return logicalORExpressionNoIn() // throws RecognitionException [1]
         {
-            Parser.logicalORExpressionNoIn_return retval = new Parser.logicalORExpressionNoIn_return();
+            ES3Parser.logicalORExpressionNoIn_return retval = new ES3Parser.logicalORExpressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken LOR119 = null;
-            Parser.logicalANDExpressionNoIn_return logicalANDExpressionNoIn118 = default(Parser.logicalANDExpressionNoIn_return);
+            ES3Parser.logicalANDExpressionNoIn_return logicalANDExpressionNoIn118 = default(ES3Parser.logicalANDExpressionNoIn_return);
 
-            Parser.logicalANDExpressionNoIn_return logicalANDExpressionNoIn120 = default(Parser.logicalANDExpressionNoIn_return);
+            ES3Parser.logicalANDExpressionNoIn_return logicalANDExpressionNoIn120 = default(ES3Parser.logicalANDExpressionNoIn_return);
 
 
             object LOR119_tree = null;
@@ -5149,20 +5149,20 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "conditionalExpression"
         // ES3.g3:843:1: conditionalExpression : logicalORExpression ( QUE assignmentExpression COLON assignmentExpression )? ;
-        public Parser.conditionalExpression_return conditionalExpression() // throws RecognitionException [1]
+        public ES3Parser.conditionalExpression_return conditionalExpression() // throws RecognitionException [1]
         {
-            Parser.conditionalExpression_return retval = new Parser.conditionalExpression_return();
+            ES3Parser.conditionalExpression_return retval = new ES3Parser.conditionalExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken QUE122 = null;
             IToken COLON124 = null;
-            Parser.logicalORExpression_return logicalORExpression121 = default(Parser.logicalORExpression_return);
+            ES3Parser.logicalORExpression_return logicalORExpression121 = default(ES3Parser.logicalORExpression_return);
 
-            Parser.assignmentExpression_return assignmentExpression123 = default(Parser.assignmentExpression_return);
+            ES3Parser.assignmentExpression_return assignmentExpression123 = default(ES3Parser.assignmentExpression_return);
 
-            Parser.assignmentExpression_return assignmentExpression125 = default(Parser.assignmentExpression_return);
+            ES3Parser.assignmentExpression_return assignmentExpression125 = default(ES3Parser.assignmentExpression_return);
 
 
             object QUE122_tree = null;
@@ -5249,20 +5249,20 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "conditionalExpressionNoIn"
         // ES3.g3:847:1: conditionalExpressionNoIn : logicalORExpressionNoIn ( QUE assignmentExpressionNoIn COLON assignmentExpressionNoIn )? ;
-        public Parser.conditionalExpressionNoIn_return conditionalExpressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.conditionalExpressionNoIn_return conditionalExpressionNoIn() // throws RecognitionException [1]
         {
-            Parser.conditionalExpressionNoIn_return retval = new Parser.conditionalExpressionNoIn_return();
+            ES3Parser.conditionalExpressionNoIn_return retval = new ES3Parser.conditionalExpressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken QUE127 = null;
             IToken COLON129 = null;
-            Parser.logicalORExpressionNoIn_return logicalORExpressionNoIn126 = default(Parser.logicalORExpressionNoIn_return);
+            ES3Parser.logicalORExpressionNoIn_return logicalORExpressionNoIn126 = default(ES3Parser.logicalORExpressionNoIn_return);
 
-            Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn128 = default(Parser.assignmentExpressionNoIn_return);
+            ES3Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn128 = default(ES3Parser.assignmentExpressionNoIn_return);
 
-            Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn130 = default(Parser.assignmentExpressionNoIn_return);
+            ES3Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn130 = default(ES3Parser.assignmentExpressionNoIn_return);
 
 
             object QUE127_tree = null;
@@ -5349,18 +5349,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "assignmentExpression"
         // ES3.g3:877:1: assignmentExpression : lhs= conditionalExpression ({...}? assignmentOperator assignmentExpression )? ;
-        public Parser.assignmentExpression_return assignmentExpression() // throws RecognitionException [1]
+        public ES3Parser.assignmentExpression_return assignmentExpression() // throws RecognitionException [1]
         {
-            Parser.assignmentExpression_return retval = new Parser.assignmentExpression_return();
+            ES3Parser.assignmentExpression_return retval = new ES3Parser.assignmentExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.conditionalExpression_return lhs = default(Parser.conditionalExpression_return);
+            ES3Parser.conditionalExpression_return lhs = default(ES3Parser.conditionalExpression_return);
 
-            Parser.assignmentOperator_return assignmentOperator131 = default(Parser.assignmentOperator_return);
+            ES3Parser.assignmentOperator_return assignmentOperator131 = default(ES3Parser.assignmentOperator_return);
 
-            Parser.assignmentExpression_return assignmentExpression132 = default(Parser.assignmentExpression_return);
+            ES3Parser.assignmentExpression_return assignmentExpression132 = default(ES3Parser.assignmentExpression_return);
 
 
 
@@ -5452,9 +5452,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "assignmentOperator"
         // ES3.g3:886:1: assignmentOperator : ( ASSIGN | MULASS | DIVASS | MODASS | ADDASS | SUBASS | SHLASS | SHRASS | SHUASS | ANDASS | XORASS | ORASS );
-        public Parser.assignmentOperator_return assignmentOperator() // throws RecognitionException [1]
+        public ES3Parser.assignmentOperator_return assignmentOperator() // throws RecognitionException [1]
         {
-            Parser.assignmentOperator_return retval = new Parser.assignmentOperator_return();
+            ES3Parser.assignmentOperator_return retval = new ES3Parser.assignmentOperator_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -5518,18 +5518,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "assignmentExpressionNoIn"
         // ES3.g3:890:1: assignmentExpressionNoIn : lhs= conditionalExpressionNoIn ({...}? assignmentOperator assignmentExpressionNoIn )? ;
-        public Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn() // throws RecognitionException [1]
         {
-            Parser.assignmentExpressionNoIn_return retval = new Parser.assignmentExpressionNoIn_return();
+            ES3Parser.assignmentExpressionNoIn_return retval = new ES3Parser.assignmentExpressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.conditionalExpressionNoIn_return lhs = default(Parser.conditionalExpressionNoIn_return);
+            ES3Parser.conditionalExpressionNoIn_return lhs = default(ES3Parser.conditionalExpressionNoIn_return);
 
-            Parser.assignmentOperator_return assignmentOperator134 = default(Parser.assignmentOperator_return);
+            ES3Parser.assignmentOperator_return assignmentOperator134 = default(ES3Parser.assignmentOperator_return);
 
-            Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn135 = default(Parser.assignmentExpressionNoIn_return);
+            ES3Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn135 = default(ES3Parser.assignmentExpressionNoIn_return);
 
 
 
@@ -5621,16 +5621,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "expression"
         // ES3.g3:903:1: expression : exprs+= assignmentExpression ( COMMA exprs+= assignmentExpression )* -> { $exprs.Count > 1 }? ^( CEXPR ( $exprs)+ ) -> $exprs;
-        public Parser.expression_return expression() // throws RecognitionException [1]
+        public ES3Parser.expression_return expression() // throws RecognitionException [1]
         {
-            Parser.expression_return retval = new Parser.expression_return();
+            ES3Parser.expression_return retval = new ES3Parser.expression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken COMMA136 = null;
             IList list_exprs = null;
-            Parser.assignmentExpression_return exprs = default(Parser.assignmentExpression_return);
+            ES3Parser.assignmentExpression_return exprs = default(ES3Parser.assignmentExpression_return);
             exprs = null;
             object COMMA136_tree = null;
             RewriteRuleTokenStream stream_COMMA = new RewriteRuleTokenStream(adaptor, "token COMMA");
@@ -5765,16 +5765,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "expressionNoIn"
         // ES3.g3:909:1: expressionNoIn : exprs+= assignmentExpressionNoIn ( COMMA exprs+= assignmentExpressionNoIn )* -> { $exprs.Count > 1 }? ^( CEXPR ( $exprs)+ ) -> $exprs;
-        public Parser.expressionNoIn_return expressionNoIn() // throws RecognitionException [1]
+        public ES3Parser.expressionNoIn_return expressionNoIn() // throws RecognitionException [1]
         {
-            Parser.expressionNoIn_return retval = new Parser.expressionNoIn_return();
+            ES3Parser.expressionNoIn_return retval = new ES3Parser.expressionNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken COMMA137 = null;
             IList list_exprs = null;
-            Parser.assignmentExpressionNoIn_return exprs = default(Parser.assignmentExpressionNoIn_return);
+            ES3Parser.assignmentExpressionNoIn_return exprs = default(ES3Parser.assignmentExpressionNoIn_return);
             exprs = null;
             object COMMA137_tree = null;
             RewriteRuleTokenStream stream_COMMA = new RewriteRuleTokenStream(adaptor, "token COMMA");
@@ -5909,9 +5909,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "semic"
         // ES3.g3:937:1: semic : ( SEMIC | EOF | RBRACE | EOL | MultiLineComment );
-        public Parser.semic_return semic() // throws RecognitionException [1]
+        public ES3Parser.semic_return semic() // throws RecognitionException [1]
         {
-            Parser.semic_return retval = new Parser.semic_return();
+            ES3Parser.semic_return retval = new ES3Parser.semic_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -6069,16 +6069,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "statement"
         // ES3.g3:956:1: statement options {k=1; } : ({...}? block | statementTail );
-        public Parser.statement_return statement() // throws RecognitionException [1]
+        public ES3Parser.statement_return statement() // throws RecognitionException [1]
         {
-            Parser.statement_return retval = new Parser.statement_return();
+            ES3Parser.statement_return retval = new ES3Parser.statement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.block_return block143 = default(Parser.block_return);
+            ES3Parser.block_return block143 = default(ES3Parser.block_return);
 
-            Parser.statementTail_return statementTail144 = default(Parser.statementTail_return);
+            ES3Parser.statementTail_return statementTail144 = default(ES3Parser.statementTail_return);
 
 
 
@@ -6153,38 +6153,38 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "statementTail"
         // ES3.g3:965:1: statementTail : ( variableStatement | emptyStatement | expressionStatement | ifStatement | iterationStatement | continueStatement | breakStatement | returnStatement | withStatement | labelledStatement | switchStatement | throwStatement | tryStatement );
-        public Parser.statementTail_return statementTail() // throws RecognitionException [1]
+        public ES3Parser.statementTail_return statementTail() // throws RecognitionException [1]
         {
-            Parser.statementTail_return retval = new Parser.statementTail_return();
+            ES3Parser.statementTail_return retval = new ES3Parser.statementTail_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.variableStatement_return variableStatement145 = default(Parser.variableStatement_return);
+            ES3Parser.variableStatement_return variableStatement145 = default(ES3Parser.variableStatement_return);
 
-            Parser.emptyStatement_return emptyStatement146 = default(Parser.emptyStatement_return);
+            ES3Parser.emptyStatement_return emptyStatement146 = default(ES3Parser.emptyStatement_return);
 
-            Parser.expressionStatement_return expressionStatement147 = default(Parser.expressionStatement_return);
+            ES3Parser.expressionStatement_return expressionStatement147 = default(ES3Parser.expressionStatement_return);
 
-            Parser.ifStatement_return ifStatement148 = default(Parser.ifStatement_return);
+            ES3Parser.ifStatement_return ifStatement148 = default(ES3Parser.ifStatement_return);
 
-            Parser.iterationStatement_return iterationStatement149 = default(Parser.iterationStatement_return);
+            ES3Parser.iterationStatement_return iterationStatement149 = default(ES3Parser.iterationStatement_return);
 
-            Parser.continueStatement_return continueStatement150 = default(Parser.continueStatement_return);
+            ES3Parser.continueStatement_return continueStatement150 = default(ES3Parser.continueStatement_return);
 
-            Parser.breakStatement_return breakStatement151 = default(Parser.breakStatement_return);
+            ES3Parser.breakStatement_return breakStatement151 = default(ES3Parser.breakStatement_return);
 
-            Parser.returnStatement_return returnStatement152 = default(Parser.returnStatement_return);
+            ES3Parser.returnStatement_return returnStatement152 = default(ES3Parser.returnStatement_return);
 
-            Parser.withStatement_return withStatement153 = default(Parser.withStatement_return);
+            ES3Parser.withStatement_return withStatement153 = default(ES3Parser.withStatement_return);
 
-            Parser.labelledStatement_return labelledStatement154 = default(Parser.labelledStatement_return);
+            ES3Parser.labelledStatement_return labelledStatement154 = default(ES3Parser.labelledStatement_return);
 
-            Parser.switchStatement_return switchStatement155 = default(Parser.switchStatement_return);
+            ES3Parser.switchStatement_return switchStatement155 = default(ES3Parser.switchStatement_return);
 
-            Parser.throwStatement_return throwStatement156 = default(Parser.throwStatement_return);
+            ES3Parser.throwStatement_return throwStatement156 = default(ES3Parser.throwStatement_return);
 
-            Parser.tryStatement_return tryStatement157 = default(Parser.tryStatement_return);
+            ES3Parser.tryStatement_return tryStatement157 = default(ES3Parser.tryStatement_return);
 
 
 
@@ -6398,16 +6398,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "block"
         // ES3.g3:983:1: block : lb= LBRACE ( statement )* RBRACE -> ^( BLOCK[$lb, \"BLOCK\"] ( statement )* ) ;
-        public Parser.block_return block() // throws RecognitionException [1]
+        public ES3Parser.block_return block() // throws RecognitionException [1]
         {
-            Parser.block_return retval = new Parser.block_return();
+            ES3Parser.block_return retval = new ES3Parser.block_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken lb = null;
             IToken RBRACE159 = null;
-            Parser.statement_return statement158 = default(Parser.statement_return);
+            ES3Parser.statement_return statement158 = default(ES3Parser.statement_return);
 
 
             object lb_tree = null;
@@ -6528,20 +6528,20 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "variableStatement"
         // ES3.g3:992:1: variableStatement : VAR variableDeclaration ( COMMA variableDeclaration )* semic -> ^( VAR ( variableDeclaration )+ ) ;
-        public Parser.variableStatement_return variableStatement() // throws RecognitionException [1]
+        public ES3Parser.variableStatement_return variableStatement() // throws RecognitionException [1]
         {
-            Parser.variableStatement_return retval = new Parser.variableStatement_return();
+            ES3Parser.variableStatement_return retval = new ES3Parser.variableStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken VAR160 = null;
             IToken COMMA162 = null;
-            Parser.variableDeclaration_return variableDeclaration161 = default(Parser.variableDeclaration_return);
+            ES3Parser.variableDeclaration_return variableDeclaration161 = default(ES3Parser.variableDeclaration_return);
 
-            Parser.variableDeclaration_return variableDeclaration163 = default(Parser.variableDeclaration_return);
+            ES3Parser.variableDeclaration_return variableDeclaration163 = default(ES3Parser.variableDeclaration_return);
 
-            Parser.semic_return semic164 = default(Parser.semic_return);
+            ES3Parser.semic_return semic164 = default(ES3Parser.semic_return);
 
 
             object VAR160_tree = null;
@@ -6676,16 +6676,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "variableDeclaration"
         // ES3.g3:997:1: variableDeclaration : Identifier ( ASSIGN assignmentExpression )? ;
-        public Parser.variableDeclaration_return variableDeclaration() // throws RecognitionException [1]
+        public ES3Parser.variableDeclaration_return variableDeclaration() // throws RecognitionException [1]
         {
-            Parser.variableDeclaration_return retval = new Parser.variableDeclaration_return();
+            ES3Parser.variableDeclaration_return retval = new ES3Parser.variableDeclaration_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken Identifier165 = null;
             IToken ASSIGN166 = null;
-            Parser.assignmentExpression_return assignmentExpression167 = default(Parser.assignmentExpression_return);
+            ES3Parser.assignmentExpression_return assignmentExpression167 = default(ES3Parser.assignmentExpression_return);
 
 
             object Identifier165_tree = null;
@@ -6765,16 +6765,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "variableDeclarationNoIn"
         // ES3.g3:1001:1: variableDeclarationNoIn : Identifier ( ASSIGN assignmentExpressionNoIn )? ;
-        public Parser.variableDeclarationNoIn_return variableDeclarationNoIn() // throws RecognitionException [1]
+        public ES3Parser.variableDeclarationNoIn_return variableDeclarationNoIn() // throws RecognitionException [1]
         {
-            Parser.variableDeclarationNoIn_return retval = new Parser.variableDeclarationNoIn_return();
+            ES3Parser.variableDeclarationNoIn_return retval = new ES3Parser.variableDeclarationNoIn_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken Identifier168 = null;
             IToken ASSIGN169 = null;
-            Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn170 = default(Parser.assignmentExpressionNoIn_return);
+            ES3Parser.assignmentExpressionNoIn_return assignmentExpressionNoIn170 = default(ES3Parser.assignmentExpressionNoIn_return);
 
 
             object Identifier168_tree = null;
@@ -6854,9 +6854,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "emptyStatement"
         // ES3.g3:1009:1: emptyStatement : SEMIC ;
-        public Parser.emptyStatement_return emptyStatement() // throws RecognitionException [1]
+        public ES3Parser.emptyStatement_return emptyStatement() // throws RecognitionException [1]
         {
-            Parser.emptyStatement_return retval = new Parser.emptyStatement_return();
+            ES3Parser.emptyStatement_return retval = new ES3Parser.emptyStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -6908,16 +6908,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "expressionStatement"
         // ES3.g3:1023:1: expressionStatement : expression semic ;
-        public Parser.expressionStatement_return expressionStatement() // throws RecognitionException [1]
+        public ES3Parser.expressionStatement_return expressionStatement() // throws RecognitionException [1]
         {
-            Parser.expressionStatement_return retval = new Parser.expressionStatement_return();
+            ES3Parser.expressionStatement_return retval = new ES3Parser.expressionStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.expression_return expression172 = default(Parser.expression_return);
+            ES3Parser.expression_return expression172 = default(ES3Parser.expression_return);
 
-            Parser.semic_return semic173 = default(Parser.semic_return);
+            ES3Parser.semic_return semic173 = default(ES3Parser.semic_return);
 
 
 
@@ -6972,9 +6972,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "ifStatement"
         // ES3.g3:1031:1: ifStatement : IF LPAREN expression RPAREN statement ({...}? ELSE statement )? -> ^( IF expression ( statement )+ ) ;
-        public Parser.ifStatement_return ifStatement() // throws RecognitionException [1]
+        public ES3Parser.ifStatement_return ifStatement() // throws RecognitionException [1]
         {
-            Parser.ifStatement_return retval = new Parser.ifStatement_return();
+            ES3Parser.ifStatement_return retval = new ES3Parser.ifStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -6983,11 +6983,11 @@ namespace IronJS.Compiler.Parser.ES3
             IToken LPAREN175 = null;
             IToken RPAREN177 = null;
             IToken ELSE179 = null;
-            Parser.expression_return expression176 = default(Parser.expression_return);
+            ES3Parser.expression_return expression176 = default(ES3Parser.expression_return);
 
-            Parser.statement_return statement178 = default(Parser.statement_return);
+            ES3Parser.statement_return statement178 = default(ES3Parser.statement_return);
 
-            Parser.statement_return statement180 = default(Parser.statement_return);
+            ES3Parser.statement_return statement180 = default(ES3Parser.statement_return);
 
 
             object IF174_tree = null;
@@ -7132,18 +7132,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "iterationStatement"
         // ES3.g3:1041:1: iterationStatement : ( doStatement | whileStatement | forStatement );
-        public Parser.iterationStatement_return iterationStatement() // throws RecognitionException [1]
+        public ES3Parser.iterationStatement_return iterationStatement() // throws RecognitionException [1]
         {
-            Parser.iterationStatement_return retval = new Parser.iterationStatement_return();
+            ES3Parser.iterationStatement_return retval = new ES3Parser.iterationStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.doStatement_return doStatement181 = default(Parser.doStatement_return);
+            ES3Parser.doStatement_return doStatement181 = default(ES3Parser.doStatement_return);
 
-            Parser.whileStatement_return whileStatement182 = default(Parser.whileStatement_return);
+            ES3Parser.whileStatement_return whileStatement182 = default(ES3Parser.whileStatement_return);
 
-            Parser.forStatement_return forStatement183 = default(Parser.forStatement_return);
+            ES3Parser.forStatement_return forStatement183 = default(ES3Parser.forStatement_return);
 
 
 
@@ -7250,9 +7250,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "doStatement"
         // ES3.g3:1047:1: doStatement : DO statement WHILE LPAREN expression RPAREN semic -> ^( DO statement expression ) ;
-        public Parser.doStatement_return doStatement() // throws RecognitionException [1]
+        public ES3Parser.doStatement_return doStatement() // throws RecognitionException [1]
         {
-            Parser.doStatement_return retval = new Parser.doStatement_return();
+            ES3Parser.doStatement_return retval = new ES3Parser.doStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -7261,11 +7261,11 @@ namespace IronJS.Compiler.Parser.ES3
             IToken WHILE186 = null;
             IToken LPAREN187 = null;
             IToken RPAREN189 = null;
-            Parser.statement_return statement185 = default(Parser.statement_return);
+            ES3Parser.statement_return statement185 = default(ES3Parser.statement_return);
 
-            Parser.expression_return expression188 = default(Parser.expression_return);
+            ES3Parser.expression_return expression188 = default(ES3Parser.expression_return);
 
-            Parser.semic_return semic190 = default(Parser.semic_return);
+            ES3Parser.semic_return semic190 = default(ES3Parser.semic_return);
 
 
             object DO184_tree = null;
@@ -7374,9 +7374,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "whileStatement"
         // ES3.g3:1052:1: whileStatement : WHILE LPAREN expression RPAREN statement ;
-        public Parser.whileStatement_return whileStatement() // throws RecognitionException [1]
+        public ES3Parser.whileStatement_return whileStatement() // throws RecognitionException [1]
         {
-            Parser.whileStatement_return retval = new Parser.whileStatement_return();
+            ES3Parser.whileStatement_return retval = new ES3Parser.whileStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -7384,9 +7384,9 @@ namespace IronJS.Compiler.Parser.ES3
             IToken WHILE191 = null;
             IToken LPAREN192 = null;
             IToken RPAREN194 = null;
-            Parser.expression_return expression193 = default(Parser.expression_return);
+            ES3Parser.expression_return expression193 = default(ES3Parser.expression_return);
 
-            Parser.statement_return statement195 = default(Parser.statement_return);
+            ES3Parser.statement_return statement195 = default(ES3Parser.statement_return);
 
 
             object WHILE191_tree = null;
@@ -7451,9 +7451,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "forStatement"
         // ES3.g3:1097:1: forStatement : FOR LPAREN forControl RPAREN statement ;
-        public Parser.forStatement_return forStatement() // throws RecognitionException [1]
+        public ES3Parser.forStatement_return forStatement() // throws RecognitionException [1]
         {
-            Parser.forStatement_return retval = new Parser.forStatement_return();
+            ES3Parser.forStatement_return retval = new ES3Parser.forStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -7461,9 +7461,9 @@ namespace IronJS.Compiler.Parser.ES3
             IToken FOR196 = null;
             IToken LPAREN197 = null;
             IToken RPAREN199 = null;
-            Parser.forControl_return forControl198 = default(Parser.forControl_return);
+            ES3Parser.forControl_return forControl198 = default(ES3Parser.forControl_return);
 
-            Parser.statement_return statement200 = default(Parser.statement_return);
+            ES3Parser.statement_return statement200 = default(ES3Parser.statement_return);
 
 
             object FOR196_tree = null;
@@ -7528,18 +7528,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "forControl"
         // ES3.g3:1101:1: forControl : ( forControlVar | forControlExpression | forControlSemic );
-        public Parser.forControl_return forControl() // throws RecognitionException [1]
+        public ES3Parser.forControl_return forControl() // throws RecognitionException [1]
         {
-            Parser.forControl_return retval = new Parser.forControl_return();
+            ES3Parser.forControl_return retval = new ES3Parser.forControl_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.forControlVar_return forControlVar201 = default(Parser.forControlVar_return);
+            ES3Parser.forControlVar_return forControlVar201 = default(ES3Parser.forControlVar_return);
 
-            Parser.forControlExpression_return forControlExpression202 = default(Parser.forControlExpression_return);
+            ES3Parser.forControlExpression_return forControlExpression202 = default(ES3Parser.forControlExpression_return);
 
-            Parser.forControlSemic_return forControlSemic203 = default(Parser.forControlSemic_return);
+            ES3Parser.forControlSemic_return forControlSemic203 = default(ES3Parser.forControlSemic_return);
 
 
 
@@ -7669,9 +7669,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "forControlVar"
         // ES3.g3:1107:1: forControlVar : VAR variableDeclarationNoIn ( ( IN expression -> ^( FORITER ^( VAR variableDeclarationNoIn ) ^( EXPR expression ) ) ) | ( ( COMMA variableDeclarationNoIn )* SEMIC (ex1= expression )? SEMIC (ex2= expression )? -> ^( FORSTEP ^( VAR ( variableDeclarationNoIn )+ ) ^( EXPR ( $ex1)? ) ^( EXPR ( $ex2)? ) ) ) ) ;
-        public Parser.forControlVar_return forControlVar() // throws RecognitionException [1]
+        public ES3Parser.forControlVar_return forControlVar() // throws RecognitionException [1]
         {
-            Parser.forControlVar_return retval = new Parser.forControlVar_return();
+            ES3Parser.forControlVar_return retval = new ES3Parser.forControlVar_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -7681,15 +7681,15 @@ namespace IronJS.Compiler.Parser.ES3
             IToken COMMA208 = null;
             IToken SEMIC210 = null;
             IToken SEMIC211 = null;
-            Parser.expression_return ex1 = default(Parser.expression_return);
+            ES3Parser.expression_return ex1 = default(ES3Parser.expression_return);
 
-            Parser.expression_return ex2 = default(Parser.expression_return);
+            ES3Parser.expression_return ex2 = default(ES3Parser.expression_return);
 
-            Parser.variableDeclarationNoIn_return variableDeclarationNoIn205 = default(Parser.variableDeclarationNoIn_return);
+            ES3Parser.variableDeclarationNoIn_return variableDeclarationNoIn205 = default(ES3Parser.variableDeclarationNoIn_return);
 
-            Parser.expression_return expression207 = default(Parser.expression_return);
+            ES3Parser.expression_return expression207 = default(ES3Parser.expression_return);
 
-            Parser.variableDeclarationNoIn_return variableDeclarationNoIn209 = default(Parser.variableDeclarationNoIn_return);
+            ES3Parser.variableDeclarationNoIn_return variableDeclarationNoIn209 = default(ES3Parser.variableDeclarationNoIn_return);
 
 
             object VAR204_tree = null;
@@ -8018,9 +8018,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "forControlExpression"
         // ES3.g3:1122:1: forControlExpression : ex1= expressionNoIn ({...}? ( IN ex2= expression -> ^( FORITER ^( EXPR $ex1) ^( EXPR $ex2) ) ) | ( SEMIC (ex2= expression )? SEMIC (ex3= expression )? -> ^( FORSTEP ^( EXPR $ex1) ^( EXPR ( $ex2)? ) ^( EXPR ( $ex3)? ) ) ) ) ;
-        public Parser.forControlExpression_return forControlExpression() // throws RecognitionException [1]
+        public ES3Parser.forControlExpression_return forControlExpression() // throws RecognitionException [1]
         {
-            Parser.forControlExpression_return retval = new Parser.forControlExpression_return();
+            ES3Parser.forControlExpression_return retval = new ES3Parser.forControlExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -8028,11 +8028,11 @@ namespace IronJS.Compiler.Parser.ES3
             IToken IN212 = null;
             IToken SEMIC213 = null;
             IToken SEMIC214 = null;
-            Parser.expressionNoIn_return ex1 = default(Parser.expressionNoIn_return);
+            ES3Parser.expressionNoIn_return ex1 = default(ES3Parser.expressionNoIn_return);
 
-            Parser.expression_return ex2 = default(Parser.expression_return);
+            ES3Parser.expression_return ex2 = default(ES3Parser.expression_return);
 
-            Parser.expression_return ex3 = default(Parser.expression_return);
+            ES3Parser.expression_return ex3 = default(ES3Parser.expression_return);
 
 
             object IN212_tree = null;
@@ -8318,18 +8318,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "forControlSemic"
         // ES3.g3:1141:1: forControlSemic : SEMIC (ex1= expression )? SEMIC (ex2= expression )? -> ^( FORSTEP ^( EXPR ) ^( EXPR ( $ex1)? ) ^( EXPR ( $ex2)? ) ) ;
-        public Parser.forControlSemic_return forControlSemic() // throws RecognitionException [1]
+        public ES3Parser.forControlSemic_return forControlSemic() // throws RecognitionException [1]
         {
-            Parser.forControlSemic_return retval = new Parser.forControlSemic_return();
+            ES3Parser.forControlSemic_return retval = new ES3Parser.forControlSemic_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken SEMIC215 = null;
             IToken SEMIC216 = null;
-            Parser.expression_return ex1 = default(Parser.expression_return);
+            ES3Parser.expression_return ex1 = default(ES3Parser.expression_return);
 
-            Parser.expression_return ex2 = default(Parser.expression_return);
+            ES3Parser.expression_return ex2 = default(ES3Parser.expression_return);
 
 
             object SEMIC215_tree = null;
@@ -8495,16 +8495,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "continueStatement"
         // ES3.g3:1155:1: continueStatement : CONTINUE ( Identifier )? semic ;
-        public Parser.continueStatement_return continueStatement() // throws RecognitionException [1]
+        public ES3Parser.continueStatement_return continueStatement() // throws RecognitionException [1]
         {
-            Parser.continueStatement_return retval = new Parser.continueStatement_return();
+            ES3Parser.continueStatement_return retval = new ES3Parser.continueStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken CONTINUE217 = null;
             IToken Identifier218 = null;
-            Parser.semic_return semic219 = default(Parser.semic_return);
+            ES3Parser.semic_return semic219 = default(ES3Parser.semic_return);
 
 
             object CONTINUE217_tree = null;
@@ -8584,16 +8584,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "breakStatement"
         // ES3.g3:1168:1: breakStatement : BREAK ( Identifier )? semic ;
-        public Parser.breakStatement_return breakStatement() // throws RecognitionException [1]
+        public ES3Parser.breakStatement_return breakStatement() // throws RecognitionException [1]
         {
-            Parser.breakStatement_return retval = new Parser.breakStatement_return();
+            ES3Parser.breakStatement_return retval = new ES3Parser.breakStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken BREAK220 = null;
             IToken Identifier221 = null;
-            Parser.semic_return semic222 = default(Parser.semic_return);
+            ES3Parser.semic_return semic222 = default(ES3Parser.semic_return);
 
 
             object BREAK220_tree = null;
@@ -8673,17 +8673,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "returnStatement"
         // ES3.g3:1189:1: returnStatement : RETURN ( expression )? semic ;
-        public Parser.returnStatement_return returnStatement() // throws RecognitionException [1]
+        public ES3Parser.returnStatement_return returnStatement() // throws RecognitionException [1]
         {
-            Parser.returnStatement_return retval = new Parser.returnStatement_return();
+            ES3Parser.returnStatement_return retval = new ES3Parser.returnStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken RETURN223 = null;
-            Parser.expression_return expression224 = default(Parser.expression_return);
+            ES3Parser.expression_return expression224 = default(ES3Parser.expression_return);
 
-            Parser.semic_return semic225 = default(Parser.semic_return);
+            ES3Parser.semic_return semic225 = default(ES3Parser.semic_return);
 
 
             object RETURN223_tree = null;
@@ -8763,9 +8763,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "withStatement"
         // ES3.g3:1197:1: withStatement : WITH LPAREN expression RPAREN statement ;
-        public Parser.withStatement_return withStatement() // throws RecognitionException [1]
+        public ES3Parser.withStatement_return withStatement() // throws RecognitionException [1]
         {
-            Parser.withStatement_return retval = new Parser.withStatement_return();
+            ES3Parser.withStatement_return retval = new ES3Parser.withStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -8773,9 +8773,9 @@ namespace IronJS.Compiler.Parser.ES3
             IToken WITH226 = null;
             IToken LPAREN227 = null;
             IToken RPAREN229 = null;
-            Parser.expression_return expression228 = default(Parser.expression_return);
+            ES3Parser.expression_return expression228 = default(ES3Parser.expression_return);
 
-            Parser.statement_return statement230 = default(Parser.statement_return);
+            ES3Parser.statement_return statement230 = default(ES3Parser.statement_return);
 
 
             object WITH226_tree = null;
@@ -8840,9 +8840,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "switchStatement"
         // ES3.g3:1205:1: switchStatement : SWITCH LPAREN expression RPAREN LBRACE ({...}? => defaultClause | caseClause )* RBRACE -> ^( SWITCH expression ( defaultClause )? ( caseClause )* ) ;
-        public Parser.switchStatement_return switchStatement() // throws RecognitionException [1]
+        public ES3Parser.switchStatement_return switchStatement() // throws RecognitionException [1]
         {
-            Parser.switchStatement_return retval = new Parser.switchStatement_return();
+            ES3Parser.switchStatement_return retval = new ES3Parser.switchStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -8852,11 +8852,11 @@ namespace IronJS.Compiler.Parser.ES3
             IToken RPAREN234 = null;
             IToken LBRACE235 = null;
             IToken RBRACE238 = null;
-            Parser.expression_return expression233 = default(Parser.expression_return);
+            ES3Parser.expression_return expression233 = default(ES3Parser.expression_return);
 
-            Parser.defaultClause_return defaultClause236 = default(Parser.defaultClause_return);
+            ES3Parser.defaultClause_return defaultClause236 = default(ES3Parser.defaultClause_return);
 
-            Parser.caseClause_return caseClause237 = default(Parser.caseClause_return);
+            ES3Parser.caseClause_return caseClause237 = default(ES3Parser.caseClause_return);
 
 
             object SWITCH231_tree = null;
@@ -9030,18 +9030,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "caseClause"
         // ES3.g3:1214:1: caseClause : CASE expression COLON ( statement )* ;
-        public Parser.caseClause_return caseClause() // throws RecognitionException [1]
+        public ES3Parser.caseClause_return caseClause() // throws RecognitionException [1]
         {
-            Parser.caseClause_return retval = new Parser.caseClause_return();
+            ES3Parser.caseClause_return retval = new ES3Parser.caseClause_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken CASE239 = null;
             IToken COLON241 = null;
-            Parser.expression_return expression240 = default(Parser.expression_return);
+            ES3Parser.expression_return expression240 = default(ES3Parser.expression_return);
 
-            Parser.statement_return statement242 = default(Parser.statement_return);
+            ES3Parser.statement_return statement242 = default(ES3Parser.statement_return);
 
 
             object CASE239_tree = null;
@@ -9133,16 +9133,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "defaultClause"
         // ES3.g3:1218:1: defaultClause : DEFAULT COLON ( statement )* ;
-        public Parser.defaultClause_return defaultClause() // throws RecognitionException [1]
+        public ES3Parser.defaultClause_return defaultClause() // throws RecognitionException [1]
         {
-            Parser.defaultClause_return retval = new Parser.defaultClause_return();
+            ES3Parser.defaultClause_return retval = new ES3Parser.defaultClause_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken DEFAULT243 = null;
             IToken COLON244 = null;
-            Parser.statement_return statement245 = default(Parser.statement_return);
+            ES3Parser.statement_return statement245 = default(ES3Parser.statement_return);
 
 
             object DEFAULT243_tree = null;
@@ -9229,16 +9229,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "labelledStatement"
         // ES3.g3:1226:1: labelledStatement : Identifier COLON statement -> ^( LABELLED Identifier statement ) ;
-        public Parser.labelledStatement_return labelledStatement() // throws RecognitionException [1]
+        public ES3Parser.labelledStatement_return labelledStatement() // throws RecognitionException [1]
         {
-            Parser.labelledStatement_return retval = new Parser.labelledStatement_return();
+            ES3Parser.labelledStatement_return retval = new ES3Parser.labelledStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken Identifier246 = null;
             IToken COLON247 = null;
-            Parser.statement_return statement248 = default(Parser.statement_return);
+            ES3Parser.statement_return statement248 = default(ES3Parser.statement_return);
 
 
             object Identifier246_tree = null;
@@ -9325,17 +9325,17 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "throwStatement"
         // ES3.g3:1250:1: throwStatement : THROW expression semic ;
-        public Parser.throwStatement_return throwStatement() // throws RecognitionException [1]
+        public ES3Parser.throwStatement_return throwStatement() // throws RecognitionException [1]
         {
-            Parser.throwStatement_return retval = new Parser.throwStatement_return();
+            ES3Parser.throwStatement_return retval = new ES3Parser.throwStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken THROW249 = null;
-            Parser.expression_return expression250 = default(Parser.expression_return);
+            ES3Parser.expression_return expression250 = default(ES3Parser.expression_return);
 
-            Parser.semic_return semic251 = default(Parser.semic_return);
+            ES3Parser.semic_return semic251 = default(ES3Parser.semic_return);
 
 
             object THROW249_tree = null;
@@ -9396,21 +9396,21 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "tryStatement"
         // ES3.g3:1258:1: tryStatement : TRY block ( catchClause ( finallyClause )? | finallyClause ) ;
-        public Parser.tryStatement_return tryStatement() // throws RecognitionException [1]
+        public ES3Parser.tryStatement_return tryStatement() // throws RecognitionException [1]
         {
-            Parser.tryStatement_return retval = new Parser.tryStatement_return();
+            ES3Parser.tryStatement_return retval = new ES3Parser.tryStatement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken TRY252 = null;
-            Parser.block_return block253 = default(Parser.block_return);
+            ES3Parser.block_return block253 = default(ES3Parser.block_return);
 
-            Parser.catchClause_return catchClause254 = default(Parser.catchClause_return);
+            ES3Parser.catchClause_return catchClause254 = default(ES3Parser.catchClause_return);
 
-            Parser.finallyClause_return finallyClause255 = default(Parser.finallyClause_return);
+            ES3Parser.finallyClause_return finallyClause255 = default(ES3Parser.finallyClause_return);
 
-            Parser.finallyClause_return finallyClause256 = default(Parser.finallyClause_return);
+            ES3Parser.finallyClause_return finallyClause256 = default(ES3Parser.finallyClause_return);
 
 
             object TRY252_tree = null;
@@ -9536,9 +9536,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "catchClause"
         // ES3.g3:1262:1: catchClause : CATCH LPAREN Identifier RPAREN block ;
-        public Parser.catchClause_return catchClause() // throws RecognitionException [1]
+        public ES3Parser.catchClause_return catchClause() // throws RecognitionException [1]
         {
-            Parser.catchClause_return retval = new Parser.catchClause_return();
+            ES3Parser.catchClause_return retval = new ES3Parser.catchClause_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -9547,7 +9547,7 @@ namespace IronJS.Compiler.Parser.ES3
             IToken LPAREN258 = null;
             IToken Identifier259 = null;
             IToken RPAREN260 = null;
-            Parser.block_return block261 = default(Parser.block_return);
+            ES3Parser.block_return block261 = default(ES3Parser.block_return);
 
 
             object CATCH257_tree = null;
@@ -9612,15 +9612,15 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "finallyClause"
         // ES3.g3:1266:1: finallyClause : FINALLY block ;
-        public Parser.finallyClause_return finallyClause() // throws RecognitionException [1]
+        public ES3Parser.finallyClause_return finallyClause() // throws RecognitionException [1]
         {
-            Parser.finallyClause_return retval = new Parser.finallyClause_return();
+            ES3Parser.finallyClause_return retval = new ES3Parser.finallyClause_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken FINALLY262 = null;
-            Parser.block_return block263 = default(Parser.block_return);
+            ES3Parser.block_return block263 = default(ES3Parser.block_return);
 
 
             object FINALLY262_tree = null;
@@ -9676,18 +9676,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "functionDeclaration"
         // ES3.g3:1280:1: functionDeclaration : FUNCTION name= Identifier formalParameterList functionBody -> ^( FUNCTION $name formalParameterList functionBody ) ;
-        public Parser.functionDeclaration_return functionDeclaration() // throws RecognitionException [1]
+        public ES3Parser.functionDeclaration_return functionDeclaration() // throws RecognitionException [1]
         {
-            Parser.functionDeclaration_return retval = new Parser.functionDeclaration_return();
+            ES3Parser.functionDeclaration_return retval = new ES3Parser.functionDeclaration_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken name = null;
             IToken FUNCTION264 = null;
-            Parser.formalParameterList_return formalParameterList265 = default(Parser.formalParameterList_return);
+            ES3Parser.formalParameterList_return formalParameterList265 = default(ES3Parser.formalParameterList_return);
 
-            Parser.functionBody_return functionBody266 = default(Parser.functionBody_return);
+            ES3Parser.functionBody_return functionBody266 = default(ES3Parser.functionBody_return);
 
 
             object name_tree = null;
@@ -9782,18 +9782,18 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "functionExpression"
         // ES3.g3:1285:1: functionExpression : FUNCTION (name= Identifier )? formalParameterList functionBody -> ^( FUNCTION ( $name)? formalParameterList functionBody ) ;
-        public Parser.functionExpression_return functionExpression() // throws RecognitionException [1]
+        public ES3Parser.functionExpression_return functionExpression() // throws RecognitionException [1]
         {
-            Parser.functionExpression_return retval = new Parser.functionExpression_return();
+            ES3Parser.functionExpression_return retval = new ES3Parser.functionExpression_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken name = null;
             IToken FUNCTION267 = null;
-            Parser.formalParameterList_return formalParameterList268 = default(Parser.formalParameterList_return);
+            ES3Parser.formalParameterList_return formalParameterList268 = default(ES3Parser.formalParameterList_return);
 
-            Parser.functionBody_return functionBody269 = default(Parser.functionBody_return);
+            ES3Parser.functionBody_return functionBody269 = default(ES3Parser.functionBody_return);
 
 
             object name_tree = null;
@@ -9913,9 +9913,9 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "formalParameterList"
         // ES3.g3:1290:1: formalParameterList : LPAREN ( Identifier ( COMMA Identifier )* )? RPAREN -> ^( ARGS ( Identifier )* ) ;
-        public Parser.formalParameterList_return formalParameterList() // throws RecognitionException [1]
+        public ES3Parser.formalParameterList_return formalParameterList() // throws RecognitionException [1]
         {
-            Parser.formalParameterList_return retval = new Parser.formalParameterList_return();
+            ES3Parser.formalParameterList_return retval = new ES3Parser.formalParameterList_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
@@ -10072,16 +10072,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "functionBody"
         // ES3.g3:1295:1: functionBody : lb= LBRACE ( sourceElement )* RBRACE -> ^( BLOCK[$lb, \"BLOCK\"] ( sourceElement )* ) ;
-        public Parser.functionBody_return functionBody() // throws RecognitionException [1]
+        public ES3Parser.functionBody_return functionBody() // throws RecognitionException [1]
         {
-            Parser.functionBody_return retval = new Parser.functionBody_return();
+            ES3Parser.functionBody_return retval = new ES3Parser.functionBody_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
             IToken lb = null;
             IToken RBRACE276 = null;
-            Parser.sourceElement_return sourceElement275 = default(Parser.sourceElement_return);
+            ES3Parser.sourceElement_return sourceElement275 = default(ES3Parser.sourceElement_return);
 
 
             object lb_tree = null;
@@ -10202,14 +10202,14 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "program"
         // ES3.g3:1304:1: program : ( sourceElement )* ;
-        public Parser.program_return program() // throws RecognitionException [1]
+        public ES3Parser.program_return program() // throws RecognitionException [1]
         {
-            Parser.program_return retval = new Parser.program_return();
+            ES3Parser.program_return retval = new ES3Parser.program_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.sourceElement_return sourceElement277 = default(Parser.sourceElement_return);
+            ES3Parser.sourceElement_return sourceElement277 = default(ES3Parser.sourceElement_return);
 
 
 
@@ -10289,16 +10289,16 @@ namespace IronJS.Compiler.Parser.ES3
 
         // $ANTLR start "sourceElement"
         // ES3.g3:1313:1: sourceElement options {k=1; } : ({...}? functionDeclaration | statement );
-        public Parser.sourceElement_return sourceElement() // throws RecognitionException [1]
+        public ES3Parser.sourceElement_return sourceElement() // throws RecognitionException [1]
         {
-            Parser.sourceElement_return retval = new Parser.sourceElement_return();
+            ES3Parser.sourceElement_return retval = new ES3Parser.sourceElement_return();
             retval.Start = input.LT(1);
 
             object root_0 = null;
 
-            Parser.functionDeclaration_return functionDeclaration278 = default(Parser.functionDeclaration_return);
+            ES3Parser.functionDeclaration_return functionDeclaration278 = default(ES3Parser.functionDeclaration_return);
 
-            Parser.statement_return statement279 = default(Parser.statement_return);
+            ES3Parser.statement_return statement279 = default(ES3Parser.statement_return);
 
 
 
