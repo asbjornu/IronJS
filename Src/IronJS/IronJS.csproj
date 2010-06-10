@@ -78,7 +78,7 @@
     <Compile Include="Compiler\Parser\Xebic\ES3Parser.cs" />
     <Compile Include="Compiler\Parser\IParser.cs" />
     <Compile Include="Extensions\Antlr.cs" />
-    <Compile Include="Compiler\Parser\StringConvert.cs" />
+    <Compile Include="Compiler\Parser\StringConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
