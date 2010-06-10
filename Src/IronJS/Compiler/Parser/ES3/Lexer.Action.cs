@@ -5,7 +5,7 @@ using System.Text;
 
 using Antlr.Runtime;
 
-namespace IronJS.Compiler.Parser
+namespace IronJS.Compiler.Parser.ES3
 {
 	using IToken = Antlr.Runtime.IToken;
 
@@ -13,7 +13,7 @@ namespace IronJS.Compiler.Parser
 	/// This partial class is complementary to the lexer generated with ANTLR from the JavaScript.g grammar.
 	/// It implements the actions used in the lexer.
 	/// </summary>
-	partial class ES3Lexer
+	partial class Lexer
 	{
 		/// <summary>
 		/// Containts the last on channel token.
