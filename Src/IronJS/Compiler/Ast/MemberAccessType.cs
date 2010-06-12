@@ -4,10 +4,7 @@ using System.Linq;
 using System.Text;
 
 namespace IronJS.Compiler.Ast {
-    public enum BinaryOp {
-        Assign,
-        LessThan,
-        Add,
-        Sub
+    public enum MemberAccessType {
+        ByField, ByIndex
     }
 }

@@ -4,6 +4,14 @@ using IronJS.Compiler.Ast;
 
 namespace IronJS.Extensions {
     public static class Antlr {
+        public static CommonTree GetChildNull(this CommonTree tree, int i) {
+            if (tree.Children == null || tree.Children.Count <= i) {
+                return null;
+            }
+
+            return (CommonTree)tree.Children[i];
+        }
+
         public static CommonTree GetChildSafe(this CommonTree tree, int i) {
             if (tree.Children == null || tree.Children.Count <= i) {
                 throw new Exception("");

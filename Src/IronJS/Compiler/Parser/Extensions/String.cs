@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
 using System;
 
-namespace IronJS.Compiler.Parser {
-    public static class StringConverter {
+namespace IronJS.Compiler.Parser.Extensions {
+    public static class StringExtensions {
         public static bool TryToDouble(this string s, out double result) {
             return double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
         }
@@ -10,7 +10,7 @@ namespace IronJS.Compiler.Parser {
         public static double ToDouble(this string s) {
             double result;
 
-            if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
+            if (s.TryToDouble(out result))
                 return result;
 
             throw new Exception("Could not convert to number");
