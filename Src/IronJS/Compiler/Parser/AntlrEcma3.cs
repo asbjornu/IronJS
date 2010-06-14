@@ -93,7 +93,7 @@ namespace IronJS.Compiler.Parser {
                     return ParseMemberAccess(tree, MemberAccess.AccessType.ByField);
 
                 case Xebic.ES3Parser.BYINDEX:
-                    return ParseMemberAccess(tree, MemberAccess.AccessType.ByField);
+                    return ParseMemberAccess(tree, MemberAccess.AccessType.ByIndex);
 
                 case Xebic.ES3Parser.FOR:
                     return ParseFor(tree.GetChildSafe(0), tree.GetChildSafe(1));
@@ -105,13 +105,13 @@ namespace IronJS.Compiler.Parser {
                     return ParseUnaryAddSub(tree.GetChildSafe(0), BinaryOp.Sub);
 
                 default:
-                    throw new Exception(String.Format("Can't convert token '{0}' to INode", Xebic.ES3Parser.tokenNames[tree.Type]));
+                    throw new Error("Can't convert token '{0}' to INode", Xebic.ES3Parser.tokenNames[tree.Type]);
             }
         }
 
         INode ParseUnaryAddSub(CommonTree tree, BinaryOp op) {
             if(op != BinaryOp.Add && op != BinaryOp.Sub)
-                throw new Exception("Can only parse unary ++x and --x");
+                throw new Error("Can only parse unary ++x and --x");
 
             var pos = tree.ToSourcePosition();
 

@@ -89,6 +89,7 @@
     <Compile Include="Compiler\Parser\IParser.cs" />
     <Compile Include="Compiler\Parser\Extensions\Antlr.cs" />
     <Compile Include="Compiler\Parser\Extensions\String.cs" />
+    <Compile Include="Error.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
