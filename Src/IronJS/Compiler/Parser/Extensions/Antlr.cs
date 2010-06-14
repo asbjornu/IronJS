@@ -2,7 +2,7 @@
 using Antlr.Runtime.Tree;
 using IronJS.Compiler.Ast;
 
-namespace IronJS.Extensions {
+namespace IronJS.Compiler.Parser.Extensions {
     public static class Antlr {
         public static CommonTree GetChildNull(this CommonTree tree, int i) {
             if (tree.Children == null || tree.Children.Count <= i) {

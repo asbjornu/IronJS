@@ -4,7 +4,6 @@ using Antlr.Runtime.Tree;
 using IronJS.Compiler.Ast;
 using IronJS.Compiler.Ast.Nodes;
 using IronJS.Compiler.Parser.Extensions;
-using IronJS.Extensions;
 
 namespace IronJS.Compiler.Parser {
     public class AntlrEcma3 : IParser {
@@ -36,7 +35,7 @@ namespace IronJS.Compiler.Parser {
             }
         }
 
-        INode GetNullNode(CommonTree tree, int i) {
+        INode GetNodeNull(CommonTree tree, int i) {
             return GetNode(tree.GetChildNull(i));
         }
 
@@ -54,9 +53,6 @@ namespace IronJS.Compiler.Parser {
                 case Xebic.ES3Parser.VAR:
                     return new Var(pos, GetNodeChild(tree, 0));
 
-                case Xebic.ES3Parser.ASSIGN:
-                    return ParseBinary(tree, BinaryOp.Assign);
-
                 case Xebic.ES3Parser.Identifier:
                     return new Identifier(pos, tree.Text);
 
@@ -67,7 +63,7 @@ namespace IronJS.Compiler.Parser {
                     return new Literal<string>(pos, tree.Text.ToJsString());
 
                 case Xebic.ES3Parser.IF:
-                    return new If(pos, GetNodeChild(tree, 0), GetNodeChild(tree, 1), GetNullNode(tree, 2));
+                    return new If(pos, GetNodeChild(tree, 0), GetNodeChild(tree, 1), GetNodeNull(tree, 2));
 
                 case Xebic.ES3Parser.BLOCK:
                     return new Block(pos, GetNodes(tree));
@@ -79,7 +75,19 @@ namespace IronJS.Compiler.Parser {
                     return new Invoke(pos, GetNodeChild(tree, 0), GetNodes(tree.GetChildSafe(0)));
 
                 case Xebic.ES3Parser.OBJECT:
-                    return new NewObject(pos);
+                    return new NewObject(pos, tree.MapChildren(x => Tuple.Create(GetNodeChild(x, 0), GetNodeChild(x, 1))));
+
+                case Xebic.ES3Parser.ARRAY:
+                    return new NewArray(pos, tree.MapChildren(x => GetNodeChild(x, 0)));
+
+                case Xebic.ES3Parser.EXPR:
+                    return GetNode(tree.GetChildSafe(0));
+
+                case Xebic.ES3Parser.ASSIGN:
+                    return ParseBinary(tree, BinaryOp.Assign);
+
+                case Xebic.ES3Parser.LT:
+                    return ParseBinary(tree, BinaryOp.LessThan);
 
                 case Xebic.ES3Parser.BYFIELD:
                     return ParseMemberAccess(tree, MemberAccessType.ByField);
@@ -90,26 +98,20 @@ namespace IronJS.Compiler.Parser {
                 case Xebic.ES3Parser.FOR:
                     return ParseFor(tree.GetChildSafe(0), tree.GetChildSafe(1));
 
-                case Xebic.ES3Parser.EXPR:
-                    return GetNode(tree.GetChildSafe(0));
-
-                case Xebic.ES3Parser.LT:
-                    return ParseBinary(tree, BinaryOp.LessThan);
-
                 case Xebic.ES3Parser.INC:
-                    return ExpandPreUnary(tree.GetChildSafe(0), BinaryOp.Add);
+                    return ParseUnaryAddSub(tree.GetChildSafe(0), BinaryOp.Add);
 
                 case Xebic.ES3Parser.DEC:
-                    return ExpandPreUnary(tree.GetChildSafe(0), BinaryOp.Sub);
+                    return ParseUnaryAddSub(tree.GetChildSafe(0), BinaryOp.Sub);
 
                 default:
                     throw new Exception(String.Format("Can't convert token '{0}' to INode", Xebic.ES3Parser.tokenNames[tree.Type]));
             }
         }
 
-        INode ExpandPreUnary(CommonTree tree, BinaryOp op) {
+        INode ParseUnaryAddSub(CommonTree tree, BinaryOp op) {
             if(op != BinaryOp.Add && op != BinaryOp.Sub)
-                throw new Exception("Can only expand unary ++x and --x");
+                throw new Exception("Can only parse unary ++x and --x");
 
             var pos = tree.ToSourcePosition();
 
@@ -131,9 +133,9 @@ namespace IronJS.Compiler.Parser {
             if (headTree.Type == Xebic.ES3Parser.FORSTEP) {
                 return  new ForStep(
                             headTree.ToSourcePosition(),
-                            GetNullNode(headTree, 0),
-                            GetNullNode(headTree, 1),
-                            GetNullNode(headTree, 2),
+                            GetNodeNull(headTree, 0),
+                            GetNodeNull(headTree, 1),
+                            GetNodeNull(headTree, 2),
                             GetNode(bodyTree)
                         );
             }

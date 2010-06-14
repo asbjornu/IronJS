@@ -73,8 +73,9 @@
     <Compile Include="Compiler\Ast\Nodes\If.cs" />
     <Compile Include="Compiler\Ast\Nodes\Literal.cs" />
     <Compile Include="Compiler\Ast\Nodes\MemberAccess.cs" />
+    <Compile Include="Compiler\Ast\Nodes\NewArray.cs" />
     <Compile Include="Compiler\Ast\Nodes\Node.cs" />
-    <Compile Include="Compiler\Ast\Nodes\Object.cs" />
+    <Compile Include="Compiler\Ast\Nodes\NewObject.cs" />
     <Compile Include="Compiler\Ast\Nodes\Pass.cs" />
     <Compile Include="Compiler\Ast\Nodes\Var.cs" />
     <Compile Include="Compiler\Ast\Position.cs" />
@@ -87,11 +88,13 @@
     <Compile Include="Compiler\Parser\Xebic\ES3Parser.Action.cs" />
     <Compile Include="Compiler\Parser\Xebic\ES3Parser.cs" />
     <Compile Include="Compiler\Parser\IParser.cs" />
-    <Compile Include="Extensions\Antlr.cs" />
+    <Compile Include="Compiler\Parser\Extensions\Antlr.cs" />
     <Compile Include="Compiler\Parser\Extensions\String.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
