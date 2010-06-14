@@ -90,10 +90,10 @@ namespace IronJS.Compiler.Parser {
                     return ParseBinary(tree, BinaryOp.LessThan);
 
                 case Xebic.ES3Parser.BYFIELD:
-                    return ParseMemberAccess(tree, MemberAccessType.ByField);
+                    return ParseMemberAccess(tree, MemberAccess.AccessType.ByField);
 
                 case Xebic.ES3Parser.BYINDEX:
-                    return ParseMemberAccess(tree, MemberAccessType.ByIndex);
+                    return ParseMemberAccess(tree, MemberAccess.AccessType.ByField);
 
                 case Xebic.ES3Parser.FOR:
                     return ParseFor(tree.GetChildSafe(0), tree.GetChildSafe(1));
@@ -121,7 +121,7 @@ namespace IronJS.Compiler.Parser {
             return new Binary(pos, BinaryOp.Assign, target, opNode);
         }
 
-        INode ParseMemberAccess(CommonTree tree, MemberAccessType type) {
+        INode ParseMemberAccess(CommonTree tree, MemberAccess.AccessType type) {
             return new MemberAccess(tree.ToSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0), type);
         }
 

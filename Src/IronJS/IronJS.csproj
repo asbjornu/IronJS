@@ -65,7 +65,6 @@
     <Compile Include="Compiler\Analyzer\IAnalyzer.cs" />
     <Compile Include="Compiler\Ast\BinaryOp.cs" />
     <Compile Include="Compiler\Ast\INode.cs" />
-    <Compile Include="Compiler\Ast\MemberAccessType.cs" />
     <Compile Include="Compiler\Ast\Nodes\Binary.cs" />
     <Compile Include="Compiler\Ast\Nodes\ForStep.cs" />
     <Compile Include="Compiler\Ast\Nodes\Function.cs" />
