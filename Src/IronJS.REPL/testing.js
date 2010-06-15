@@ -29,3 +29,6 @@ for (var i = 0; i < 10; ++i) {
 var z = [1, 2, 3];
 
 var _ = z++;
+
+var _true = true;
+var _false = false;

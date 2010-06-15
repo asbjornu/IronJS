@@ -110,6 +110,12 @@ namespace IronJS.Compiler.Parser {
                 case Xebic.ES3Parser.PDEC:
                     return ParseUnary(tree, UnaryOp.PostDec);
 
+                case Xebic.ES3Parser.TRUE:
+                    return Literal.True;
+
+                case Xebic.ES3Parser.FALSE:
+                    return Literal.False;
+
                 default:
                     throw new Error("Can't convert token '{0}' to INode", Xebic.ES3Parser.tokenNames[tree.Type]);
             }

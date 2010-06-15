@@ -5,7 +5,7 @@ namespace IronJS.Compiler.Ast {
         public int Line;
         public int Column;
 
-        public static SourcePosition Undefined {
+        public static SourcePosition Unknown {
             get {
                 SourcePosition pos;
 

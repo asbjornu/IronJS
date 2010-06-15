@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace IronJS.Compiler.Ast.Nodes {
     public class Literal<T> : Node {
@@ -16,6 +13,18 @@ namespace IronJS.Compiler.Ast.Nodes {
     public static class Literal {
         public static INode Create<T>(SourcePosition pos, T value) {
             return new Literal<T>(pos, value) as INode;
+        }
+
+        public static INode True {
+            get {
+                return Literal.Create(SourcePosition.Unknown, true);
+            }
+        }
+
+        public static INode False {
+            get {
+                return Literal.Create(SourcePosition.Unknown, false);
+            }
         }
     }
 }
