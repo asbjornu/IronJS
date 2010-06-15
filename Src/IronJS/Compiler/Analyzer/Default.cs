@@ -26,9 +26,29 @@ namespace IronJS.Compiler.Analyzer {
             } else if (node is Function) {
                 return Analyze(scopes, node as Function);
 
+            } else if (node is Unary) {
+                return Analyze(scopes, node as Unary);
+
             } else {
                 return node;
             }
+        }
+
+        INode Analyze(ScopeChain scopes, Unary node) {
+            var target = Analyze(scopes, node.Target);
+
+            switch (node.Op) {
+                case UnaryOp.Inc:
+                case UnaryOp.Dec:
+                case UnaryOp.PostDec:
+                case UnaryOp.PostInc:
+                    if (target is Identifier) {
+                        scopes.Current.Variables.AddType(target, Runtime.Type.Double);
+                    }
+                    break;
+            }
+
+            return new Unary(node.SourcePosition, target, node.Op);
         }
 
         INode Analyze(ScopeChain scopes, Function node) {
@@ -37,15 +57,18 @@ namespace IronJS.Compiler.Analyzer {
         }
 
         INode Analyze(ScopeChain scopes, Binary node) {
+            var left = Analyze(scopes, node.Left);
+            var right = Analyze(scopes, node.Right);
+
             switch (node.Op) {
                 case BinaryOp.Assign:
-                    if (node.Left is Identifier) {
-                        scopes.Current.Variables.AddAssignedFrom(node.Left, node.Right);
+                    if (left is Identifier) {
+                        scopes.Current.Variables.AddAssignedFrom(left, right);
                     }
                     break;
             }
 
-            return new Binary(node.SourcePosition, node.Op, Analyze(scopes, node.Left), Analyze(scopes, node.Right));
+            return new Binary(node.SourcePosition, node.Op, left, right);
         }
 
         INode Analyze(ScopeChain scopes, Var node) {
