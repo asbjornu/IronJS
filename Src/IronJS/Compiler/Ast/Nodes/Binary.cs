@@ -6,9 +6,9 @@ namespace IronJS.Compiler.Ast.Nodes {
         public INode Left { get; private set; }
         public INode Right { get; private set; }
 
-        public override bool StaticType {
+        public override bool TypeResolved {
             get {
-                return Left.StaticType && Right.StaticType;
+                return Left.TypeResolved && Right.TypeResolved;
             }
         }
 

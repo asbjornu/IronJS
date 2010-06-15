@@ -8,7 +8,7 @@ namespace IronJS.Compiler.Ast.Nodes {
             get { return Runtime.Type.Dynamic; }
         }
 
-        public virtual bool StaticType {
+        public virtual bool TypeResolved {
             get { return false; }
         }
 

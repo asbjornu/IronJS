@@ -10,7 +10,7 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        public override bool StaticType {
+        public override bool TypeResolved {
             get {
                 return true;
             }

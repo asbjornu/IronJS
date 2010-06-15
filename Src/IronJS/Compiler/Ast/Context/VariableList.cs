@@ -34,7 +34,7 @@ namespace IronJS.Compiler.Ast.Context {
         }
 
         public void AddAssignedFrom(INode node, INode value) {
-            if (value.StaticType) {
+            if (value.TypeResolved) {
                 AddType(node, value.Type);
             } else {
                 Get(node).AssignedFrom.Add(value);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using IronJS.Compiler;
 using IronJS.Compiler.Ast;
 using IronJS.Compiler.Ast.Context;
@@ -17,7 +18,10 @@ namespace IronJS.Compiler.Analyzer {
         }
 
         INode Analyze(ScopeChain scopes, INode node) {
-            if (node is Var) {
+            if (node == null) {
+                return null;
+
+            } else if (node is Var) {
                 return Analyze(scopes, node as Var);
 
             } else if (node is Binary) {
@@ -29,9 +33,78 @@ namespace IronJS.Compiler.Analyzer {
             } else if (node is Unary) {
                 return Analyze(scopes, node as Unary);
 
+            } else if (node is For) {
+                return Analyze(scopes, node as For); 
+
+            } else if (node is Property) {
+                return Analyze(scopes, node as Property);
+
+            } else if (node is If) {
+                return Analyze(scopes, node as If);
+
+            } else if (node is Invoke) {
+                return Analyze(scopes, node as Invoke);
+
+            } else if (node is New) {
+                return Analyze(scopes, node as New);
+
+            } else if (node is Block) {
+                return Analyze(scopes, node as Block);
+
             } else {
+                //Identifier, Literal<T>
                 return node;
             }
+        }
+
+        INode Analyze(ScopeChain scopes, Block node) {
+            return new Block(node.SourcePosition, node.Nodes.Select(x => Analyze(scopes, x)).ToArray());
+        }
+
+        INode Analyze(ScopeChain scopes, New node) {
+            return  new New(
+                        node.SourcePosition,
+                        node.Type,
+                        Analyze(scopes, node.Function),
+                        node.InitExpressions
+                            .Select(x => Tuple.Create(Analyze(scopes, x.Item1), Analyze(scopes, x.Item2)))
+                            .ToArray()
+                    );
+        }
+
+        INode Analyze(ScopeChain scopes, Invoke node) {
+            return  new Invoke(
+                        node.SourcePosition,
+                        Analyze(scopes, node.Target),
+                        node.Arguments.Select(x => Analyze(scopes, x)).ToArray()
+                    );
+        }
+
+        INode Analyze(ScopeChain scopes, If node) {
+            return  new If(
+                        node.SourcePosition,
+                        Analyze(scopes, node.Test),
+                        Analyze(scopes, node.IfTrue),
+                        Analyze(scopes, node.IfFalse)
+                    );
+        }
+
+        INode Analyze(ScopeChain scopes, Property node) {
+            return  new Property(
+                        node.SourcePosition, 
+                        Analyze(scopes, node.Target), 
+                        Analyze(scopes, node.Member), 
+                        node.Mode
+                    );
+        }
+
+        INode Analyze(ScopeChain scopes, For node) {
+            return  new For(node.SourcePosition, 
+                        Analyze(scopes, node.Init),
+                        Analyze(scopes, node.Test),
+                        Analyze(scopes, node.Incr),
+                        Analyze(scopes, node.Body)
+                    );
         }
 
         INode Analyze(ScopeChain scopes, Unary node) {

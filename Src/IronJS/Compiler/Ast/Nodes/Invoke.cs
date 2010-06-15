@@ -5,7 +5,7 @@ namespace IronJS.Compiler.Ast.Nodes {
         public INode Target { get; private set; }
         public INode[] Arguments { get; private set; }
 
-        public override bool StaticType {
+        public override bool TypeResolved {
             get {
                 return true;
             }

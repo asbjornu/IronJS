@@ -13,7 +13,7 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        public override bool StaticType {
+        public override bool TypeResolved {
             get {
                 return true;
             }
@@ -34,6 +34,13 @@ namespace IronJS.Compiler.Ast.Nodes {
                 Function = function;
                 _type = Runtime.Type.Object;
                 InitExpressions = new Tuple<INode, INode>[0];
+        }
+
+        public New(SourcePosition pos, Runtime.Type type, INode function, Tuple<INode, INode>[] initExpressions)
+            : base(pos) {
+            _type = type;
+            Function = function;
+            InitExpressions = initExpressions;
         }
     }
 }

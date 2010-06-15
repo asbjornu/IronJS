@@ -4,6 +4,6 @@ namespace IronJS.Compiler.Ast {
     public interface INode {
         SourcePosition SourcePosition { get; }
         Runtime.Type Type { get; }
-        bool StaticType { get; }
+        bool TypeResolved { get; }
     }
 }
