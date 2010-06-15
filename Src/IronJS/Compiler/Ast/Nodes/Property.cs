@@ -10,6 +10,12 @@ namespace IronJS.Compiler.Ast.Nodes {
         public INode Member { get; private set; }
         public AccessMode Mode { get; private set; }
 
+        public override bool StaticType {
+            get {
+                return true;
+            }
+        }
+
         public Property(SourcePosition pos, INode target, INode member, AccessMode mode)
             : base(pos) {
                 Target = target;

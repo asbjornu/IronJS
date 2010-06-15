@@ -10,6 +10,12 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
+        public override bool StaticType {
+            get {
+                return true;
+            }
+        }
+
         public Literal(SourcePosition position, T value)
             : base(position) {
                 Value = value;

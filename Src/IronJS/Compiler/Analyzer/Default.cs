@@ -32,14 +32,15 @@ namespace IronJS.Compiler.Analyzer {
         }
 
         INode Analyze(ScopeChain scopes, Function node) {
-            return node;
+            scopes.Enter(node.Scope);
+            return new Function(node.SourcePosition, Analyze(scopes, node.Body), scopes.Exit());
         }
 
         INode Analyze(ScopeChain scopes, Binary node) {
             switch (node.Op) {
                 case BinaryOp.Assign:
                     if (node.Left is Identifier) {
-                        scopes.Current.Variables.AddTypeTo(node.Left, node.Right.Type);
+                        scopes.Current.Variables.AddAssignedFrom(node.Left, node.Right);
                     }
                     break;
             }

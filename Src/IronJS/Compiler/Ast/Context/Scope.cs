@@ -28,9 +28,17 @@ namespace IronJS.Compiler.Ast.Context {
             return _variables.First(x => x.Name == (node as Identifier).Name);
         }
 
-        public void AddTypeTo(INode node, Runtime.Type type) {
+        public void AddType(INode node, Runtime.Type type) {
             var variable = Get(node);
             variable.Type |= type;
+        }
+
+        public void AddAssignedFrom(INode node, INode value) {
+            if (value.StaticType) {
+                AddType(node, value.Type);
+            } else {
+                Get(node).AssignedFrom.Add(value);
+            }
         }
     }
 

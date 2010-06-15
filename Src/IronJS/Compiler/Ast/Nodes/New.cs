@@ -13,6 +13,12 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
+        public override bool StaticType {
+            get {
+                return true;
+            }
+        }
+
         public New(SourcePosition pos, Runtime.Type type)
             : this(pos, type, new Tuple<INode, INode>[0]) {
         }

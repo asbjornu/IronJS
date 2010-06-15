@@ -6,6 +6,12 @@ namespace IronJS.Compiler.Ast.Nodes {
         public INode Left { get; private set; }
         public INode Right { get; private set; }
 
+        public override bool StaticType {
+            get {
+                return Left.StaticType && Right.StaticType;
+            }
+        }
+
         public Binary(SourcePosition position, BinaryOp op, INode left, INode right)
             : base(position) {
                 Op = op;

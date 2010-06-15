@@ -8,6 +8,10 @@ namespace IronJS.Compiler.Ast.Nodes {
             get { return Runtime.Type.Dynamic; }
         }
 
+        public virtual bool StaticType {
+            get { return false; }
+        }
+
         public Node(SourcePosition position) {
             SourcePosition = position;
         }
@@ -20,7 +24,5 @@ namespace IronJS.Compiler.Ast.Nodes {
 
             SourcePosition = pos;
         }
-
-
     }
 }
