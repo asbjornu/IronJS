@@ -30,7 +30,7 @@ namespace IronJS.Compiler.Parser.Extensions {
             return children;
         }
 
-        public static SourcePosition ToSourcePosition(this CommonTree tree) {
+        public static SourcePosition GetSourcePosition(this CommonTree tree) {
             SourcePosition pos;
 
             pos.Line = tree.Line;

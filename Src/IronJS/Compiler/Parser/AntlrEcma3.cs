@@ -47,7 +47,7 @@ namespace IronJS.Compiler.Parser {
             if (tree == null)
                 return new Pass();
 
-            var pos = tree.ToSourcePosition();
+            var pos = tree.GetSourcePosition();
 
             switch (tree.Type) {
                 case Xebic.ES3Parser.VAR:
@@ -122,21 +122,21 @@ namespace IronJS.Compiler.Parser {
         }
 
         INode ParseProperty(CommonTree tree, Property.AccessType type) {
-            return new Property(tree.ToSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0), type);
+            return new Property(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0), type);
         }
 
         INode ParseBinary(CommonTree tree, BinaryOp op) {
-            return new Binary(tree.ToSourcePosition(), op, GetNodeChild(tree, 0), GetNodeChild(tree, 1));
+            return new Binary(tree.GetSourcePosition(), op, GetNodeChild(tree, 0), GetNodeChild(tree, 1));
         }
 
         INode ParseUnary(CommonTree tree, UnaryOp op) {
-            return new Unary(tree.ToSourcePosition(), GetNodeChild(tree, 0), op);
+            return new Unary(tree.GetSourcePosition(), GetNodeChild(tree, 0), op);
         }
 
         INode ParseFor(CommonTree headTree, CommonTree bodyTree) {
             if (headTree.Type == Xebic.ES3Parser.FORSTEP) {
                 return  new ForStep(
-                            headTree.ToSourcePosition(),
+                            headTree.GetSourcePosition(),
                             GetNodeNull(headTree, 0),
                             GetNodeNull(headTree, 1),
                             GetNodeNull(headTree, 2),
