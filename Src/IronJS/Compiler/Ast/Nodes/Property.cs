@@ -1,6 +1,7 @@
-﻿
+﻿using System;
+
 namespace IronJS.Compiler.Ast.Nodes {
-    public class MemberAccess : Node {
+    public class Property : Node {
         public enum AccessType {
             ByField, ByIndex
         }
@@ -9,7 +10,7 @@ namespace IronJS.Compiler.Ast.Nodes {
         public INode Member { get; private set; }
         public AccessType Type { get; private set; }
 
-        public MemberAccess(SourcePosition pos, INode target, INode member, AccessType type)
+        public Property(SourcePosition pos, INode target, INode member, AccessType type)
             : base(pos) {
                 Target = target;
                 Member = member;

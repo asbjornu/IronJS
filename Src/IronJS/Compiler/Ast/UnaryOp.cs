@@ -1,6 +1,6 @@
 ﻿
 namespace IronJS.Compiler.Ast {
     public enum UnaryOp {
-        Not
+        Not, Delete, Void, PostInc, PostDec, Inc, Dec
     }
 }

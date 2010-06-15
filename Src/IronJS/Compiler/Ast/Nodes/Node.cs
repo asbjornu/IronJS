@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Antlr.Runtime.Tree;
 
 namespace IronJS.Compiler.Ast.Nodes {
     public abstract class Node : INode {

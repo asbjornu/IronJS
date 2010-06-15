@@ -20,11 +20,11 @@ namespace IronJS.Compiler.Parser.Extensions {
             return (CommonTree)tree.Children[i];
         }
 
-        public static T[] MapChildren<T>(this CommonTree tree, Func<CommonTree, T> func) {
+        public static T[] MapChildren<T>(this CommonTree tree, Func<int, CommonTree, T> func) {
             var children = new T[tree.ChildCount];
 
             for (var i = 0; i < tree.ChildCount; ++i) {
-                children[i] = func(tree.GetChildSafe(i));
+                children[i] = func(i, tree.GetChildSafe(i));
             }
 
             return children;

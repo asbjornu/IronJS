@@ -21,7 +21,7 @@ namespace IronJS.Compiler.Parser {
             var tree = (CommonTree)parser.program().Tree;
 
             if (tree.IsNil) {
-                return tree.MapChildren(x => GetNode(x));
+                return tree.MapChildren((_, x) => GetNode(x));
             }
 
             return new[] { GetNode(tree) };
@@ -29,7 +29,7 @@ namespace IronJS.Compiler.Parser {
 
         INode[] GetNodes(CommonTree tree) {
             if (tree.ChildCount > 0) {
-                return tree.MapChildren(x => GetNode(x));
+                return tree.MapChildren((_, x) => GetNode(x));
             } else {
                 return new INode[0];
             }
@@ -75,10 +75,10 @@ namespace IronJS.Compiler.Parser {
                     return new Invoke(pos, GetNodeChild(tree, 0), GetNodes(tree.GetChildSafe(0)));
 
                 case Xebic.ES3Parser.OBJECT:
-                    return new NewObject(pos, tree.MapChildren(x => Tuple.Create(GetNodeChild(x, 0), GetNodeChild(x, 1))));
+                    return new New(pos, Runtime.Types.Object, tree.MapChildren((_, x) => Tuple.Create(GetNodeChild(x, 0), GetNodeChild(x, 1))));
 
                 case Xebic.ES3Parser.ARRAY:
-                    return new NewArray(pos, tree.MapChildren(x => GetNodeChild(x, 0)));
+                    return new New(pos, Runtime.Types.Array, tree.MapChildren((i, x) => Tuple.Create(new Literal<double>(pos, i) as INode, GetNodeChild(x, 0))));
 
                 case Xebic.ES3Parser.EXPR:
                     return GetNode(tree.GetChildSafe(0));
@@ -87,46 +87,44 @@ namespace IronJS.Compiler.Parser {
                     return ParseBinary(tree, BinaryOp.Assign);
 
                 case Xebic.ES3Parser.LT:
-                    return ParseBinary(tree, BinaryOp.LessThan);
+                    return ParseBinary(tree, BinaryOp.Lt);
 
                 case Xebic.ES3Parser.BYFIELD:
-                    return ParseMemberAccess(tree, MemberAccess.AccessType.ByField);
+                    return ParseMemberAccess(tree, Property.AccessType.ByField);
 
                 case Xebic.ES3Parser.BYINDEX:
-                    return ParseMemberAccess(tree, MemberAccess.AccessType.ByIndex);
+                    return ParseMemberAccess(tree, Property.AccessType.ByIndex);
 
                 case Xebic.ES3Parser.FOR:
                     return ParseFor(tree.GetChildSafe(0), tree.GetChildSafe(1));
 
                 case Xebic.ES3Parser.INC:
-                    return ParseUnaryAddSub(tree.GetChildSafe(0), BinaryOp.Add);
+                    return ParseUnary(tree, UnaryOp.Inc);
 
                 case Xebic.ES3Parser.DEC:
-                    return ParseUnaryAddSub(tree.GetChildSafe(0), BinaryOp.Sub);
+                    return ParseUnary(tree, UnaryOp.Dec);
+
+                case Xebic.ES3Parser.PINC:
+                    return ParseUnary(tree, UnaryOp.PostInc);
+
+                case Xebic.ES3Parser.PDEC:
+                    return ParseUnary(tree, UnaryOp.PostDec);
 
                 default:
                     throw new Error("Can't convert token '{0}' to INode", Xebic.ES3Parser.tokenNames[tree.Type]);
             }
         }
 
-        INode ParseUnaryAddSub(CommonTree tree, BinaryOp op) {
-            if(op != BinaryOp.Add && op != BinaryOp.Sub)
-                throw new Error("Can only parse unary ++x and --x");
-
-            var pos = tree.ToSourcePosition();
-
-            var target = GetNode(tree);
-            var opNode = new Binary(pos, op, target, new Literal<double>(pos, 1.0));
-
-            return new Binary(pos, BinaryOp.Assign, target, opNode);
-        }
-
-        INode ParseMemberAccess(CommonTree tree, MemberAccess.AccessType type) {
-            return new MemberAccess(tree.ToSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0), type);
+        INode ParseMemberAccess(CommonTree tree, Property.AccessType type) {
+            return new Property(tree.ToSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0), type);
         }
 
         INode ParseBinary(CommonTree tree, BinaryOp op) {
             return new Binary(tree.ToSourcePosition(), op, GetNodeChild(tree, 0), GetNodeChild(tree, 1));
+        }
+
+        INode ParseUnary(CommonTree tree, UnaryOp op) {
+            return new Unary(tree.ToSourcePosition(), GetNodeChild(tree, 0), op);
         }
 
         INode ParseFor(CommonTree headTree, CommonTree bodyTree) {

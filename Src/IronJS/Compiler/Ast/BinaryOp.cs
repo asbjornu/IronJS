@@ -5,9 +5,7 @@ using System.Text;
 
 namespace IronJS.Compiler.Ast {
     public enum BinaryOp {
-        Assign,
-        LessThan,
-        Add,
-        Sub
+        Assign, Add, Sub, Div, Mul, Mod, 
+        Eq, EqEq, Lt, Gt, GtEq, LtEq, NotEq
     }
 }

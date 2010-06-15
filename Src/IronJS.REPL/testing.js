@@ -23,7 +23,9 @@ y.foo = "lol";
 y["foo"] = "LOL";
 
 for (var i = 0; i < 10; ++i) {
-
+    
 }
 
 var z = [1, 2, 3];
+
+var _ = z++;

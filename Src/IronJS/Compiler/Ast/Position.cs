@@ -1,11 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace IronJS.Compiler.Ast {
     public struct SourcePosition {
         public int Line;
         public int Column;
+
+        public static SourcePosition Undefined {
+            get {
+                SourcePosition pos;
+
+                pos.Column = -1;
+                pos.Line = -1;
+
+                return pos;
+            }
+        }
     }
 }

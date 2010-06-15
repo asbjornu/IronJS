@@ -11,5 +11,10 @@ namespace IronJS.Compiler.Ast.Nodes {
             : base(position) {
                 Value = value;
         }
+
+        public Literal(T value)
+            : base(new SourcePosition()) {
+            Value = value;
+        }
     }
 }

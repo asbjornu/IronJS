@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace IronJS.Compiler.Ast.Nodes {
     public class Binary : Node {
-        public BinaryOp BinaryOp { get; protected set; }
+        public BinaryOp Op { get; protected set; }
         public INode Left { get; private set; }
         public INode Right { get; private set; }
 
-        public Binary(SourcePosition position, BinaryOp binaryOp, INode left, INode right)
+        public Binary(SourcePosition position, BinaryOp op, INode left, INode right)
             : base(position) {
-                BinaryOp = binaryOp;
+                Op = op;
                 Left = left;
                 Right = right;
         }
