@@ -2,19 +2,19 @@
 
 namespace IronJS.Compiler.Ast.Nodes {
     public class Property : Node {
-        public enum AccessType {
+        public enum AccessMode {
             ByField, ByIndex
         }
 
         public INode Target { get; private set; }
         public INode Member { get; private set; }
-        public AccessType Type { get; private set; }
+        public AccessMode Mode { get; private set; }
 
-        public Property(SourcePosition pos, INode target, INode member, AccessType type)
+        public Property(SourcePosition pos, INode target, INode member, AccessMode mode)
             : base(pos) {
                 Target = target;
                 Member = member;
-                Type = type;
+                Mode = mode;
         }
     }
 }

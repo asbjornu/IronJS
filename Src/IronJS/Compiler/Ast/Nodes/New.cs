@@ -2,24 +2,31 @@
 
 namespace IronJS.Compiler.Ast.Nodes {
     public class New : Node {
-        public Runtime.Types Type { get; private set; }
+        Runtime.Type _type;
+
         public INode Function { get; private set; }
         public Tuple<INode, INode>[] InitExpressions { get; private set; }
 
-        public New(SourcePosition pos, Runtime.Types type)
+        public override Runtime.Type Type {
+            get {
+                return _type;
+            }
+        }
+
+        public New(SourcePosition pos, Runtime.Type type)
             : this(pos, type, new Tuple<INode, INode>[0]) {
         }
 
-        public New(SourcePosition pos, Runtime.Types type, Tuple<INode, INode>[] initExpressions)
+        public New(SourcePosition pos, Runtime.Type type, Tuple<INode, INode>[] initExpressions)
             : base(pos) {
-                Type = type;
+                _type = type;
                 InitExpressions = initExpressions;
         }
 
         public New(SourcePosition pos, INode function)
             : base(pos) {
                 Function = function;
-                Type = Runtime.Types.Object;
+                _type = Runtime.Type.Object;
                 InitExpressions = new Tuple<INode, INode>[0];
         }
     }

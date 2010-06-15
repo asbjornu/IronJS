@@ -2,6 +2,6 @@
 
 namespace IronJS.Compiler.Analyzer {
     public interface IAnalyzer {
-        INode[] Analyze(Ast.Context.Scope context, INode[] nodes);
+        INode[] Analyze(Ast.Context.ScopeChain context, INode[] nodes);
     }
 }

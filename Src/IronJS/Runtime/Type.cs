@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace IronJS.Runtime {
-    public enum Types {
+    public enum Type {
         Nothing   = 0,   // NOT null
 
         Double    = 1,

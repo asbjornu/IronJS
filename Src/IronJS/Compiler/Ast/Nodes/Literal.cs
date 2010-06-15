@@ -4,6 +4,12 @@ namespace IronJS.Compiler.Ast.Nodes {
     public class Literal<T> : Node {
         public T Value { get; private set; }
 
+        public override Runtime.Type Type {
+            get {
+                return Runtime.TypeConverter.ClrToJs<T>();
+            }
+        }
+
         public Literal(SourcePosition position, T value)
             : base(position) {
                 Value = value;

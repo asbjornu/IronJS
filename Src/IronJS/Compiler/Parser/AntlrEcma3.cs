@@ -75,10 +75,10 @@ namespace IronJS.Compiler.Parser {
                     return new Invoke(pos, GetNodeChild(tree, 0), GetNodes(tree.GetChildSafe(0)));
 
                 case Xebic.ES3Parser.OBJECT:
-                    return new New(pos, Runtime.Types.Object, tree.MapChildren((_, x) => Tuple.Create(GetNodeChild(x, 0), GetNodeChild(x, 1))));
+                    return new New(pos, Runtime.Type.Object, tree.MapChildren((_, x) => Tuple.Create(GetNodeChild(x, 0), GetNodeChild(x, 1))));
 
                 case Xebic.ES3Parser.ARRAY:
-                    return new New(pos, Runtime.Types.Array, tree.MapChildren((i, x) => Tuple.Create(Literal.Create(pos, (double)i), GetNodeChild(x, 0))));
+                    return new New(pos, Runtime.Type.Array, tree.MapChildren((i, x) => Tuple.Create(Literal.Create(pos, (double)i), GetNodeChild(x, 0))));
 
                 case Xebic.ES3Parser.EXPR:
                     return GetNode(tree.GetChildSafe(0));
@@ -90,10 +90,10 @@ namespace IronJS.Compiler.Parser {
                     return ParseBinary(tree, BinaryOp.Lt);
 
                 case Xebic.ES3Parser.BYFIELD:
-                    return ParseProperty(tree, Property.AccessType.ByField);
+                    return ParseProperty(tree, Property.AccessMode.ByField);
 
                 case Xebic.ES3Parser.BYINDEX:
-                    return ParseProperty(tree, Property.AccessType.ByIndex);
+                    return ParseProperty(tree, Property.AccessMode.ByIndex);
 
                 case Xebic.ES3Parser.FOR:
                     return ParseFor(tree.GetChildSafe(0), tree.GetChildSafe(1));
@@ -121,7 +121,7 @@ namespace IronJS.Compiler.Parser {
             }
         }
 
-        INode ParseProperty(CommonTree tree, Property.AccessType type) {
+        INode ParseProperty(CommonTree tree, Property.AccessMode type) {
             return new Property(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0), type);
         }
 

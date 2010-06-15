@@ -4,6 +4,10 @@ namespace IronJS.Compiler.Ast.Nodes {
     public abstract class Node : INode {
         public SourcePosition SourcePosition { get; private set; }
 
+        public virtual Runtime.Type Type {
+            get { return Runtime.Type.Dynamic; }
+        }
+
         public Node(SourcePosition position) {
             SourcePosition = position;
         }
@@ -16,5 +20,7 @@ namespace IronJS.Compiler.Ast.Nodes {
 
             SourcePosition = pos;
         }
+
+
     }
 }
