@@ -57,10 +57,10 @@ namespace IronJS.Compiler.Parser {
                     return new Identifier(pos, tree.Text);
 
                 case Xebic.ES3Parser.DecimalLiteral:
-                    return new Literal<double>(pos, tree.Text.ToDouble());
+                    return Literal.Create(pos, tree.Text.ToDouble());
 
                 case Xebic.ES3Parser.StringLiteral:
-                    return new Literal<string>(pos, tree.Text.ToJsString());
+                    return Literal.Create(pos, tree.Text.ToJsString());
 
                 case Xebic.ES3Parser.IF:
                     return new If(pos, GetNodeChild(tree, 0), GetNodeChild(tree, 1), GetNodeNull(tree, 2));
@@ -78,7 +78,7 @@ namespace IronJS.Compiler.Parser {
                     return new New(pos, Runtime.Types.Object, tree.MapChildren((_, x) => Tuple.Create(GetNodeChild(x, 0), GetNodeChild(x, 1))));
 
                 case Xebic.ES3Parser.ARRAY:
-                    return new New(pos, Runtime.Types.Array, tree.MapChildren((i, x) => Tuple.Create(new Literal<double>(pos, i) as INode, GetNodeChild(x, 0))));
+                    return new New(pos, Runtime.Types.Array, tree.MapChildren((i, x) => Tuple.Create(Literal.Create(pos, (double)i), GetNodeChild(x, 0))));
 
                 case Xebic.ES3Parser.EXPR:
                     return GetNode(tree.GetChildSafe(0));
@@ -90,10 +90,10 @@ namespace IronJS.Compiler.Parser {
                     return ParseBinary(tree, BinaryOp.Lt);
 
                 case Xebic.ES3Parser.BYFIELD:
-                    return ParseMemberAccess(tree, Property.AccessType.ByField);
+                    return ParseProperty(tree, Property.AccessType.ByField);
 
                 case Xebic.ES3Parser.BYINDEX:
-                    return ParseMemberAccess(tree, Property.AccessType.ByIndex);
+                    return ParseProperty(tree, Property.AccessType.ByIndex);
 
                 case Xebic.ES3Parser.FOR:
                     return ParseFor(tree.GetChildSafe(0), tree.GetChildSafe(1));
@@ -115,7 +115,7 @@ namespace IronJS.Compiler.Parser {
             }
         }
 
-        INode ParseMemberAccess(CommonTree tree, Property.AccessType type) {
+        INode ParseProperty(CommonTree tree, Property.AccessType type) {
             return new Property(tree.ToSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0), type);
         }
 

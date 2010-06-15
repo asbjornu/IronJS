@@ -11,10 +11,11 @@ namespace IronJS.Compiler.Ast.Nodes {
             : base(position) {
                 Value = value;
         }
+    }
 
-        public Literal(T value)
-            : base(new SourcePosition()) {
-            Value = value;
+    public static class Literal {
+        public static INode Create<T>(SourcePosition pos, T value) {
+            return new Literal<T>(pos, value) as INode;
         }
     }
 }
