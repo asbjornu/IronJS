@@ -23,9 +23,16 @@ namespace IronJS.Compiler.Analyzer {
             } else if (node is Binary) {
                 return Analyze(scopes, node as Binary);
 
+            } else if (node is Function) {
+                return Analyze(scopes, node as Function);
+
             } else {
                 return node;
             }
+        }
+
+        INode Analyze(ScopeChain scopes, Function node) {
+            return node;
         }
 
         INode Analyze(ScopeChain scopes, Binary node) {
@@ -47,7 +54,6 @@ namespace IronJS.Compiler.Analyzer {
                 identifier = (node.Node as Binary).Left as Identifier;
                 scopes.Current.Variables.Add(new Variable(identifier.Name));
                 return Analyze(scopes, node.Node);
-
             }
 
             identifier = node.Node as Identifier;

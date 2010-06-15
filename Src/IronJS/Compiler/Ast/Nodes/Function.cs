@@ -4,6 +4,7 @@ namespace IronJS.Compiler.Ast.Nodes {
     public class Function : Node {
         public INode[] Parameters { get; private set; }
         public INode Body { get; private set; }
+        public Context.Scope Scope { get; private set; }
 
         public override Runtime.Type Type {
             get {
@@ -15,6 +16,7 @@ namespace IronJS.Compiler.Ast.Nodes {
             : base(pos) {
                 Parameters = parameters;
                 Body = body;
+                Scope = new Context.Scope();
         }
     }
 }
