@@ -4,6 +4,34 @@ using System.Collections.Generic;
 using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Ast.Context {
+    public class Scope {
+        public VariableList Variables { get; private set; }
+
+        public Scope() {
+            Variables = new VariableList();
+        }
+    }
+
+    public class ScopeChain {
+        Stack<Scope> _scopes;
+
+        public Scope Current {
+            get { return _scopes.Peek(); }
+        }
+
+        public ScopeChain() {
+            _scopes = new Stack<Scope>();
+        }
+
+        public void Enter(Scope scope) {
+            _scopes.Push(scope);
+        }
+
+        public Scope Exit() {
+            return _scopes.Pop();
+        }
+    }
+
     public class VariableList {
         HashSet<Variable> _variables;
 
@@ -39,34 +67,6 @@ namespace IronJS.Compiler.Ast.Context {
             } else {
                 Get(node).AssignedFrom.Add(value);
             }
-        }
-    }
-
-    public class Scope {
-        public VariableList Variables { get; private set; }
-
-        public Scope() {
-            Variables = new VariableList();
-        }
-    }
-
-    public class ScopeChain {
-        Stack<Scope> _scopes;
-
-        public Scope Current {
-            get { return _scopes.Peek(); }
-        }
-
-        public ScopeChain() {
-            _scopes = new Stack<Scope>();
-        }
-
-        public void Enter(Scope scope) {
-            _scopes.Push(scope);
-        }
-
-        public Scope Exit() {
-            return _scopes.Pop();
         }
     }
 }
