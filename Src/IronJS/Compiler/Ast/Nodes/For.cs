@@ -1,13 +1,13 @@
 ﻿using System;
 
 namespace IronJS.Compiler.Ast.Nodes {
-    public class ForStep : Node {
+    public class For : Node {
         public INode Init { get; private set; }
         public INode Test { get; private set; }
         public INode Incr { get; private set; }
         public INode Body { get; private set; }
 
-        public ForStep(SourcePosition pos, INode init, INode test, INode incr, INode body)
+        public For(SourcePosition pos, INode init, INode test, INode incr, INode body)
             : base(pos) {
                 Init = init;
                 Test = test;

@@ -30,8 +30,7 @@ namespace IronJS.Compiler.Ast.Context {
         }
 
         public void AddType(INode node, Runtime.Type type) {
-            var variable = Get(node);
-            variable.Type |= type;
+            Get(node).Type |= type;
         }
 
         public void AddAssignedFrom(INode node, INode value) {

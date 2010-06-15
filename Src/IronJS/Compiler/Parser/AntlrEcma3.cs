@@ -135,7 +135,7 @@ namespace IronJS.Compiler.Parser {
 
         INode ParseFor(CommonTree headTree, CommonTree bodyTree) {
             if (headTree.Type == Xebic.ES3Parser.FORSTEP) {
-                return  new ForStep(
+                return  new For(
                             headTree.GetSourcePosition(),
                             GetNodeNull(headTree, 0),
                             GetNodeNull(headTree, 1),

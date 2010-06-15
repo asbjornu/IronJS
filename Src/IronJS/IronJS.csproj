@@ -70,7 +70,7 @@
     <Compile Include="Compiler\Ast\Context\VariableList.cs" />
     <Compile Include="Compiler\Ast\INode.cs" />
     <Compile Include="Compiler\Ast\Nodes\Binary.cs" />
-    <Compile Include="Compiler\Ast\Nodes\ForStep.cs" />
+    <Compile Include="Compiler\Ast\Nodes\For.cs" />
     <Compile Include="Compiler\Ast\Nodes\Function.cs" />
     <Compile Include="Compiler\Ast\Nodes\Identifier.cs" />
     <Compile Include="Compiler\Ast\Nodes\If.cs" />
