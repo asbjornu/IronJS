@@ -8,7 +8,7 @@ namespace IronJS.REPL {
             var analyzer = new Compiler.Analyzer.Default();
 
             var nodes = parser.ParseFile("testing.js");
-            var analyzed = analyzer.Analyze(nodes);
+            var analyzed = analyzer.Analyze(new Compiler.Ast.Context.Scope(), nodes);
 		}
 	}
 }
