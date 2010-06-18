@@ -10,7 +10,7 @@ namespace IronJS.Compiler.Ast.Nodes {
         public INode Member { get { return Children[1]; } }
         public AccessMode Mode { get; private set; }
 
-        public override bool TypeResolved {
+        public override bool TypeIsStatic {
             get {
                 return true;
             }

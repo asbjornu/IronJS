@@ -6,9 +6,9 @@ namespace IronJS.Compiler.Ast.Nodes {
         public INode Left { get { return Children[0]; } }
         public INode Right { get { return Children[1]; } }
 
-        public override bool TypeResolved {
+        public override bool TypeIsStatic {
             get {
-                return Left.TypeResolved && Right.TypeResolved;
+                return Left.TypeIsStatic && Right.TypeIsStatic;
             }
         }
 

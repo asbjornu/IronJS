@@ -1,7 +1,8 @@
 ﻿using IronJS.Compiler.Ast;
+using IronJS.Compiler.Ast.Context;
 
 namespace IronJS.Compiler.Analyzer {
     public interface IAnalyzer {
-        INode[] Analyze(Ast.Context.ScopeChain context, INode[] nodes);
+        INode[] Analyze(Scope scope, INode[] nodes);
     }
 }

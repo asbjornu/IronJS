@@ -3,13 +3,13 @@
 namespace IronJS.Compiler.Ast.Nodes {
     public class Node : INode {
         public INode[] Children { get; set; }
-        public SourcePosition SourcePosition { get; private set; }
+        public SourcePosition Source { get; private set; }
 
         public virtual Runtime.Type Type {
             get { return Runtime.Type.Dynamic; }
         }
 
-        public virtual bool TypeResolved {
+        public virtual bool TypeIsStatic {
             get { return false; }
         }
 
@@ -18,15 +18,15 @@ namespace IronJS.Compiler.Ast.Nodes {
         }
 
         public Node(SourcePosition position) {
-            SourcePosition = position;
+            Source = position;
         }
         public Node(INode[] children) {
             Children = children;
-            SourcePosition = SourcePosition.Unknown;
+            Source = SourcePosition.Unknown;
         }
 
         public Node() {
-            SourcePosition = SourcePosition.Unknown;
+            Source = SourcePosition.Unknown;
         }
     }
 }

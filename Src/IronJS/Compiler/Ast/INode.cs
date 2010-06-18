@@ -3,9 +3,9 @@
 namespace IronJS.Compiler.Ast {
     public interface INode {
         INode[] Children { get; set; }
-        SourcePosition SourcePosition { get; }
+        SourcePosition Source { get; }
         Runtime.Type Type { get; }
-        bool TypeResolved { get; }
+        bool TypeIsStatic { get; }
         bool HasChildren { get; }
     }
 }
