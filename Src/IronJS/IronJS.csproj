@@ -66,6 +66,7 @@
     <Compile Include="Compiler\Analyzer\IAnalyzer.cs" />
     <Compile Include="Compiler\Ast\BinaryOp.cs" />
     <Compile Include="Compiler\Ast\Context\Variable.cs" />
+    <Compile Include="Compiler\Ast\Context\VariableList.cs" />
     <Compile Include="Compiler\Ast\INode.cs" />
     <Compile Include="Compiler\Ast\Nodes\Binary.cs" />
     <Compile Include="Compiler\Ast\Nodes\For.cs" />
