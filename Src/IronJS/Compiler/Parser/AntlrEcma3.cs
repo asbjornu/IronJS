@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Antlr.Runtime;
 using Antlr.Runtime.Tree;
 using IronJS.Compiler.Ast;
@@ -75,10 +76,10 @@ namespace IronJS.Compiler.Parser {
                     return new Invoke(pos, GetNodeChild(tree, 0), GetNodes(tree.GetChildSafe(0)));
 
                 case Xebic.ES3Parser.OBJECT:
-                    return new New(pos, Runtime.Type.Object, tree.MapChildren((_, x) => Tuple.Create(GetNodeChild(x, 0), GetNodeChild(x, 1))));
+                    return new New(pos, Runtime.Type.Object, new INode[0]);
 
                 case Xebic.ES3Parser.ARRAY:
-                    return new New(pos, Runtime.Type.Array, tree.MapChildren((i, x) => Tuple.Create(Literal.Create(pos, (double)i), GetNodeChild(x, 0))));
+                    return new New(pos, Runtime.Type.Array, tree.MapChildren((_, x) => GetNodeChild(x, 0)));
 
                 case Xebic.ES3Parser.EXPR:
                     return GetNode(tree.GetChildSafe(0));

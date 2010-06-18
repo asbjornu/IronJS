@@ -2,8 +2,8 @@
 
 namespace IronJS.Compiler.Ast.Nodes {
     public class Invoke : Node {
-        public INode Target { get; private set; }
-        public INode[] Arguments { get; private set; }
+        public INode Target { get { return Children[0]; } }
+        public INode[] Arguments { get { return Children[0].Children; } }
 
         public override bool TypeResolved {
             get {
@@ -13,8 +13,7 @@ namespace IronJS.Compiler.Ast.Nodes {
 
         public Invoke(SourcePosition pos, INode target, INode[] arguments)
             : base(pos) {
-                Target = target;
-                Arguments = arguments;
+                Children = new[] { target, new Node(arguments) };
         }
     }
 }

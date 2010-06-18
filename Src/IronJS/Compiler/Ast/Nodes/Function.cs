@@ -2,7 +2,7 @@
 
 namespace IronJS.Compiler.Ast.Nodes {
     public class Function : Node {
-        public INode Body { get; private set; }
+        public INode Body { get { return Children[0]; } }
         public Context.Scope Scope { get; private set; }
 
         public override Runtime.Type Type {
@@ -20,7 +20,7 @@ namespace IronJS.Compiler.Ast.Nodes {
         public Function(SourcePosition pos, INode[] parameters, INode body)
             : base(pos) {
 
-            Body = body;
+            Children = new[] { body };
             Scope = new Context.Scope();
 
             for (int i = 0; i < parameters.Length; ++i) {
@@ -30,7 +30,7 @@ namespace IronJS.Compiler.Ast.Nodes {
 
         public Function(SourcePosition pos, INode body, Context.Scope scope)
             : base(pos) {
-            Body = body;
+            Children = new[] { body };
             Scope = scope;
         }
     }
