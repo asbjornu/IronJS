@@ -12,6 +12,15 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
+        public override Runtime.Type Type {
+            get {
+                if ((int)Op >= 100)
+                    return Runtime.Type.Boolean;
+
+                return Left.Type | Right.Type;
+            }
+        }
+
         public Binary(SourcePosition position, BinaryOp op, INode left, INode right)
             : base(position) {
                 Op = op;
