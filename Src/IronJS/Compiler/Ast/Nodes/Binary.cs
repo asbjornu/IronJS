@@ -5,6 +5,7 @@ namespace IronJS.Compiler.Ast.Nodes {
         public BinaryOp Op { get; protected set; }
         public INode Left { get { return Children[0]; } }
         public INode Right { get { return Children[1]; } }
+        public bool IsAssign { get { return Op == BinaryOp.Assign; } }
 
         public override bool TypeIsStatic {
             get {

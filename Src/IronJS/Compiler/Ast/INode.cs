@@ -7,5 +7,6 @@ namespace IronJS.Compiler.Ast {
         Runtime.Type Type { get; }
         bool TypeIsStatic { get; }
         bool HasChildren { get; }
+        bool As<T>(out T result) where T : class;
     }
 }

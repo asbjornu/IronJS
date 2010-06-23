@@ -91,18 +91,26 @@ namespace IronJS.Compiler.Analyzer {
             return new Binary(node.Source, node.Op, left, right);
         }
 
+        const string WrongNodeType = "";
+
         INode Analyze(Var node) {
+            Binary binary;
             Identifier identifier;
 
-            if (node.Node is Binary) {
-                identifier = (node.Node as Binary).Left as Identifier;
+            if (node.Node.As<Binary>(out binary) && binary.IsAssign) {
+                if (binary.Left.As<Identifier>(out identifier)) {
+                    Scope.Variables.Add(new Variable(identifier.Name));
+                    return Analyze(binary);
+                }
+                throw new Error("");
+
+            } else if (node.Node.As<Identifier>(out identifier)) {
                 Scope.Variables.Add(new Variable(identifier.Name));
-                return Analyze(node.Node);
+                return new Pass();
+
             }
 
-            identifier = node.Node as Identifier;
-            Scope.Variables.Add(new Variable(identifier.Name));
-            return new Pass();
+            throw new Error("");
         }
     }
 }
