@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace IronJS.Runtime {
     public static class TypeConverter {
@@ -21,6 +18,21 @@ namespace IronJS.Runtime {
             }
 
             return Type.Dynamic;
+        }
+
+        public static System.Type JsToClr(Type type) {
+            if (type == Type.String) {
+                return typeof(string);
+
+            } else if (type == Type.Double) {
+                return typeof(double);
+
+            } else if (type == Type.Boolean) {
+                return typeof(bool);
+
+            }
+
+            return typeof(object);
         }
     }
 }

@@ -8,6 +8,8 @@ namespace IronJS.Compiler.Ast {
         Div     = 4, 
         Mul     = 5, 
         Mod     = 6, 
+        And     = 50,
+        Or      = 51,
         Eq      = 100, 
         EqEq    = 101, 
         Lt      = 102, 

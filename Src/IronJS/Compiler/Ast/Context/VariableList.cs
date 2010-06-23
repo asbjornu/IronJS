@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Ast.Context {
@@ -21,7 +19,7 @@ namespace IronJS.Compiler.Ast.Context {
         }
 
         public Variable Get(INode node) {
-            return _variables.First(x => x.Name == (node as Identifier).Name);
+            return Get((node as Identifier).Name);
         }
 
         public void AddType(INode node, Runtime.Type type) {

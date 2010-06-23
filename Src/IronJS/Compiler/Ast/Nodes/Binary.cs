@@ -14,6 +14,7 @@ namespace IronJS.Compiler.Ast.Nodes {
 
         public override Runtime.Type Type {
             get {
+                //All logical operators have a value equal to or above 100
                 if ((int)Op >= 100)
                     return Runtime.Type.Boolean;
 
