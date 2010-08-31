@@ -2,7 +2,7 @@
 var bar = "2";
 
 var x = function (a, b) {
-
+    
 };
 
 

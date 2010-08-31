@@ -2,7 +2,7 @@
 
 namespace IronJS.Runtime {
     public enum Type {
-        Nothing   = 0,   // NOT null
+        None      = 0,   // NOT null
 
         Double    = 1,
         Integer   = 2,

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using IronJS.Compiler;
 using IronJS.Compiler.Ast;
 using IronJS.Compiler.Ast.Context;
 using IronJS.Compiler.Ast.Nodes;
