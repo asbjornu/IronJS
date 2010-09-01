@@ -6,6 +6,11 @@ using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Analyzer {
     public class Default : IAnalyzer {
+        public IAnalyzer Next {
+            get;
+            private set;
+        }
+
         public INode[] Analyze(ScopeChain scopes, INode[] nodes) {
             var analyzedNodes = new INode[nodes.Length];
 

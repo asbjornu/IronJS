@@ -66,7 +66,7 @@
     <Compile Include="Compiler\Analyzer\IAnalyzer.cs" />
     <Compile Include="Compiler\Ast\Context\ScopeChain.cs" />
     <Compile Include="Compiler\Ast\Context\Variable.cs" />
-    <Compile Include="Compiler\Ast\Context\VariableList.cs" />
+    <Compile Include="Compiler\Ast\Context\VariableSet.cs" />
     <Compile Include="Compiler\Ast\INode.cs" />
     <Compile Include="Compiler\Ast\Nodes\Binary.cs" />
     <Compile Include="Compiler\Ast\Nodes\For.cs" />
@@ -82,7 +82,7 @@
     <Compile Include="Compiler\Ast\Nodes\Var.cs" />
     <Compile Include="Compiler\Ast\Position.cs" />
     <Compile Include="Compiler\Ast\UnaryOp.cs" />
-    <Compile Include="Compiler\Parser\AntlrEcma3.cs" />
+    <Compile Include="Compiler\Parser\Ecma3.cs" />
     <Compile Include="Compiler\Ast\Nodes\Block.cs" />
     <Compile Include="Compiler\Ast\Nodes\Invoke.cs" />
     <Compile Include="Compiler\Parser\Xebic\ES3Lexer.Action.cs" />

@@ -24,7 +24,7 @@ namespace IronJS.Compiler.Ast.Nodes {
 
     public static class Literal {
         public static INode Create<T>(SourcePosition pos, T value) {
-            return new Literal<T>(pos, value) as INode;
+            return new Literal<T>(pos, value);
         }
 
         public static INode True {

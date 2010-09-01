@@ -2,14 +2,21 @@
 
 namespace IronJS.Compiler.Ast.Nodes {
     public abstract class Node : INode {
-        public SourcePosition SourcePosition { get; private set; }
+        public SourcePosition SourcePosition {
+            get;
+            private set;
+        }
 
         public virtual Runtime.Type Type {
-            get { return Runtime.Type.Dynamic; }
+            get {
+                return Runtime.Type.Dynamic;
+            }
         }
 
         public virtual bool TypeResolved {
-            get { return false; }
+            get {
+                return false;
+            }
         }
 
         public Node(SourcePosition position) {

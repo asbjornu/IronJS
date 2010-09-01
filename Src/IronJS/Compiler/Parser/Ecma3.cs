@@ -6,7 +6,7 @@ using IronJS.Compiler.Ast.Nodes;
 using IronJS.Compiler.Parser.Extensions;
 
 namespace IronJS.Compiler.Parser {
-    public class AntlrEcma3 : IParser {
+    public class Ecma3 : IParser {
         public INode[] ParseFile(string fileName) {
             return Parse(new ANTLRFileStream(fileName), fileName);
         }
@@ -90,10 +90,10 @@ namespace IronJS.Compiler.Parser {
                     return ParseBinary(tree, Binary.OpType.Lt);
 
                 case Xebic.ES3Parser.BYFIELD:
-                    return ParseProperty(tree, Property.AccessMode.ByField);
+                    return ParseProperty(tree, Property.AccessMode.Field);
 
                 case Xebic.ES3Parser.BYINDEX:
-                    return ParseProperty(tree, Property.AccessMode.ByIndex);
+                    return ParseProperty(tree, Property.AccessMode.Index);
 
                 case Xebic.ES3Parser.FOR:
                     return ParseFor(tree.GetChildSafe(0), tree.GetChildSafe(1));

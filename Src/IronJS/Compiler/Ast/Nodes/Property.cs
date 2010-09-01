@@ -3,7 +3,7 @@
 namespace IronJS.Compiler.Ast.Nodes {
     public class Property : Node {
         public enum AccessMode {
-            ByField, ByIndex
+            Field, Index
         }
 
         public INode Target { get; private set; }
