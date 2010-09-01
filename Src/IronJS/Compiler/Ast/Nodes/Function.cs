@@ -4,7 +4,7 @@ using System.Linq;
 namespace IronJS.Compiler.Ast.Nodes {
     public class Function : Node {
         public INode Body { get { return Children[0]; } }
-        public Context.Scope Scope { get; private set; }
+        public Context.Scope Scope { get; protected set; }
 
         public override Runtime.Type Type {
             get {
@@ -29,6 +29,10 @@ namespace IronJS.Compiler.Ast.Nodes {
             : base(pos) {
             Children = new[] { body };
             Scope = scope;
+        }
+
+        public override INode Clone() {
+            return new Function(Source, Body, Scope);
         }
     }
 }

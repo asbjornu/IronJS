@@ -10,5 +10,9 @@ namespace IronJS.Compiler.Ast.Nodes {
             : base(position) {
                 Children = new[] { test, ifTrue, ifFalse };
         }
+
+        public override INode Clone() {
+            return new If(Source, Test, IfTrue, IfFalse);
+        }
     }
 }

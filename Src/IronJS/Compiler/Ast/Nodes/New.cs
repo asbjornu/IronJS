@@ -40,5 +40,9 @@ namespace IronJS.Compiler.Ast.Nodes {
                 _type = type;
                 Children = new INode[] { function, new Node(initExpressions) };
         }
+
+        public override INode Clone() {
+            return new New(Source, _type, Function, InitExpressions);
+        }
     }
 }

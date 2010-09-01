@@ -8,7 +8,7 @@ namespace IronJS.Compiler.Ast.Nodes {
 
         public INode Target { get { return Children[0]; } }
         public INode Member { get { return Children[1]; } }
-        public AccessMode Mode { get; private set; }
+        public AccessMode Mode { get; protected set; }
 
         public override bool TypeResolved {
             get {
@@ -20,6 +20,10 @@ namespace IronJS.Compiler.Ast.Nodes {
             : base(pos) {
                 Children = new[] { target, member };
                 Mode = mode;
+        }
+
+        public override INode Clone() {
+            return new Property(Source, Target, Member, Mode);
         }
     }
 }

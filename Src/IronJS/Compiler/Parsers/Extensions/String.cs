@@ -13,14 +13,13 @@ namespace IronJS.Compiler.Parsers.Extensions {
             if (s.TryToDouble(out result))
                 return result;
 
-            throw new Exception("Could not convert to number");
+            throw new CompilerError("Could not convert '{0}' to number", s);
         }
 
         public static string ToJsString(this string s) {
-            if (s.Length < 2)
-                throw new Exception("String to short");
-
-            if(s[0] == s[s.Length-1] && (s[0] == '"' || s[0] == '\'')) {
+            //If string is >= 2 characters, the start and end 
+            //character are equal and one of " or ', strip them
+            if (s.Length >= 2 && s[0] == s[s.Length - 1] && (s[0] == '"' || s[0] == '\'')) {
                 return s.Substring(1, s.Length - 2);
             }
 

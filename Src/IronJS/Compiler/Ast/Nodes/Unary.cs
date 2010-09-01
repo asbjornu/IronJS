@@ -8,7 +8,7 @@ namespace IronJS.Compiler.Ast.Nodes {
         }
 
         public INode Target { get { return Children[0]; } }
-        public OpType Op { get; private set; }
+        public OpType Op { get; protected set; }
 
         public Unary(SourcePosition pos, INode target, OpType op)
             : base(pos) {

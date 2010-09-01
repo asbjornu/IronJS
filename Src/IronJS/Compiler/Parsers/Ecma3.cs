@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Antlr.Runtime;
+﻿using Antlr.Runtime;
 using Antlr.Runtime.Tree;
 using IronJS.Compiler.Ast;
 using IronJS.Compiler.Ast.Nodes;
@@ -46,7 +44,7 @@ namespace IronJS.Compiler.Parsers {
 
         INode GetNode(CommonTree tree) {
             if (tree == null)
-                return new Pass();
+                return Pass.Instance;
 
             var pos = tree.GetSourcePosition();
 
@@ -62,6 +60,12 @@ namespace IronJS.Compiler.Parsers {
 
                 case Xebic.ES3Parser.StringLiteral:
                     return Literal.Create(pos, tree.Text.ToJsString());
+
+                case Xebic.ES3Parser.TRUE:
+                    return Literal.True;
+
+                case Xebic.ES3Parser.FALSE:
+                    return Literal.False;
 
                 case Xebic.ES3Parser.IF:
                     return new If(pos, GetNodeChild(tree, 0), GetNodeChild(tree, 1), GetNodeNull(tree, 2));
@@ -87,8 +91,20 @@ namespace IronJS.Compiler.Parsers {
                 case Xebic.ES3Parser.ASSIGN:
                     return ParseBinary(tree, Binary.OpType.Assign);
 
+                case Xebic.ES3Parser.EQ:
+                    return ParseBinary(tree, Binary.OpType.Eq);
+
                 case Xebic.ES3Parser.LT:
                     return ParseBinary(tree, Binary.OpType.Lt);
+
+                case Xebic.ES3Parser.LTE:
+                    return ParseBinary(tree, Binary.OpType.LtEq);
+
+                case Xebic.ES3Parser.GT:
+                    return ParseBinary(tree, Binary.OpType.Gt);
+
+                case Xebic.ES3Parser.GTE:
+                    return ParseBinary(tree, Binary.OpType.GtEq);
 
                 case Xebic.ES3Parser.BYFIELD:
                     return ParseProperty(tree, Property.AccessMode.Field);
@@ -111,14 +127,8 @@ namespace IronJS.Compiler.Parsers {
                 case Xebic.ES3Parser.PDEC:
                     return ParseUnary(tree, Unary.OpType.PostDec);
 
-                case Xebic.ES3Parser.TRUE:
-                    return Literal.True;
-
-                case Xebic.ES3Parser.FALSE:
-                    return Literal.False;
-
                 default:
-                    throw new Error("Can't convert token '{0}' to INode", Xebic.ES3Parser.tokenNames[tree.Type]);
+                    throw new CompilerError("Can't convert token '{0}' to INode", Xebic.ES3Parser.tokenNames[tree.Type]);
             }
         }
 
@@ -145,7 +155,7 @@ namespace IronJS.Compiler.Parsers {
                         );
             }
 
-            return new Pass();
+            return Pass.Instance;
         }
     }
 }

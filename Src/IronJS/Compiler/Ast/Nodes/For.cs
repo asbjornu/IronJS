@@ -11,5 +11,9 @@ namespace IronJS.Compiler.Ast.Nodes {
             : base(pos) {
                 Children = new[] { init, test, incr, body };
         }
+
+        public override INode Clone() {
+            return new For(Source, Init, Test, Incr, Body);
+        }
     }
 }

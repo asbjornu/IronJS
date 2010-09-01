@@ -8,5 +8,9 @@ namespace IronJS.Compiler.Ast.Nodes {
             : base(pos) {
                 Children = nodes; 
         }
+
+        public override INode Clone() {
+            return new Block(Source, Nodes);
+        }
     }
 }

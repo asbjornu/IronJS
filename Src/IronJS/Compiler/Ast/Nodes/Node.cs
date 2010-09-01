@@ -9,7 +9,7 @@ namespace IronJS.Compiler.Ast.Nodes {
 
         public SourcePosition Source {
             get;
-            private set;
+            protected set;
         }
 
         public virtual Runtime.Type Type {
@@ -30,7 +30,7 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        public Node(INode[] children, SourcePosition position)
+        public Node(SourcePosition position, INode[] children)
             : this(position) {
                 Children = children;
         }
@@ -51,6 +51,10 @@ namespace IronJS.Compiler.Ast.Nodes {
         public bool As<T>(out T result) where T : class, INode {
             result = this as T;
             return result != null;
+        }
+
+        public virtual INode Clone() {
+            return new Node(Source, Children);
         }
     }
 }

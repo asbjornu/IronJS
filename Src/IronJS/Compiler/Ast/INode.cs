@@ -8,5 +8,6 @@ namespace IronJS.Compiler.Ast {
         bool TypeResolved { get; }
         bool HasChildren { get; }
         bool As<T>(out T result) where T : class, INode;
+        INode Clone();
     }
 }

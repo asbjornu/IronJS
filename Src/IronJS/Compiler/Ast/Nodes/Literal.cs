@@ -20,6 +20,10 @@ namespace IronJS.Compiler.Ast.Nodes {
             : base(position) {
                 Value = value;
         }
+
+        public override INode Clone() {
+            return this;
+        }
     }
 
     public static class Literal {

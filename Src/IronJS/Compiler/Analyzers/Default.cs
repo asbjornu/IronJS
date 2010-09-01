@@ -1,16 +1,17 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Linq;
 using IronJS.Compiler.Ast;
 using IronJS.Compiler.Ast.Context;
 using IronJS.Compiler.Ast.Nodes;
-using System.Collections.Generic;
 
 namespace IronJS.Compiler.Analyzers {
     public class Default : IAnalyzer {
         Stack<Scope> _scopes;
 
-        Scope Scope {
-            get { return _scopes.Peek(); }
+        Scope _scope {
+            get {
+                return _scopes.Peek();
+            }
         }
 
         public Default() {
@@ -20,19 +21,12 @@ namespace IronJS.Compiler.Analyzers {
         public INode[] Analyze(Scope scope, INode[] nodes) {
             _scopes.Clear();
             _scopes.Push(scope);
-
-            var analyzedNodes = new INode[nodes.Length];
-
-            for(var i = 0; i < nodes.Length; ++i) {
-                analyzedNodes[i] = Analyze(nodes[i]);
-            }
-
-            return analyzedNodes;
+            return nodes.Select(x => Analyze(x)).ToArray();
         }
 
         INode Analyze(INode node) {
             if (node == null) {
-                return null;
+                return Pass.Instance;
 
             } else if (node is Var) {
                 return Analyze(node as Var);
@@ -47,11 +41,13 @@ namespace IronJS.Compiler.Analyzers {
                 return Analyze(node as Unary);
 
             } else {
-                if(node.HasChildren) {
-                    node.Children = node.Children.Select(x => Analyze(x)).ToArray();
+                var clone = node.Clone();
+
+                if (clone.HasChildren) {
+                    clone.Children = clone.Children.Select(x => Analyze(x)).ToArray();
                 }
 
-                return node;
+                return clone;
             }
         }
 
@@ -64,7 +60,7 @@ namespace IronJS.Compiler.Analyzers {
                 case Unary.OpType.PostDec:
                 case Unary.OpType.PostInc:
                     if (target is Identifier) {
-                        Scope.Variables.Get(target).AddType(Runtime.Type.Double);
+                        _scope.Variables.Get(target).AddType(Runtime.Type.Double);
                     }
                     break;
             }
@@ -84,7 +80,7 @@ namespace IronJS.Compiler.Analyzers {
             switch (node.Op) {
                 case Binary.OpType.Assign:
                     if (left is Identifier) {
-                        Scope.Variables.Get(left).AddAssignedFrom(right);
+                        _scope.Variables.Get(left).AddAssignedFrom(right);
                     }
                     break;
             }
@@ -98,18 +94,19 @@ namespace IronJS.Compiler.Analyzers {
 
             if (node.Node.As<Binary>(out binary) && binary.IsAssign) {
                 if (binary.Left.As<Identifier>(out identifier)) {
-                    Scope.Variables.Add(new Variable(identifier.Name));
+                    _scope.Variables.Add(new Variable(identifier.Name));
                     return Analyze(binary);
                 }
-                throw new Error();
+
+                throw new CompilerError();
 
             } else if (node.Node.As<Identifier>(out identifier)) {
-                Scope.Variables.Add(new Variable(identifier.Name));
-                return new Pass();
-
+                _scope.Variables.Add(new Variable(identifier.Name));
+                return Pass.Instance;
+                    
             }
 
-            throw new Error();
+            throw new CompilerError();
         }
     }
 }
