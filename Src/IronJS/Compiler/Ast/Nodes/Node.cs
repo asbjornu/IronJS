@@ -30,9 +30,15 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
+        public Node(INode[] children, SourcePosition position)
+            : this(position) {
+                Children = children;
+        }
+
         public Node(SourcePosition position) {
             Source = position;
         }
+
         public Node(INode[] children) {
             Children = children;
             Source = SourcePosition.Unknown;
