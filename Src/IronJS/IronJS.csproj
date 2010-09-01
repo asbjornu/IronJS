@@ -62,8 +62,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\Ast\Context\Scope.cs" />
-    <Compile Include="Compiler\Analyzer\Default.cs" />
-    <Compile Include="Compiler\Analyzer\IAnalyzer.cs" />
+    <Compile Include="Compiler\Analyzers\Default.cs" />
+    <Compile Include="Compiler\Analyzers\IAnalyzer.cs" />
     <Compile Include="Compiler\Ast\Context\Variable.cs" />
     <Compile Include="Compiler\Ast\Context\VariableSet.cs" />
     <Compile Include="Compiler\Ast\INode.cs" />

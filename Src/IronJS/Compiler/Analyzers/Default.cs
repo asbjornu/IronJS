@@ -5,7 +5,7 @@ using IronJS.Compiler.Ast.Context;
 using IronJS.Compiler.Ast.Nodes;
 using System.Collections.Generic;
 
-namespace IronJS.Compiler.Analyzer {
+namespace IronJS.Compiler.Analyzers {
     public class Default : IAnalyzer {
         Stack<Scope> _scopes;
 
