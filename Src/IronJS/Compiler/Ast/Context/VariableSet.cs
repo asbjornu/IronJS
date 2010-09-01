@@ -5,7 +5,7 @@ using System.Text;
 using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Ast.Context {
-    public class VariableList {
+    public class VariableSet {
         HashSet<Variable> _variables;
 
         class VariableComparer : IEqualityComparer<Variable> {
@@ -13,7 +13,7 @@ namespace IronJS.Compiler.Ast.Context {
             public int GetHashCode(Variable obj) { return obj.Name.GetHashCode(); }
         }
 
-        public VariableList() {
+        public VariableSet() {
             _variables = new HashSet<Variable>(new VariableComparer());
         }
 
@@ -26,19 +26,11 @@ namespace IronJS.Compiler.Ast.Context {
         }
 
         public Variable Get(INode node) {
-            return _variables.First(x => x.Name == (node as Identifier).Name);
-        }
-
-        public void AddType(INode node, Runtime.Type type) {
-            Get(node).Type |= type;
-        }
-
-        public void AddAssignedFrom(INode node, INode value) {
-            if (value.TypeResolved) {
-                AddType(node, value.Type);
-            } else {
-                Get(node).AssignedFrom.Add(value);
+            if (node is Identifier) {
+                return _variables.First(x => x.Name == (node as Identifier).Name);
             }
+
+            throw new Exception();
         }
     }
 }

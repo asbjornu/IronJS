@@ -6,7 +6,7 @@ namespace IronJS.Compiler.Ast.Context {
         public string Name { get; private set; }
         public int Index { get; private set; }
 
-        public Runtime.Type Type { get; set; }
+        public Runtime.Type Type { get; private set; }
         public HashSet<INode> AssignedFrom { get; private set; }
 
         public bool NeedsProxy { get; set; }
@@ -29,6 +29,18 @@ namespace IronJS.Compiler.Ast.Context {
 
         public Variable(string name)
             : this(name, -1) {
+        }
+
+        public void AddType(Runtime.Type type) {
+            Type |= type;
+        }
+
+        public void AddAssignedFrom(INode value) {
+            if (value.TypeResolved) {
+                AddType(value.Type);
+            } else {
+                AssignedFrom.Add(value);
+            }
         }
     }
 }

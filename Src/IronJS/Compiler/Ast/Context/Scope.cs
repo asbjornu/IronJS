@@ -5,10 +5,10 @@ using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Ast.Context {
     public class Scope {
-        public VariableList Variables { get; private set; }
+        public VariableSet Variables { get; private set; }
 
         public Scope() {
-            Variables = new VariableList();
+            Variables = new VariableSet();
         }
     }
 }

@@ -115,7 +115,7 @@ namespace IronJS.Compiler.Analyzer {
                 case Unary.OpType.PostDec:
                 case Unary.OpType.PostInc:
                     if (target is Identifier) {
-                        scopes.Current.Variables.AddType(target, Runtime.Type.Double);
+                        scopes.Current.Variables.Get(target).AddType(Runtime.Type.Double);
                     }
                     break;
             }
@@ -135,7 +135,7 @@ namespace IronJS.Compiler.Analyzer {
             switch (node.Op) {
                 case Binary.OpType.Assign:
                     if (left is Identifier) {
-                        scopes.Current.Variables.AddAssignedFrom(left, right);
+                        scopes.Current.Variables.Get(left).AddAssignedFrom(right);
                     }
                     break;
             }
