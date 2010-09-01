@@ -81,7 +81,6 @@
     <Compile Include="Compiler\Ast\Nodes\Unary.cs" />
     <Compile Include="Compiler\Ast\Nodes\Var.cs" />
     <Compile Include="Compiler\Ast\Position.cs" />
-    <Compile Include="Compiler\Ast\UnaryOp.cs" />
     <Compile Include="Compiler\Parser\Ecma3.cs" />
     <Compile Include="Compiler\Ast\Nodes\Block.cs" />
     <Compile Include="Compiler\Ast\Nodes\Invoke.cs" />

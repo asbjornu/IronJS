@@ -26,7 +26,7 @@ namespace IronJS.Compiler.Analyzer {
                 return null;
 
             } else if (node is Var) {
-                return Analyze(scopes, node as Var);
+                return Analyze(scopes, node as Var);    
 
             } else if (node is Binary) {
                 return Analyze(scopes, node as Binary);

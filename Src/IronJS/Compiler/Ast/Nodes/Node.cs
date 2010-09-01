@@ -31,5 +31,10 @@ namespace IronJS.Compiler.Ast.Nodes {
 
             SourcePosition = pos;
         }
+
+        public bool As<T>(out T result) where T : class, INode {
+            result = this as T;
+            return result != null;
+        }
     }
 }
