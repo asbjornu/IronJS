@@ -4,12 +4,12 @@ namespace IronJS.Compiler.Ast.Nodes {
     public class Node : INode {
         public INode[] Children {
             get;
-            protected set;
+            private set;
         }
 
         public SourcePosition Source {
             get;
-            protected set;
+            private set;
         }
 
         public virtual Runtime.Type Type {
@@ -39,6 +39,10 @@ namespace IronJS.Compiler.Ast.Nodes {
             : this(position, new INode[0]) {
         }
 
+        protected Node(INode[] children)
+            : this(SourcePosition.Unknown, children) {
+        }
+
         public bool As<T>(out T result) where T : class, INode {
             result = this as T;
             return result != null;
@@ -49,15 +53,15 @@ namespace IronJS.Compiler.Ast.Nodes {
         }
 
         public static INode Create() {
-            return Create(SourcePosition.Unknown, new INode[0]);
+            return new Node(SourcePosition.Unknown);
         }
 
         public static INode Create(SourcePosition pos) {
-            return Create(pos, new INode[0]);
+            return new Node(pos);
         }
 
         public static INode Create(INode[] children) {
-            return Create(SourcePosition.Unknown, children);
+            return new Node(children);
         }
 
         public static INode Create(SourcePosition pos, INode[] children) {

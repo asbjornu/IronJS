@@ -24,11 +24,11 @@ namespace IronJS.Compiler.Ast.Nodes {
             return new Property(Source, children, Mode);
         }
 
-        public static INode Field(SourcePosition pos, INode target, INode member) {
+        public static INode CreateField(SourcePosition pos, INode target, INode member) {
             return new Property(pos, new[] { target, member }, AccessMode.Field);
         }
 
-        public static INode Index(SourcePosition pos, INode target, INode member) {
+        public static INode CreateIndex(SourcePosition pos, INode target, INode member) {
             return new Property(pos, new[] { target, member }, AccessMode.Index);
         }
     }

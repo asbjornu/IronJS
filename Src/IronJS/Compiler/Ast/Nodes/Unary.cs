@@ -10,12 +10,13 @@ namespace IronJS.Compiler.Ast.Nodes {
         public INode Target { get { return Children[0]; } }
         public OpType Op { get; protected set; }
 
-        public Unary(SourcePosition pos, INode target, OpType op)
-            : base(pos) {
-                Children = new[] { target };
+        Unary(SourcePosition pos, INode[] children, OpType op)
+            : base(pos, children) {
                 Op = op;
         }
 
-        public static INode Create(
+        public static INode Create(SourcePosition pos, INode target, OpType op) {
+            return new Unary(pos, new[] { target }, op);
+        }
     }
 }

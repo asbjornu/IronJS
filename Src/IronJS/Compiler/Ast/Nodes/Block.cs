@@ -12,7 +12,7 @@ namespace IronJS.Compiler.Ast.Nodes {
             return new Block(Source, children);
         }
 
-        public static INode Create(SourcePosition pos, INode[] nodes) {
+        public new static INode Create(SourcePosition pos, INode[] nodes) {
             return new Block(pos, nodes);
         }
     }

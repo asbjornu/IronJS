@@ -4,15 +4,15 @@ namespace IronJS.Compiler.Ast.Nodes {
     public sealed class Pass : Node {
         static INode _instance;
 
-        Pass(SourcePosition pos, INode[] children)
-            : base(pos, children) {
+        Pass()
+            : base(SourcePosition.Unknown) {
 
         }
 
         public static INode Instance {
             get {
                 if (_instance == null) {
-                    _instance = new Pass(SourcePosition.Unknown, new INode[0]);
+                    _instance = new Pass();
                 }
 
                 return _instance;

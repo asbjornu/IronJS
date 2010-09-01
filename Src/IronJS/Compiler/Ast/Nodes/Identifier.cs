@@ -5,7 +5,7 @@ namespace IronJS.Compiler.Ast.Nodes {
         public string Name { get; protected set; }
 
         Identifier(SourcePosition pos, string name)
-            : base(pos, new INode[0]) {
+            : base(pos) {
                 Name = name;
         }
 

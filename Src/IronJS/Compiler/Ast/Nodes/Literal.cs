@@ -16,19 +16,23 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        internal Literal(SourcePosition position, T value)
-            : base(position, new INode[0]) {
+        Literal(SourcePosition position, T value)
+            : base(position) {
                 Value = value;
         }
 
         public override INode Clone(INode[] children) {
             return this;
         }
+
+        public static INode Create(SourcePosition pos, T value) {
+            return new Literal<T>(pos, value);
+        }
     }
 
     public static class Literal {
         public static INode Create<T>(SourcePosition pos, T value) {
-            return new Literal<T>(pos, value);
+            return Literal<T>.Create(pos, value);
         }
 
         public static INode True {

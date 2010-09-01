@@ -61,6 +61,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\Analyzers\Base.cs" />
+    <Compile Include="Compiler\Analyzers\VariableAnalyzer.cs" />
     <Compile Include="Compiler\Ast\Context\Scope.cs" />
     <Compile Include="Compiler\Analyzers\Default.cs" />
     <Compile Include="Compiler\Analyzers\IAnalyzer.cs" />

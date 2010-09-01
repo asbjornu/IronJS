@@ -50,7 +50,7 @@ namespace IronJS.Compiler.Parsers {
 
             switch (tree.Type) {
                 case Xebic.ES3Parser.VAR:
-                    return new Var(pos, GetNodeChild(tree, 0));
+                    return Var.Create(pos, GetNodeChild(tree, 0));
 
                 case Xebic.ES3Parser.Identifier:
                     return Identifier.Create(pos, tree.Text);
@@ -135,10 +135,10 @@ namespace IronJS.Compiler.Parsers {
         INode ParseProperty(CommonTree tree, Property.AccessMode type) {
             switch (type) {
                 case Property.AccessMode.Field:
-                    return Property.Field(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0));
+                    return Property.CreateField(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0));
 
                 default: //Property.AccessMode.Field
-                    return Property.Index(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0));
+                    return Property.CreateIndex(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0));
             }
         }
 
@@ -147,7 +147,7 @@ namespace IronJS.Compiler.Parsers {
         }
 
         INode ParseUnary(CommonTree tree, Unary.OpType op) {
-            return new Unary(tree.GetSourcePosition(), GetNodeChild(tree, 0), op);
+            return Unary.Create(tree.GetSourcePosition(), GetNodeChild(tree, 0), op);
         }
 
         INode ParseFor(CommonTree headTree, CommonTree bodyTree) {

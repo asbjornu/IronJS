@@ -5,26 +5,8 @@ using IronJS.Compiler.Ast.Context;
 using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Analyzers {
-    public class Default : IAnalyzer {
-        Stack<Scope> _scopes;
-
-        Scope _scope {
-            get {
-                return _scopes.Peek();
-            }
-        }
-
-        public Default() {
-            _scopes = new Stack<Scope>();
-        }
-
-        public INode[] Analyze(Scope scope, INode[] nodes) {
-            _scopes.Clear();
-            _scopes.Push(scope);
-            return nodes.Select(x => Analyze(x)).ToArray();
-        }
-
-        INode Analyze(INode node) {
+    public class Default : Base {
+        protected override INode Analyze(INode node) {
             if (node == null) {
                 return Pass.Instance;
 
@@ -41,15 +23,7 @@ namespace IronJS.Compiler.Analyzers {
                 return Analyze(node as Unary);
 
             } else {
-                INode[] children;
-
-                if (node.HasChildren) {
-                    children = node.Children.Select(x => Analyze(x)).ToArray();
-                } else {
-                    children = new INode[0];
-                }
-
-                return node.Clone(children);
+                return AnalyzeChildrenAndClone(node);
             }
         }
 
@@ -62,17 +36,17 @@ namespace IronJS.Compiler.Analyzers {
                 case Unary.OpType.PostDec:
                 case Unary.OpType.PostInc:
                     if (target is Identifier) {
-                        _scope.Variables.Get(target).AddType(Runtime.Type.Double);
+                        Scope.Variables.Get(target).AddType(Runtime.Type.Double);
                     }
                     break;
             }
 
-            return new Unary(node.Source, target, node.Op);
+            return Unary.Create(node.Source, target, node.Op);
         }
 
         INode Analyze(Function node) {
-            _scopes.Push(node.Scope);
-            return Function.CreateWithScope(node.Source, Analyze(node.Body), _scopes.Pop());
+            ScopeChain.Push(node.Scope);
+            return Function.CreateWithScope(node.Source, Analyze(node.Body), ScopeChain.Pop());
         }
 
         INode Analyze(Binary node) {
@@ -82,7 +56,7 @@ namespace IronJS.Compiler.Analyzers {
             switch (node.Op) {
                 case Binary.OpType.Assign:
                     if (left is Identifier) {
-                        _scope.Variables.Get(left).AddAssignedFrom(right);
+                        Scope.Variables.Get(left).AddAssignedFrom(right);
                     }
                     break;
             }
@@ -96,14 +70,14 @@ namespace IronJS.Compiler.Analyzers {
 
             if (node.Node.As<Binary>(out binary) && binary.IsAssign) {
                 if (binary.Left.As<Identifier>(out identifier)) {
-                    _scope.Variables.Add(new Variable(identifier.Name));
+                    Scope.Variables.Add(new Variable(identifier.Name));
                     return Analyze(binary);
                 }
 
                 throw new CompilerError();
 
             } else if (node.Node.As<Identifier>(out identifier)) {
-                _scope.Variables.Add(new Variable(identifier.Name));
+                Scope.Variables.Add(new Variable(identifier.Name));
                 return Pass.Instance;
                     
             }
