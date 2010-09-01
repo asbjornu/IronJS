@@ -31,8 +31,8 @@ namespace IronJS.Compiler.Ast.Nodes {
 
         public New(SourcePosition pos, INode function)
             : base(pos) {
-                Function = function;
                 _type = Runtime.Type.Object;
+                Function = function;
                 InitExpressions = new Tuple<INode, INode>[0];
         }
 

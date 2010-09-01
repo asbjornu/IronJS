@@ -18,7 +18,7 @@ namespace IronJS.Compiler.Ast.Context {
             Name = name;
             Index = index;
 
-            Type = Runtime.Type.Nothing;
+            Type = Runtime.Type.None;
             AssignedFrom = new HashSet<INode>();
 
             IsClosedOver = false;
