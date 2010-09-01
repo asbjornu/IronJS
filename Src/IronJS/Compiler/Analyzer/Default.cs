@@ -3,116 +3,60 @@ using System.Linq;
 using IronJS.Compiler.Ast;
 using IronJS.Compiler.Ast.Context;
 using IronJS.Compiler.Ast.Nodes;
+using System.Collections.Generic;
 
 namespace IronJS.Compiler.Analyzer {
     public class Default : IAnalyzer {
-        public IAnalyzer Next {
-            get;
-            private set;
+        Stack<Scope> _scopes;
+
+        Scope Scope {
+            get { return _scopes.Peek(); }
         }
 
-        public INode[] Analyze(ScopeChain scopes, INode[] nodes) {
+        public Default() {
+            _scopes = new Stack<Scope>();
+        }
+
+        public INode[] Analyze(Scope scope, INode[] nodes) {
+            _scopes.Clear();
+            _scopes.Push(scope);
+
             var analyzedNodes = new INode[nodes.Length];
 
             for(var i = 0; i < nodes.Length; ++i) {
-                analyzedNodes[i] = Analyze(scopes, nodes[i]);
+                analyzedNodes[i] = Analyze(nodes[i]);
             }
 
             return analyzedNodes;
         }
 
-        INode Analyze(ScopeChain scopes, INode node) {
+        INode Analyze(INode node) {
             if (node == null) {
                 return null;
 
             } else if (node is Var) {
-                return Analyze(scopes, node as Var);    
+                return Analyze(node as Var);
 
             } else if (node is Binary) {
-                return Analyze(scopes, node as Binary);
+                return Analyze(node as Binary);
 
             } else if (node is Function) {
-                return Analyze(scopes, node as Function);
+                return Analyze(node as Function);
 
             } else if (node is Unary) {
-                return Analyze(scopes, node as Unary);
-
-            } else if (node is For) {
-                return Analyze(scopes, node as For); 
-
-            } else if (node is Property) {
-                return Analyze(scopes, node as Property);
-
-            } else if (node is If) {
-                return Analyze(scopes, node as If);
-
-            } else if (node is Invoke) {
-                return Analyze(scopes, node as Invoke);
-
-            } else if (node is New) {
-                return Analyze(scopes, node as New);
-
-            } else if (node is Block) {
-                return Analyze(scopes, node as Block);
+                return Analyze(node as Unary);
 
             } else {
-                //Identifier, Literal<T>
+                if(node.HasChildren) {
+                    node.Children = node.Children.Select(x => Analyze(x)).ToArray();
+                }
+
                 return node;
             }
         }
 
-        INode Analyze(ScopeChain scopes, Block node) {
-            return new Block(node.SourcePosition, node.Nodes.Select(x => Analyze(scopes, x)).ToArray());
-        }
-
-        INode Analyze(ScopeChain scopes, New node) {
-            return  new New(
-                        node.SourcePosition,
-                        node.Type,
-                        Analyze(scopes, node.Function),
-                        node.InitExpressions
-                            .Select(x => Tuple.Create(Analyze(scopes, x.Item1), Analyze(scopes, x.Item2)))
-                            .ToArray()
-                    );
-        }
-
-        INode Analyze(ScopeChain scopes, Invoke node) {
-            return  new Invoke(
-                        node.SourcePosition,
-                        Analyze(scopes, node.Target),
-                        node.Arguments.Select(x => Analyze(scopes, x)).ToArray()
-                    );
-        }
-
-        INode Analyze(ScopeChain scopes, If node) {
-            return  new If(
-                        node.SourcePosition,
-                        Analyze(scopes, node.Test),
-                        Analyze(scopes, node.IfTrue),
-                        Analyze(scopes, node.IfFalse)
-                    );
-        }
-
-        INode Analyze(ScopeChain scopes, Property node) {
-            return  new Property(
-                        node.SourcePosition, 
-                        Analyze(scopes, node.Target), 
-                        Analyze(scopes, node.Member), 
-                        node.Mode
-                    );
-        }
-
-        INode Analyze(ScopeChain scopes, For node) {
-            return  new For(node.SourcePosition, 
-                        Analyze(scopes, node.Init),
-                        Analyze(scopes, node.Test),
-                        Analyze(scopes, node.Incr),
-                        Analyze(scopes, node.Body)
-                    );
-        }
-
-        INode Analyze(ScopeChain scopes, Unary node) {
-            var target = Analyze(scopes, node.Target);
+        INode Analyze(Unary node) {
+            var target = Analyze(node.Target);
 
             switch (node.Op) {
                 case Unary.OpType.Inc:
@@ -120,46 +64,52 @@ namespace IronJS.Compiler.Analyzer {
                 case Unary.OpType.PostDec:
                 case Unary.OpType.PostInc:
                     if (target is Identifier) {
-                        scopes.Current.Variables.Get(target).AddType(Runtime.Type.Double);
+                        Scope.Variables.Get(target).AddType(Runtime.Type.Double);
                     }
                     break;
             }
 
-            return new Unary(node.SourcePosition, target, node.Op);
+            return new Unary(node.Source, target, node.Op);
         }
 
-        INode Analyze(ScopeChain scopes, Function node) {
-            scopes.Enter(node.Scope);
-            return new Function(node.SourcePosition, Analyze(scopes, node.Body), scopes.Exit());
+        INode Analyze(Function node) {
+            _scopes.Push(node.Scope);
+            return new Function(node.Source, Analyze(node.Body), _scopes.Pop());
         }
 
-        INode Analyze(ScopeChain scopes, Binary node) {
-            var left = Analyze(scopes, node.Left);
-            var right = Analyze(scopes, node.Right);
+        INode Analyze(Binary node) {
+            var left = Analyze(node.Left);
+            var right = Analyze(node.Right);
 
             switch (node.Op) {
                 case Binary.OpType.Assign:
                     if (left is Identifier) {
-                        scopes.Current.Variables.Get(left).AddAssignedFrom(right);
+                        Scope.Variables.Get(left).AddAssignedFrom(right);
                     }
                     break;
             }
 
-            return new Binary(node.SourcePosition, node.Op, left, right);
+            return new Binary(node.Source, node.Op, left, right);
         }
 
-        INode Analyze(ScopeChain scopes, Var node) {
+        INode Analyze(Var node) {
+            Binary binary;
             Identifier identifier;
 
-            if (node.Node is Binary) {
-                identifier = (node.Node as Binary).Left as Identifier;
-                scopes.Current.Variables.Add(new Variable(identifier.Name));
-                return Analyze(scopes, node.Node);
+            if (node.Node.As<Binary>(out binary) && binary.IsAssign) {
+                if (binary.Left.As<Identifier>(out identifier)) {
+                    Scope.Variables.Add(new Variable(identifier.Name));
+                    return Analyze(binary);
+                }
+                throw new Error();
+
+            } else if (node.Node.As<Identifier>(out identifier)) {
+                Scope.Variables.Add(new Variable(identifier.Name));
+                return new Pass();
+
             }
 
-            identifier = node.Node as Identifier;
-            scopes.Current.Variables.Add(new Variable(identifier.Name));
-            return new Pass();
+            throw new Error();
         }
     }
 }

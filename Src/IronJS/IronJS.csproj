@@ -64,7 +64,6 @@
     <Compile Include="Compiler\Ast\Context\Scope.cs" />
     <Compile Include="Compiler\Analyzer\Default.cs" />
     <Compile Include="Compiler\Analyzer\IAnalyzer.cs" />
-    <Compile Include="Compiler\Ast\Context\ScopeChain.cs" />
     <Compile Include="Compiler\Ast\Context\Variable.cs" />
     <Compile Include="Compiler\Ast\Context\VariableSet.cs" />
     <Compile Include="Compiler\Ast\INode.cs" />
@@ -93,10 +92,12 @@
     <Compile Include="Compiler\Parser\Extensions\String.cs" />
     <Compile Include="Error.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Runtime\Scope.cs" />
     <Compile Include="Runtime\Type.cs" />
     <Compile Include="Runtime\TypeConverter.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Compiler\Jit\" />
     <Folder Include="Extensions\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

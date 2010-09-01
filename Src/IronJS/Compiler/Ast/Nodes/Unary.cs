@@ -7,12 +7,12 @@ namespace IronJS.Compiler.Ast.Nodes {
             PostDec, Inc, Dec
         }
 
-        public INode Target { get; private set; }
+        public INode Target { get { return Children[0]; } }
         public OpType Op { get; private set; }
 
         public Unary(SourcePosition pos, INode target, OpType op)
             : base(pos) {
-                Target = target;
+                Children = new[] { target };
                 Op = op;
         }
     }

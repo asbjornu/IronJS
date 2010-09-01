@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
+using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Ast.Context {
     public class Variable {
@@ -10,8 +12,8 @@ namespace IronJS.Compiler.Ast.Context {
         public HashSet<INode> AssignedFrom { get; private set; }
 
         public bool NeedsProxy { get; set; }
-        public bool TypeResolved { get; set; }
         public bool IsClosedOver { get; set; }
+        public bool TypeResolved { get; set; }
         public bool InitAsUndefind { get; set; }
 
         public Variable(string name, int index) {
@@ -21,10 +23,10 @@ namespace IronJS.Compiler.Ast.Context {
             Type = Runtime.Type.None;
             AssignedFrom = new HashSet<INode>();
 
-            IsClosedOver = false;
-            InitAsUndefind = false;
             NeedsProxy = false;
+            IsClosedOver = false;
             TypeResolved = false;
+            InitAsUndefind = false;
         }
 
         public Variable(string name)

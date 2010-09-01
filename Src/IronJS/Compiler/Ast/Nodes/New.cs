@@ -4,8 +4,8 @@ namespace IronJS.Compiler.Ast.Nodes {
     public class New : Node {
         Runtime.Type _type;
 
-        public INode Function { get; private set; }
-        public Tuple<INode, INode>[] InitExpressions { get; private set; }
+        public INode Function { get { return Children[0]; } }
+        public INode[] InitExpressions { get { return Children[0].Children; } }
 
         public override Runtime.Type Type {
             get {
@@ -20,27 +20,25 @@ namespace IronJS.Compiler.Ast.Nodes {
         }
 
         public New(SourcePosition pos, Runtime.Type type)
-            : this(pos, type, new Tuple<INode, INode>[0]) {
+            : this(pos, type, new INode[0]) {
         }
 
-        public New(SourcePosition pos, Runtime.Type type, Tuple<INode, INode>[] initExpressions)
+        public New(SourcePosition pos, Runtime.Type type, INode[] initExpressions)
             : base(pos) {
                 _type = type;
-                InitExpressions = initExpressions;
+                Children = new[] { null, new Node(initExpressions) };
         }
 
         public New(SourcePosition pos, INode function)
             : base(pos) {
                 _type = Runtime.Type.Object;
-                Function = function;
-                InitExpressions = new Tuple<INode, INode>[0];
+                Children = new INode[] { function, new Node(new Node[0]) };
         }
 
-        public New(SourcePosition pos, Runtime.Type type, INode function, Tuple<INode, INode>[] initExpressions)
+        public New(SourcePosition pos, Runtime.Type type, INode function, INode[] initExpressions)
             : base(pos) {
-            _type = type;
-            Function = function;
-            InitExpressions = initExpressions;
+                _type = type;
+                Children = new INode[] { function, new Node(initExpressions) };
         }
     }
 }

@@ -20,7 +20,11 @@ namespace IronJS.Compiler.Parser.Extensions {
             if (s.Length < 2)
                 throw new Exception("String to short");
 
-            return s.Substring(1, s.Length - 2);
+            if(s[0] == s[s.Length-1] && (s[0] == '"' || s[0] == '\'')) {
+                return s.Substring(1, s.Length - 2);
+            }
+
+            return s;
         }
     }
 }

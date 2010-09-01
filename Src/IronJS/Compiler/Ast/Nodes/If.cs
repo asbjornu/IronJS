@@ -2,15 +2,13 @@
 
 namespace IronJS.Compiler.Ast.Nodes {
     public class If : Node {
-        public INode Test { get; private set; }
-        public INode IfTrue { get; private set; }
-        public INode IfFalse { get; private set; }
+        public INode Test { get { return Children[0]; } }
+        public INode IfTrue { get { return Children[1]; } }
+        public INode IfFalse { get { return Children[1]; } }
 
         public If(SourcePosition position, INode test, INode ifTrue, INode ifFalse)
             : base(position) {
-                Test = test;
-                IfTrue = ifTrue;
-                IfFalse = ifFalse;
+                Children = new[] { test, ifTrue, ifFalse };
         }
     }
 }

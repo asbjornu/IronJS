@@ -1,8 +1,13 @@
 ﻿using System;
 
 namespace IronJS.Compiler.Ast.Nodes {
-    public abstract class Node : INode {
-        public SourcePosition SourcePosition {
+    public class Node : INode {
+        public INode[] Children {
+            get;
+            set;
+        }
+
+        public SourcePosition Source {
             get;
             private set;
         }
@@ -19,17 +24,22 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
+        public bool HasChildren {
+            get {
+                return Children != null && Children.Length > 0;
+            }
+        }
+
         public Node(SourcePosition position) {
-            SourcePosition = position;
+            Source = position;
+        }
+        public Node(INode[] children) {
+            Children = children;
+            Source = SourcePosition.Unknown;
         }
 
         public Node() {
-            SourcePosition pos;
-
-            pos.Column = -1;
-            pos.Line = -1;
-
-            SourcePosition = pos;
+            Source = SourcePosition.Unknown;
         }
 
         public bool As<T>(out T result) where T : class, INode {
