@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace IronJS.Compiler.Parser.Extensions {
+namespace IronJS.Compiler.Parsers.Extensions {
     public static class StringExtensions {
         public static bool TryToDouble(this string s, out double result) {
             return double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out result);

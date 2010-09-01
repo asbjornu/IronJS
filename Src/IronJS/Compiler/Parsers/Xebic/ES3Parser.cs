@@ -12,7 +12,7 @@ using IList = System.Collections.IList;
 using ArrayList = System.Collections.ArrayList;
 using Stack = Antlr.Runtime.Collections.StackList;
 
-namespace IronJS.Compiler.Parser.Xebic
+namespace IronJS.Compiler.Parsers.Xebic
 {
     partial class ES3Parser : Antlr.Runtime.Parser
     {

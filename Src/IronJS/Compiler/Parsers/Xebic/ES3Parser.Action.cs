@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using Antlr.Runtime;
 using Antlr.Runtime.Tree;
 
-namespace IronJS.Compiler.Parser.Xebic
+namespace IronJS.Compiler.Parsers.Xebic
 {
 	using IToken = Antlr.Runtime.IToken;
 

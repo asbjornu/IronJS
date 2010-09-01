@@ -4,9 +4,9 @@ using Antlr.Runtime;
 using Antlr.Runtime.Tree;
 using IronJS.Compiler.Ast;
 using IronJS.Compiler.Ast.Nodes;
-using IronJS.Compiler.Parser.Extensions;
+using IronJS.Compiler.Parsers.Extensions;
 
-namespace IronJS.Compiler.Parser {
+namespace IronJS.Compiler.Parsers {
     public class Ecma3 : IParser {
         public INode[] ParseFile(string fileName) {
             return Parse(new ANTLRFileStream(fileName), fileName);

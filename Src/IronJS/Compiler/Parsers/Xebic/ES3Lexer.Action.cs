@@ -5,7 +5,7 @@ using System.Text;
 
 using Antlr.Runtime;
 
-namespace IronJS.Compiler.Parser.Xebic
+namespace IronJS.Compiler.Parsers.Xebic
 {
 	using IToken = Antlr.Runtime.IToken;
 
