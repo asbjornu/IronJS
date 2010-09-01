@@ -7,13 +7,16 @@ namespace IronJS.Compiler.Ast.Nodes {
         public INode Incr { get { return Children[2]; } }
         public INode Body { get { return Children[3]; } }
 
-        public For(SourcePosition pos, INode init, INode test, INode incr, INode body)
-            : base(pos) {
-                Children = new[] { init, test, incr, body };
+        For(SourcePosition pos, INode[] children)
+            : base(pos, children) {
         }
 
-        public override INode Clone() {
-            return new For(Source, Init, Test, Incr, Body);
+        public override INode Clone(INode[] children) {
+            return new For(Source, children);
+        }
+
+        public static INode Create(SourcePosition pos, INode init, INode test, INode incr, INode body) {
+            return new For(pos, new[] { init, test, incr, body });
         }
     }
 }

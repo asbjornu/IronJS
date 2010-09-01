@@ -18,21 +18,23 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        public Function(SourcePosition pos, INode[] parameters, INode body)
-            : base(pos) {
-            Children = new[] { body };
-            Scope = new Context.Scope();
-            Scope.Variables.Add(parameters.Cast<Identifier>().Select(x => new Context.Variable(x.Name)));
+        Function(SourcePosition pos, INode[] children, Context.Scope scope)
+            : base(pos, children) {
+                Scope = scope;
         }
 
-        public Function(SourcePosition pos, INode body, Context.Scope scope)
-            : base(pos) {
-            Children = new[] { body };
-            Scope = scope;
+        public override INode Clone(INode[] children) {
+            return new Function(Source, children, Scope);
         }
 
-        public override INode Clone() {
-            return new Function(Source, Body, Scope);
+        public static INode Create(SourcePosition pos, INode[] parameters, INode body) {
+            var node = new Function(pos, new[] { body }, new Context.Scope());
+            node.Scope.Variables.Add(parameters.Cast<Identifier>().Select(x => new Context.Variable(x.Name)));
+            return node;
+        }
+
+        public static INode CreateWithScope(SourcePosition pos, INode body, Context.Scope scope) {
+            return new Function(pos, new[] { body }, new Context.Scope());
         }
     }
 }

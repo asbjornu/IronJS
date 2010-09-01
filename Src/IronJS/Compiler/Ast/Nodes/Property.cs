@@ -16,14 +16,20 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        public Property(SourcePosition pos, INode target, INode member, AccessMode mode)
-            : base(pos) {
-                Children = new[] { target, member };
-                Mode = mode;
+        Property(SourcePosition pos, INode[] children, AccessMode mode)
+            : base(pos, children) {
         }
 
-        public override INode Clone() {
-            return new Property(Source, Target, Member, Mode);
+        public override INode Clone(INode[] children) {
+            return new Property(Source, children, Mode);
+        }
+
+        public static INode Field(SourcePosition pos, INode target, INode member) {
+            return new Property(pos, new[] { target, member }, AccessMode.Field);
+        }
+
+        public static INode Index(SourcePosition pos, INode target, INode member) {
+            return new Property(pos, new[] { target, member }, AccessMode.Index);
         }
     }
 }

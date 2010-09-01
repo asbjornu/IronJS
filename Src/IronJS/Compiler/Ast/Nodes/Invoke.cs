@@ -11,13 +11,16 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        public Invoke(SourcePosition pos, INode target, INode[] arguments)
-            : base(pos) {
-                Children = new[] { target, new Node(arguments) };
+        Invoke(SourcePosition pos, INode[] children)
+            : base(pos, children) {
         }
 
-        public override INode Clone() {
-            return new Invoke(Source, Target, Arguments);
+        public override INode Clone(INode[] children) {
+            return new Invoke(Source, children);
+        }
+
+        public static INode Create(SourcePosition pos, INode target, INode[] arguments) {
+            return new Invoke(pos, new[] { target, Node.Create(arguments) });
         }
     }
 }

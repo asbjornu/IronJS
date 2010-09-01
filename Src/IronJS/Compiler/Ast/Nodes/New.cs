@@ -4,7 +4,7 @@ namespace IronJS.Compiler.Ast.Nodes {
     public class New : Node {
         Runtime.Type _type;
 
-        public INode Function { get { return Children[0]; } }
+        public INode FunctionExpression { get { return Children[0]; } }
         public INode[] InitExpressions { get { return Children[0].Children; } }
 
         public override Runtime.Type Type {
@@ -19,30 +19,31 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        public New(SourcePosition pos, Runtime.Type type)
-            : this(pos, type, new INode[0]) {
+        New(SourcePosition pos, INode[] children, Runtime.Type type)
+            : base(pos, children) {
+            _type = type;
         }
 
-        public New(SourcePosition pos, Runtime.Type type, INode[] initExpressions)
-            : base(pos) {
-                _type = type;
-                Children = new[] { null, new Node(initExpressions) };
+        public static INode Object(SourcePosition pos, INode[] initExpressions) {
+            return new New(pos, new[] { null, Node.Create(initExpressions) }, Runtime.Type.Object);
         }
 
-        public New(SourcePosition pos, INode function)
-            : base(pos) {
-                _type = Runtime.Type.Object;
-                Children = new INode[] { function, new Node(new Node[0]) };
+        public static INode Array(SourcePosition pos, INode[] initExpressions) {
+            return new New(pos, new[] { null, Node.Create(initExpressions) }, Runtime.Type.Array);
         }
 
-        public New(SourcePosition pos, Runtime.Type type, INode function, INode[] initExpressions)
-            : base(pos) {
-                _type = type;
-                Children = new INode[] { function, new Node(initExpressions) };
+        /*
+        public static INode Function(SourcePosition pos, Runtime.Type type, INode function, INode[] initExpressions) {
+            return new New(pos, new INode[] { function, new Node(initExpressions) }, type);
         }
 
-        public override INode Clone() {
-            return new New(Source, _type, Function, InitExpressions);
+        public static INode Function(SourcePosition pos, INode function) {
+            return new New(pos, new INode[] { function, new Node(new Node[0]) }, Runtime.Type.Object);
+        }
+        */
+
+        public override INode Clone(INode[] children) {
+            return new New(Source, children, _type);
         }
     }
 }

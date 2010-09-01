@@ -15,5 +15,7 @@ namespace IronJS.Compiler.Ast.Nodes {
                 Children = new[] { target };
                 Op = op;
         }
+
+        public static INode Create(
     }
 }

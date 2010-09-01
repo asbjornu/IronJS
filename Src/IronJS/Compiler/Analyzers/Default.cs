@@ -41,13 +41,15 @@ namespace IronJS.Compiler.Analyzers {
                 return Analyze(node as Unary);
 
             } else {
-                var clone = node.Clone();
+                INode[] children;
 
-                if (clone.HasChildren) {
-                    clone.Children = clone.Children.Select(x => Analyze(x)).ToArray();
+                if (node.HasChildren) {
+                    children = node.Children.Select(x => Analyze(x)).ToArray();
+                } else {
+                    children = new INode[0];
                 }
 
-                return clone;
+                return node.Clone(children);
             }
         }
 
@@ -70,7 +72,7 @@ namespace IronJS.Compiler.Analyzers {
 
         INode Analyze(Function node) {
             _scopes.Push(node.Scope);
-            return new Function(node.Source, Analyze(node.Body), _scopes.Pop());
+            return Function.CreateWithScope(node.Source, Analyze(node.Body), _scopes.Pop());
         }
 
         INode Analyze(Binary node) {
@@ -85,7 +87,7 @@ namespace IronJS.Compiler.Analyzers {
                     break;
             }
 
-            return new Binary(node.Source, node.Op, left, right);
+            return Binary.Create(node.Source, node.Op, left, right);
         }
 
         INode Analyze(Var node) {

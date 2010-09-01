@@ -38,14 +38,17 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        public Binary(SourcePosition position, OpType op, INode left, INode right)
-            : base(position) {
+        Binary(SourcePosition pos, OpType op, INode[] children)
+            : base(pos, children) {
                 Op = op;
-                Children = new[] { left, right };
         }
 
-        public override INode Clone() {
-            return new Binary(Source, Op, Left, Right);
+        public override INode Clone(INode[] children) {
+            return new Binary(Source, Op, children);
+        }
+
+        public static INode Create(SourcePosition pos, OpType op, INode left, INode right) {
+            return new Binary(pos, op, new [] { left, right });
         }
     }
 }

@@ -53,7 +53,7 @@ namespace IronJS.Compiler.Parsers {
                     return new Var(pos, GetNodeChild(tree, 0));
 
                 case Xebic.ES3Parser.Identifier:
-                    return new Identifier(pos, tree.Text);
+                    return Identifier.Create(pos, tree.Text);
 
                 case Xebic.ES3Parser.DecimalLiteral:
                     return Literal.Create(pos, tree.Text.ToDouble());
@@ -68,22 +68,22 @@ namespace IronJS.Compiler.Parsers {
                     return Literal.False;
 
                 case Xebic.ES3Parser.IF:
-                    return new If(pos, GetNodeChild(tree, 0), GetNodeChild(tree, 1), GetNodeNull(tree, 2));
+                    return If.Create(pos, GetNodeChild(tree, 0), GetNodeChild(tree, 1), GetNodeNull(tree, 2));
 
                 case Xebic.ES3Parser.BLOCK:
-                    return new Block(pos, GetNodes(tree));
+                    return Block.Create(pos, GetNodes(tree));
 
                 case Xebic.ES3Parser.FUNCTION:
-                    return new Function(pos, GetNodes(tree.GetChildSafe(0)), GetNodeChild(tree, 1));
+                    return Function.Create(pos, GetNodes(tree.GetChildSafe(0)), GetNodeChild(tree, 1));
 
                 case Xebic.ES3Parser.CALL:
-                    return new Invoke(pos, GetNodeChild(tree, 0), GetNodes(tree.GetChildSafe(0)));
+                    return Invoke.Create(pos, GetNodeChild(tree, 0), GetNodes(tree.GetChildSafe(0)));
 
                 case Xebic.ES3Parser.OBJECT:
-                    return new New(pos, Runtime.Type.Object, new INode[0]);
+                    return New.Object(pos, new INode[0]);
 
                 case Xebic.ES3Parser.ARRAY:
-                    return new New(pos, Runtime.Type.Array, tree.MapChildren((_, x) => GetNodeChild(x, 0)));
+                    return New.Array(pos, tree.MapChildren((_, x) => GetNodeChild(x, 0)));
 
                 case Xebic.ES3Parser.EXPR:
                     return GetNode(tree.GetChildSafe(0));
@@ -133,11 +133,17 @@ namespace IronJS.Compiler.Parsers {
         }
 
         INode ParseProperty(CommonTree tree, Property.AccessMode type) {
-            return new Property(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0), type);
+            switch (type) {
+                case Property.AccessMode.Field:
+                    return Property.Field(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0));
+
+                default: //Property.AccessMode.Field
+                    return Property.Index(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0));
+            }
         }
 
         INode ParseBinary(CommonTree tree, Binary.OpType op) {
-            return new Binary(tree.GetSourcePosition(), op, GetNodeChild(tree, 0), GetNodeChild(tree, 1));
+            return Binary.Create(tree.GetSourcePosition(), op, GetNodeChild(tree, 0), GetNodeChild(tree, 1));
         }
 
         INode ParseUnary(CommonTree tree, Unary.OpType op) {
@@ -146,7 +152,7 @@ namespace IronJS.Compiler.Parsers {
 
         INode ParseFor(CommonTree headTree, CommonTree bodyTree) {
             if (headTree.Type == Xebic.ES3Parser.FORSTEP) {
-                return  new For(
+                return  For.Create(
                             headTree.GetSourcePosition(),
                             GetNodeNull(headTree, 0),
                             GetNodeNull(headTree, 1),
