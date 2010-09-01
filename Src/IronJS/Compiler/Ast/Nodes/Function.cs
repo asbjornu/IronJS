@@ -24,7 +24,7 @@ namespace IronJS.Compiler.Ast.Nodes {
         }
 
         public override INode Clone(INode[] children) {
-            return new Function(Source, children, Scope);
+            return new Function(Source, children, Scope.Clone());
         }
 
         public static INode Create(SourcePosition pos, INode[] parameters, INode body) {

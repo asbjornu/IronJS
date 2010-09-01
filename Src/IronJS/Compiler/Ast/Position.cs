@@ -2,17 +2,17 @@
 
 namespace IronJS.Compiler.Ast {
     public struct SourcePosition {
-        public int Line;
-        public int Column;
+        public readonly int Line;
+        public readonly int Column;
+
+        public SourcePosition(int line, int column) {
+            Line = line;
+            Column = column;
+        }
 
         public static SourcePosition Unknown {
             get {
-                SourcePosition pos;
-
-                pos.Column = -1;
-                pos.Line = -1;
-
-                return pos;
+                return new SourcePosition(-1, -1);
             }
         }
     }

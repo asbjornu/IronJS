@@ -5,7 +5,7 @@ namespace IronJS.REPL {
 	class Program {
 		static void Main(string[] args) {
             var parser = new Compiler.Parsers.Ecma3();
-            var analyzer = new Compiler.Analyzers.Default();
+            var analyzer = new Compiler.Analyzers.TypeAnalyzer();
 
             var nodes = parser.ParseFile("testing.js");
             var global = new Compiler.Ast.Context.Scope();

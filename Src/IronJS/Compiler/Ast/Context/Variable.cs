@@ -44,5 +44,17 @@ namespace IronJS.Compiler.Ast.Context {
                 AssignedFrom.Add(value);
             }
         }
+
+        public Variable Clone() {
+            var clone = new Variable(Name, Index);
+
+            clone.Type = Type;
+            clone.NeedsProxy = NeedsProxy;
+            clone.IsClosedOver = IsClosedOver;
+            clone.TypeResolved = TypeResolved;
+            clone.InitAsUndefind = InitAsUndefind;
+
+            return clone;
+        }
     }
 }

@@ -50,5 +50,9 @@ namespace IronJS.Compiler.Ast.Nodes {
         public static INode Create(SourcePosition pos, OpType op, INode left, INode right) {
             return new Binary(pos, op, new [] { left, right });
         }
+
+        public static INode CreateAssign(SourcePosition pos, INode left, INode right) {
+            return Create(pos, OpType.Assign, left, right);
+        }
     }
 }

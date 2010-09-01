@@ -31,12 +31,7 @@ namespace IronJS.Compiler.Parsers.Extensions {
         }
 
         public static SourcePosition GetSourcePosition(this CommonTree tree) {
-            SourcePosition pos;
-
-            pos.Line = tree.Line;
-            pos.Column = tree.CharPositionInLine;
-
-            return pos;
+            return new SourcePosition(tree.Line, tree.CharPositionInLine);
         }
     }
 }

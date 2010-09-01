@@ -26,6 +26,12 @@ namespace IronJS.Compiler.Ast.Context {
             return Get((node as Identifier).Name);
         }
 
+        public VariableSet Clone() {
+            var set = new VariableSet();
+            set._variables.UnionWith(_variables.Select(x => x.Clone()));
+            return set;
+        }
+
         class VariableComparer : IEqualityComparer<Variable> {
             public bool Equals(Variable x, Variable y) { return x.Name == y.Name; }
             public int GetHashCode(Variable obj) { return obj.Name.GetHashCode(); }

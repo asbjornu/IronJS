@@ -10,5 +10,11 @@ namespace IronJS.Compiler.Ast.Context {
         public Scope() {
             Variables = new VariableSet();
         }
+
+        public Scope Clone() {
+            var scope = new Scope();
+            scope.Variables = Variables.Clone();
+            return scope;
+        }
     }
 }
