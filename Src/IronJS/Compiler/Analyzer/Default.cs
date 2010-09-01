@@ -110,10 +110,10 @@ namespace IronJS.Compiler.Analyzer {
             var target = Analyze(scopes, node.Target);
 
             switch (node.Op) {
-                case UnaryOp.Inc:
-                case UnaryOp.Dec:
-                case UnaryOp.PostDec:
-                case UnaryOp.PostInc:
+                case Unary.OpType.Inc:
+                case Unary.OpType.Dec:
+                case Unary.OpType.PostDec:
+                case Unary.OpType.PostInc:
                     if (target is Identifier) {
                         scopes.Current.Variables.AddType(target, Runtime.Type.Double);
                     }
@@ -133,7 +133,7 @@ namespace IronJS.Compiler.Analyzer {
             var right = Analyze(scopes, node.Right);
 
             switch (node.Op) {
-                case BinaryOp.Assign:
+                case Binary.OpType.Assign:
                     if (left is Identifier) {
                         scopes.Current.Variables.AddAssignedFrom(left, right);
                     }

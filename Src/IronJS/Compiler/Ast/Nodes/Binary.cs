@@ -2,7 +2,12 @@
 
 namespace IronJS.Compiler.Ast.Nodes {
     public class Binary : Node {
-        public BinaryOp Op { get; protected set; }
+        public enum OpType {
+            Assign, Add, Sub, Div, Mul, Mod,
+            Eq, EqEq, Lt, Gt, GtEq, LtEq, NotEq
+        }
+
+        public OpType Op { get; protected set; }
         public INode Left { get; private set; }
         public INode Right { get; private set; }
 
@@ -12,7 +17,7 @@ namespace IronJS.Compiler.Ast.Nodes {
             }
         }
 
-        public Binary(SourcePosition position, BinaryOp op, INode left, INode right)
+        public Binary(SourcePosition position, OpType op, INode left, INode right)
             : base(position) {
                 Op = op;
                 Left = left;

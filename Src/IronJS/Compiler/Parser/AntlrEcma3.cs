@@ -84,10 +84,10 @@ namespace IronJS.Compiler.Parser {
                     return GetNode(tree.GetChildSafe(0));
 
                 case Xebic.ES3Parser.ASSIGN:
-                    return ParseBinary(tree, BinaryOp.Assign);
+                    return ParseBinary(tree, Binary.OpType.Assign);
 
                 case Xebic.ES3Parser.LT:
-                    return ParseBinary(tree, BinaryOp.Lt);
+                    return ParseBinary(tree, Binary.OpType.Lt);
 
                 case Xebic.ES3Parser.BYFIELD:
                     return ParseProperty(tree, Property.AccessMode.ByField);
@@ -99,16 +99,16 @@ namespace IronJS.Compiler.Parser {
                     return ParseFor(tree.GetChildSafe(0), tree.GetChildSafe(1));
 
                 case Xebic.ES3Parser.INC:
-                    return ParseUnary(tree, UnaryOp.Inc);
+                    return ParseUnary(tree, Unary.OpType.Inc);
 
                 case Xebic.ES3Parser.DEC:
-                    return ParseUnary(tree, UnaryOp.Dec);
+                    return ParseUnary(tree, Unary.OpType.Dec);
 
                 case Xebic.ES3Parser.PINC:
-                    return ParseUnary(tree, UnaryOp.PostInc);
+                    return ParseUnary(tree, Unary.OpType.PostInc);
 
                 case Xebic.ES3Parser.PDEC:
-                    return ParseUnary(tree, UnaryOp.PostDec);
+                    return ParseUnary(tree, Unary.OpType.PostDec);
 
                 case Xebic.ES3Parser.TRUE:
                     return Literal.True;
@@ -125,11 +125,11 @@ namespace IronJS.Compiler.Parser {
             return new Property(tree.GetSourcePosition(), GetNodeChild(tree, 1), GetNodeChild(tree, 0), type);
         }
 
-        INode ParseBinary(CommonTree tree, BinaryOp op) {
+        INode ParseBinary(CommonTree tree, Binary.OpType op) {
             return new Binary(tree.GetSourcePosition(), op, GetNodeChild(tree, 0), GetNodeChild(tree, 1));
         }
 
-        INode ParseUnary(CommonTree tree, UnaryOp op) {
+        INode ParseUnary(CommonTree tree, Unary.OpType op) {
             return new Unary(tree.GetSourcePosition(), GetNodeChild(tree, 0), op);
         }
 
