@@ -27,13 +27,16 @@ namespace IronJS.Compiler.Analyzers {
             return nodes.Select(x => Analyze(x)).ToArray();
         }
 
-        protected INode AnalyzeChildrenAndClone(INode node) {
-            return node.Clone(node.Children.Select(x => Analyze(x)).ToArray());
+        protected INode AnalyzeChildren(INode node) {
+            node.Children = node.Children.Select(x => Analyze(x)).ToArray();
+            return node;
         }
 
         protected INode Analyze(Function node) {
             ScopeChain.Push(node.Scope);
-            return Function.CreateWithScope(node.Source, Analyze(node.Body), ScopeChain.Pop());
+            AnalyzeChildren(node);
+            ScopeChain.Pop();
+            return node;
         }
 
         protected abstract INode Analyze(INode node);

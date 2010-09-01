@@ -62,9 +62,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\Analyzers\Base.cs" />
-    <Compile Include="Compiler\Analyzers\VariableAnalyzer.cs" />
+    <Compile Include="Compiler\Analyzers\VariableScopeAnalyzer.cs" />
     <Compile Include="Compiler\Ast\Context\Scope.cs" />
-    <Compile Include="Compiler\Analyzers\TypeAnalyzer.cs" />
+    <Compile Include="Compiler\Analyzers\StaticTypeAnalyzer.cs" />
     <Compile Include="Compiler\Analyzers\IAnalyzer.cs" />
     <Compile Include="Compiler\Ast\Context\Variable.cs" />
     <Compile Include="Compiler\Ast\Context\VariableSet.cs" />

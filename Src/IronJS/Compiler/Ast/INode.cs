@@ -2,7 +2,7 @@
 
 namespace IronJS.Compiler.Ast {
     public interface INode {
-        INode[] Children { get; }
+        INode[] Children { get; set; }
         SourcePosition Source { get; }
         Runtime.Type Type { get; }
         bool TypeResolved { get; }

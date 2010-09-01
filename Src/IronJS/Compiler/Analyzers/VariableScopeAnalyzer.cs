@@ -3,7 +3,7 @@ using IronJS.Compiler.Ast.Context;
 using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Analyzers {
-    public class VariableAnalyzer : Base {
+    public class VariableScopeAnalyzer : Base {
         protected override INode Analyze(INode node) {
             if (node == null) {
                 return Pass.Instance;
@@ -15,7 +15,7 @@ namespace IronJS.Compiler.Analyzers {
                 return Analyze(node as Function);
 
             } else {
-                return AnalyzeChildrenAndClone(node);
+                return AnalyzeChildren(node);
             }
         }
 
@@ -25,14 +25,14 @@ namespace IronJS.Compiler.Analyzers {
 
             if (node.Node.As<Binary>(out binary) && binary.IsAssign) {
                 if (binary.Left.As<Identifier>(out identifier)) {
-                    Scope.Variables.Add(new Variable(identifier.Name));
+                    Scope.Variables.Add(Variable.CreateLocal(identifier.Name));
                     return Analyze(binary);
                 }
 
                 throw new CompilerError();
 
             } else if (node.Node.As<Identifier>(out identifier)) {
-                Scope.Variables.Add(new Variable(identifier.Name));
+                Scope.Variables.Add(Variable.CreateLocal(identifier.Name));
                 return Pass.Instance;
 
             }

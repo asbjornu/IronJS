@@ -15,6 +15,7 @@ namespace IronJS.Compiler.Ast.Context {
         public bool IsClosedOver { get; set; }
         public bool TypeResolved { get; set; }
         public bool InitAsUndefind { get; set; }
+        public bool IsParameter { get; set; }
 
         public Variable(string name, int index) {
             Name = name;
@@ -27,6 +28,7 @@ namespace IronJS.Compiler.Ast.Context {
             IsClosedOver = false;
             TypeResolved = false;
             InitAsUndefind = false;
+            IsParameter = false;
         }
 
         public Variable(string name)
@@ -55,6 +57,16 @@ namespace IronJS.Compiler.Ast.Context {
             clone.InitAsUndefind = InitAsUndefind;
 
             return clone;
+        }
+
+        public static Variable CreateLocal(string name) {
+            return new Variable(name, -1);
+        }
+
+        public static Variable CreateParameter(string name, int index) {
+            var variable = new Variable(name, index);
+            variable.IsParameter = true;
+            return variable;
         }
     }
 }

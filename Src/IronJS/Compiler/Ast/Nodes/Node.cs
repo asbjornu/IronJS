@@ -4,7 +4,7 @@ namespace IronJS.Compiler.Ast.Nodes {
     public class Node : INode {
         public INode[] Children {
             get;
-            private set;
+            set;
         }
 
         public SourcePosition Source {

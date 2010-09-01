@@ -3,7 +3,7 @@ using IronJS.Compiler.Ast.Context;
 using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Analyzers {
-    public class TypeAnalyzer : Base {
+    public class StaticTypeAnalyzer : Base {
         protected override INode Analyze(INode node) {
             if (node == null) {
                 return Pass.Instance;
@@ -12,7 +12,7 @@ namespace IronJS.Compiler.Analyzers {
                 return Analyze(node as Binary);
 
             } else {
-                return AnalyzeChildrenAndClone(node);
+                return AnalyzeChildren(node);
             }
         }
 
@@ -21,11 +21,15 @@ namespace IronJS.Compiler.Analyzers {
                 var left = Analyze(node.Left);
                 var right = Analyze(node.Right);
 
-                Scope.Variables.Get(left).AddAssignedFrom(right);
+                if (right.TypeResolved) {
+                    Scope.Variables.Get(left).AddType(right.Type);
+                    return Binary.CreateAssign(node.Source, left, right);
 
-                return Binary.CreateAssign(node.Source, left, right);
+                } else {
+                    return AnalyzeChildren(node);
+                }
             } else {
-                return AnalyzeChildrenAndClone(node);
+                return AnalyzeChildren(node);
             }
         }
     }
