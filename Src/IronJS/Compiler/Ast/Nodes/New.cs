@@ -28,19 +28,13 @@ namespace IronJS.Compiler.Ast.Nodes {
             return new New(pos, new[] { null, Node.Create(initExpressions) }, Runtime.Type.Object);
         }
 
+        public static INode Object(SourcePosition pos, INode function, INode[] initExpressions) {
+            return new New(pos, new[] { function, Node.Create(initExpressions) }, Runtime.Type.Object);
+        }
+
         public static INode Array(SourcePosition pos, INode[] initExpressions) {
             return new New(pos, new[] { null, Node.Create(initExpressions) }, Runtime.Type.Array);
         }
-
-        /*
-        public static INode Function(SourcePosition pos, Runtime.Type type, INode function, INode[] initExpressions) {
-            return new New(pos, new INode[] { function, new Node(initExpressions) }, type);
-        }
-
-        public static INode Function(SourcePosition pos, INode function) {
-            return new New(pos, new INode[] { function, new Node(new Node[0]) }, Runtime.Type.Object);
-        }
-        */
 
         public override INode Clone(INode[] children) {
             return new New(Source, children, _type);

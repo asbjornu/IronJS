@@ -2,17 +2,23 @@
 using IronJS;
 using IronJS.Compiler.Ast.Nodes;
 using IronJS.Compiler.Ast;
+using IronJS.Compiler.Analyzers;
+using System.Collections.Generic;
 
 namespace IronJS.REPL {
 	class Program {
 		static void Main(string[] args) {
             var parser = new Compiler.Parsers.Ecma3();
-            var analyzer = new Compiler.Analyzers.VariableScopeAnalyzer();
-            var analyzer2 = new Compiler.Analyzers.StaticTypeAnalyzer();
+            var ast = Function.Create(SourcePosition.Unknown, parser.ParseFile("testing.js"));
 
-            var nodes = parser.ParseFile("testing.js");
-            var function = Function.Create(SourcePosition.Unknown, new INode[0], Block.Create(SourcePosition.Unknown, nodes));
-            var analyzed = analyzer2.Analyze(analyzer.Analyze(function));
+            var analyzers = new List<IAnalyzer>();
+            analyzers.Add(new Compiler.Analyzers.DeclarationAnalyzer());
+            analyzers.Add(new Compiler.Analyzers.StaticTypeAnalyzer());
+            analyzers.Add(new Compiler.Analyzers.ScopeAnalyzer());
+
+            foreach(var analyzer in analyzers) {
+                ast = analyzer.Analyze(ast);
+            }
 		}
 	}
 }

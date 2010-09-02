@@ -1,0 +1,30 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+	<head>
+		<title></title>
+        <script type="text/javascript">
+            var x1 = function () {
+
+                var y = 2;
+
+                var x2 = function () {
+
+                    var x3 = function () {
+                        return y;
+                    }
+
+                    var y = 3;
+
+                    return x3;
+                }
+
+                return x2;
+            };
+
+            alert(x1()()());
+        </script>
+	</head>
+	<body>
+	
+	</body>
+</html>

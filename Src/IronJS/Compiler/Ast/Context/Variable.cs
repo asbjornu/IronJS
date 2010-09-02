@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Ast.Context {
-    public class Variable {
+    public class Variable : INamed {
         public string Name { get; private set; }
         public int Index { get; private set; }
 

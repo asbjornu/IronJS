@@ -3,7 +3,7 @@ using IronJS.Compiler.Ast.Context;
 using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Analyzers {
-    public class VariableScopeAnalyzer : Base {
+    public class DeclarationAnalyzer : Base {
         protected override INode AnalyzeNode(INode node) {
             if (node == null) {
                 return Pass.Instance;

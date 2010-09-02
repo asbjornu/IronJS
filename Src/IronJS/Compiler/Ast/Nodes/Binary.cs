@@ -13,10 +13,28 @@ namespace IronJS.Compiler.Ast.Nodes {
             Eq = 100, EqEq, Lt, Gt, GtEq, LtEq, NotEq
         }
 
-        public OpType Op { get; protected set; }
-        public INode Left { get { return Children[0]; } }
-        public INode Right { get { return Children[1]; } }
-        public bool IsAssign { get { return Op == OpType.Assign; } }
+        public OpType Op {
+            get;
+            protected set;
+        }
+
+        public INode Left {
+            get {
+                return Children[0];
+            }
+        }
+
+        public INode Right {
+            get {
+                return Children[1];
+            }
+        }
+
+        public bool IsAssign {
+            get {
+                return Op == OpType.Assign;
+            }
+        }
 
         public override bool TypeResolved {
             get {

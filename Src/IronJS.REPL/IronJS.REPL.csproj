@@ -72,6 +72,7 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="JsTests.html" />
     <Content Include="testing.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

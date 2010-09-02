@@ -5,16 +5,12 @@ using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Ast.Context {
     public class Scope {
-        public VariableSet Variables { get; private set; }
+        public NamedSet<Variable> Variables { get; private set; }
+        public NamedSet<Closure> Closures { get; private set; }
 
         public Scope() {
-            Variables = new VariableSet();
-        }
-
-        public Scope Clone() {
-            var scope = new Scope();
-            scope.Variables = Variables.Clone();
-            return scope;
+            Variables = new NamedSet<Variable>();
+            Closures = new NamedSet<Closure>();
         }
     }
 }
