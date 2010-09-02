@@ -2,10 +2,13 @@
 var bar = "2";
 
 var x = function (a, b) {
+    var c = 3;
+
     return function () {
-        return a;
+        return a * c;
     }
 };
 
-
-var y = foo;
+with ({}) {
+    var y = foo;
+}

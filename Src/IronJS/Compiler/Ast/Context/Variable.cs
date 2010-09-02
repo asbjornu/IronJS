@@ -6,9 +6,9 @@ using IronJS.Compiler.Ast.Nodes;
 namespace IronJS.Compiler.Ast.Context {
     public class Variable : INamed {
         public string Name { get; private set; }
-        public int Index { get; private set; }
+        public int Index { get; set; }
 
-        public Runtime.Type Type { get; private set; }
+        public Runtime.Type Type { get; set; }
         public HashSet<INode> AssignedFrom { get; private set; }
 
         public bool NeedsProxy { get; set; }

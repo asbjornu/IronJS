@@ -84,6 +84,7 @@
     <Compile Include="Compiler\Ast\Nodes\Pass.cs" />
     <Compile Include="Compiler\Ast\Nodes\Unary.cs" />
     <Compile Include="Compiler\Ast\Nodes\Var.cs" />
+    <Compile Include="Compiler\Ast\Nodes\With.cs" />
     <Compile Include="Compiler\Ast\Position.cs" />
     <Compile Include="Compiler\Parsers\Ecma3.cs" />
     <Compile Include="Compiler\Ast\Nodes\Block.cs" />

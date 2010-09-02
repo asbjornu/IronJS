@@ -130,9 +130,16 @@ namespace IronJS.Compiler.Parsers {
                 case Xebic.ES3Parser.RETURN:
                     return ParseUnary(tree, Unary.OpType.Return);
 
+                case Xebic.ES3Parser.WITH:
+                    return ParseWith(tree);
+
                 default:
                     throw new CompilerError("Can't convert token '{0}' to INode", Xebic.ES3Parser.tokenNames[tree.Type]);
             }
+        }
+
+        INode ParseWith(CommonTree tree) {
+            return With.Create(tree.GetSourcePosition(), GetNodeChild(tree, 0), GetNodeChild(tree, 1));
         }
 
         INode ParseProperty(CommonTree tree, Property.AccessMode type) {

@@ -4,9 +4,7 @@
 		<title></title>
         <script type="text/javascript">
             var x1 = function () {
-
                 var y = 2;
-
                 var x2 = function () {
 
                     var x3 = function () {
@@ -14,14 +12,22 @@
                     }
 
                     var y = 3;
-
                     return x3;
                 }
 
                 return x2;
             };
 
-            alert(x1()()());
+            //alert(x1()()());
+
+            var y1 = function (a) {
+                arguments[0] = "<arguments>";
+                alert(a);
+                a = "a"
+                alert(arguments[0]);
+            }
+
+            y1(1);
         </script>
 	</head>
 	<body>
