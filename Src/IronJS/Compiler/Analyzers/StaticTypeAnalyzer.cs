@@ -21,13 +21,9 @@ namespace IronJS.Compiler.Analyzers {
                 var left = Analyze(node.Left);
                 var right = Analyze(node.Right);
 
-                if (right.TypeResolved) {
-                    Scope.Variables.Get(left).AddType(right.Type);
-                    return Binary.CreateAssign(node.Source, left, right);
+                Scope.Variables.Get(left).AddAssignedFrom(right);
 
-                } else {
-                    return AnalyzeChildren(node);
-                }
+                return Binary.CreateAssign(node.Source, left, right);
             } else {
                 return AnalyzeChildren(node);
             }
