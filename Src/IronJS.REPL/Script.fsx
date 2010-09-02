@@ -1,0 +1,2 @@
+﻿#light
+#r @"FSharp.PowerPack"
