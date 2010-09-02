@@ -9,23 +9,23 @@ type UnaryOp
   = Inc
   | Dec
 
-type Node 
+type Node
   //Constants
-  = String of string
-  | Number of double
-  | Boolean of bool
-  | Pass
-  | Null
-  | Undefined
+  = String    of IronJS.Type * string
+  | Number    of IronJS.Type * double
+  | Boolean   of IronJS.Type * bool
+  | Pass      of IronJS.Type
+  | Null      of IronJS.Type
+  | Undefined of IronJS.Type
 
   //Ops
-  | Binary of BinaryOp * Node * Node
-  | Unary of UnaryOp * Node
+  | Binary  of IronJS.Type * BinaryOp * Node * Node
+  | Unary   of IronJS.Type * UnaryOp  * Node
 
   //
-  | Block of Node list
-  | Identifier of string
-  | Var of Node
-  | Return of Node
-  | With of Node
-
+  | Assign      of IronJS.Type * Node * Node
+  | Block       of IronJS.Type * Node list
+  | Identifier  of IronJS.Type * string
+  | Var         of IronJS.Type * Node
+  | Return      of IronJS.Type * Node
+  | With        of IronJS.Type * Node
