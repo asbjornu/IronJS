@@ -2,11 +2,7 @@
 
 type Type
   = Nothing   = 0   // NOT null
-
-  | Double    = 1
-  | Integer   = 2
-  | Number    = 3   // Double | Integer
-
+  | Number    = 1
   | Boolean   = 4
   | String    = 8
 

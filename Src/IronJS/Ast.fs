@@ -14,7 +14,6 @@
     = String  of string
     | Number  of double
     | Boolean of bool
-    | Pass
     | Null
     | Undefined
 

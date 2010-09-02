@@ -5,13 +5,13 @@
 #r @"../Lib/Microsoft.Dynamic.dll"
 
 #load "Type.fs"
-#load "Node.fs"
-#load "Parsers.fs"
+#load "Ast.fs"
+#load "Cst.fs"
 
 open IronJS
 open System
 
-IO.Directory.SetCurrentDirectory(@"C:\Users\fredrikhm\Personal\IronJS\Src\IronJS.Ast")
+IO.Directory.SetCurrentDirectory(@"C:\Users\fredrikhm\Personal\IronJS\Src\IronJS")
 
 let x = Ast.Parsers.ecma3 (IO.File.ReadAllText("Script.js"))
-
+let y = Cst.convertAstToCst x
