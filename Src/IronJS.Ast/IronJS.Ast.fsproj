@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>a9d2b9b0-8677-416d-a334-2b7c5befa399</ProjectGuid>
+    <ProjectGuid>{0c550da8-d997-4a41-ad19-03eca0eb8115}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>IronJS.Ast</RootNamespace>
     <AssemblyName>IronJS.Ast</AssemblyName>
@@ -39,7 +39,6 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Module1.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />

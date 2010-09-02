@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "IronJS", "IronJS\IronJS.fsproj", "{AD57D94C-301D-4E67-B024-82E8CB45F67B}"
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "IronJS.REPL", "IronJS.REPL\IronJS.REPL.fsproj", "{0F78334F-EA74-4C5C-8232-B7D329BE2226}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "IronJS.Ast", "IronJS.Ast\IronJS.Ast.fsproj", "{0C550DA8-D997-4A41-AD19-03ECA0EB8115}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,16 +15,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{AD57D94C-301D-4E67-B024-82E8CB45F67B}.Release|x86.ActiveCfg = Release|Any CPU
 		{0F78334F-EA74-4C5C-8232-B7D329BE2226}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{0F78334F-EA74-4C5C-8232-B7D329BE2226}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{0F78334F-EA74-4C5C-8232-B7D329BE2226}.Debug|Mixed Platforms.Build.0 = Debug|x86
@@ -35,6 +25,16 @@ Global
 		{0F78334F-EA74-4C5C-8232-B7D329BE2226}.Release|Mixed Platforms.Build.0 = Release|x86
 		{0F78334F-EA74-4C5C-8232-B7D329BE2226}.Release|x86.ActiveCfg = Release|x86
 		{0F78334F-EA74-4C5C-8232-B7D329BE2226}.Release|x86.Build.0 = Release|x86
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{0C550DA8-D997-4A41-AD19-03ECA0EB8115}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
