@@ -21,9 +21,7 @@ namespace IronJS.Runtime {
         }
 
         public static System.Type JsToClr(Type type) {
-            type = NormalizeJsType(type);
-
-            switch (type) {
+            switch (NormalizeJsType(type)) {
                 case Type.String:
                     return typeof(string);
 
@@ -83,12 +81,11 @@ namespace IronJS.Runtime {
                     return Type.Object;
 
                 case Type.None:
-                    throw new Error("'None' is not a valud IronJS.Runtime.Type");
+                    throw new Error("'None' is not a valid IronJS.Runtime.Type value");
 
                 default:
                     throw new Error("Invalid IronJS.Runtime.Type value ({0})", type);
             }
-
         }
     }
 }

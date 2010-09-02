@@ -21,24 +21,23 @@ namespace IronJS.Compiler.Analyzers {
             ScopeChain = new Stack<Scope>();
         }
 
-        public INode[] Analyze(Scope scope, INode[] nodes) {
+        public INode Analyze(INode node) {
             ScopeChain.Clear();
-            ScopeChain.Push(scope);
-            return nodes.Select(x => Analyze(x)).ToArray();
+            return AnalyzeNode(node);
         }
 
         protected INode AnalyzeChildren(INode node) {
-            node.Children = node.Children.Select(x => Analyze(x)).ToArray();
+            node.Children = node.Children.Select(x => AnalyzeNode(x)).ToArray();
             return node;
         }
 
-        protected INode Analyze(Function node) {
+        protected INode AnalyzeFunction(Function node) {
             ScopeChain.Push(node.Scope);
             AnalyzeChildren(node);
             ScopeChain.Pop();
             return node;
         }
 
-        protected abstract INode Analyze(INode node);
+        protected abstract INode AnalyzeNode(INode node);
     }
 }

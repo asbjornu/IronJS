@@ -4,22 +4,25 @@ using IronJS.Compiler.Ast.Nodes;
 
 namespace IronJS.Compiler.Analyzers {
     public class StaticTypeAnalyzer : Base {
-        protected override INode Analyze(INode node) {
+        protected override INode AnalyzeNode(INode node) {
             if (node == null) {
                 return Pass.Instance;
 
             } else if (node is Binary) {
-                return Analyze(node as Binary);
+                return AnalyzeBinary(node as Binary);
+
+            } else if (node is Function) {
+                return AnalyzeFunction(node as Function);
 
             } else {
                 return AnalyzeChildren(node);
             }
         }
 
-        INode Analyze(Binary node) {
+        INode AnalyzeBinary(Binary node) {
             if (node.Op == Binary.OpType.Assign && node.Left is Identifier) {
-                var left = Analyze(node.Left);
-                var right = Analyze(node.Right);
+                var left = AnalyzeNode(node.Left);
+                var right = AnalyzeNode(node.Right);
 
                 Scope.Variables.Get(left).AddAssignedFrom(right);
 

@@ -28,8 +28,9 @@ namespace IronJS.Compiler.Ast.Nodes {
         }
 
         public static INode Create(SourcePosition pos, INode[] parameters, INode body) {
+            var index = 0;
             var node = new Function(pos, new[] { body }, new Context.Scope());
-            node.Scope.Variables.Add(parameters.Cast<Identifier>().Select(x => new Context.Variable(x.Name)));
+            node.Scope.Variables.Add(parameters.Cast<Identifier>().Select(x => Context.Variable.CreateParameter(x.Name, ++index) ));
             return node;
         }
 

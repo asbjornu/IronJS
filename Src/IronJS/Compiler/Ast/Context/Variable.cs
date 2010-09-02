@@ -17,7 +17,7 @@ namespace IronJS.Compiler.Ast.Context {
         public bool InitAsUndefind { get; set; }
         public bool IsParameter { get; set; }
 
-        public Variable(string name, int index) {
+        Variable(string name, int index) {
             Name = name;
             Index = index;
 
@@ -31,7 +31,7 @@ namespace IronJS.Compiler.Ast.Context {
             IsParameter = false;
         }
 
-        public Variable(string name)
+        Variable(string name)
             : this(name, -1) {
         }
 

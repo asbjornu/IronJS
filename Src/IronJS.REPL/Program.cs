@@ -1,5 +1,7 @@
 ﻿using System;
 using IronJS;
+using IronJS.Compiler.Ast.Nodes;
+using IronJS.Compiler.Ast;
 
 namespace IronJS.REPL {
 	class Program {
@@ -9,8 +11,8 @@ namespace IronJS.REPL {
             var analyzer2 = new Compiler.Analyzers.StaticTypeAnalyzer();
 
             var nodes = parser.ParseFile("testing.js");
-            var global = new Compiler.Ast.Context.Scope();
-            var analyzed = analyzer2.Analyze(global, analyzer.Analyze(global, nodes));
+            var function = Function.Create(SourcePosition.Unknown, new INode[0], Block.Create(SourcePosition.Unknown, nodes));
+            var analyzed = analyzer2.Analyze(analyzer.Analyze(function));
 		}
 	}
 }
