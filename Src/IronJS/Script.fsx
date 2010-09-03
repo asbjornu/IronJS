@@ -6,12 +6,14 @@
 
 #load "Type.fs"
 #load "Ast.fs"
-#load "Cst.fs"
 
 open IronJS
 open System
 
 IO.Directory.SetCurrentDirectory(@"C:\Users\fredrikhm\Personal\IronJS\Src\IronJS")
 
-let x = Ast.Parsers.ecma3 (IO.File.ReadAllText("Script.js"))
-let y = Cst.convertAstToCst x
+let tree = Ast.Parsers.ecma3 (IO.File.ReadAllText("Script.js"))
+let trees = Ast.splitTree tree 10L
+let filters = [Ast.Filters.collectVars]
+
+List.fold (fun s f -> f s) trees filters
