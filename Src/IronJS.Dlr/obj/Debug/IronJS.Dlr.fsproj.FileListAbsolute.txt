@@ -1,8 +1,0 @@
-C:\Users\fredrikhm\Personal\IronJS\Src\IronJS.Dlr\obj\Debug\ResolveAssemblyReference.cache
-C:\Users\fredrikhm\Personal\IronJS\Src\IronJS.Dlr\bin\Debug\IronJS.Dlr.XML
-C:\Users\fredrikhm\Personal\IronJS\Src\IronJS.Dlr\bin\Debug\IronJS.Dlr.dll
-C:\Users\fredrikhm\Personal\IronJS\Src\IronJS.Dlr\bin\Debug\IronJS.Dlr.pdb
-C:\Users\fredrikhm\Personal\IronJS\Src\IronJS.Dlr\bin\Debug\Microsoft.Dynamic.dll
-C:\Users\fredrikhm\Personal\IronJS\Src\IronJS.Dlr\bin\Debug\Microsoft.Scripting.dll
-C:\Users\fredrikhm\Personal\IronJS\Src\IronJS.Dlr\obj\Debug\IronJS.Dlr.dll
-C:\Users\fredrikhm\Personal\IronJS\Src\IronJS.Dlr\obj\Debug\IronJS.Dlr.pdb
