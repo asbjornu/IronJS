@@ -41,13 +41,11 @@
         | Return      of Node
         | With        of Node * Node
         | Function    of string option * string list * Node
-        | AstRef      of int64
 
       let walk func tree = 
         match tree with
         | Identifier(_)
         | Boolean(_)
-        | AstRef(_)
         | String(_)
         | Number(_)
         | Pass
@@ -64,31 +62,6 @@
         | Return(tree) -> Return(func tree)
         | With(target, tree) -> With(target, tree)
         | Function(name, parms, tree) -> Function(name, parms, func tree)
-
-      (**)
-      let split tree index = 
-        let index = index + 1L
-        let astTrees = ref List.empty
-
-        let rec split ast =
-          match ast with
-          | Function(name, parms, ast) -> 
-            astTrees := (split ast, Scope.New parms) :: !astTrees
-
-            match name with
-            | None -> AstRef(int64 (!astTrees).Length+index)
-            | Some(name) -> AstRef(int64 (!astTrees).Length+index)
-
-          | Var(t)          -> Var(split t)
-          | Assign(lt, rt)  -> Assign(split lt, split rt)
-          | Block(trees)    -> Block([for x in trees -> split x])
-
-          //trees without sub-trees
-          | x -> x
-
-        (split tree, Scope.New []) :: (List.rev !astTrees)
-          |> List.mapi (fun i x -> (int64 i)+index, x)
-          |> Map.ofList
 
     module Filters =
         
