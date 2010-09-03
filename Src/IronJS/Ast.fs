@@ -146,8 +146,6 @@
       scopes     := List.tail !scopes
       scope, result
         
-    (*
-    *)
     let private currentScope scopes =
       List.head !scopes
         
@@ -297,7 +295,7 @@
                           
                       Some(scopes.Length, itm.DynamicScopeLevel), scope :: scopes
 
-                  | Some(fromScope, dynamicLevel)  -> 
+                  | Some(fromScope, dynamicScopeLevel)  -> 
 
                     let scope = 
                       match itm.HasClosure name with
@@ -306,7 +304,7 @@
                                       fun c -> {c with 
                                                   Name = name; 
                                                   FromScope = fromScope; 
-                                                  DynamicScopeLevel = dynamicLevel})
+                                                  DynamicScopeLevel = dynamicScopeLevel})
                     level, scope :: scopes
 
                 ) !scopes (None, [])
@@ -336,13 +334,9 @@
         open IronJS
         open Xebic.ES3
 
-        (*
-        *)
         type private AntlrToken = 
           Antlr.Runtime.Tree.CommonTree
 
-        (*
-        *)
         let private children (tok:AntlrToken) = 
           if tok.Children = null then []
           else
@@ -350,28 +344,18 @@
               |> Seq.cast<AntlrToken> 
               |> Seq.toList
               
-        (*
-        *)
         let private cast (tok:obj) = 
           tok :?> AntlrToken
           
-        (*
-        *)
         let private hasChild (tok:AntlrToken) index =
           tok.ChildCount > index
           
-        (*
-        *)
         let private child (tok:AntlrToken) index = 
           if hasChild tok index then cast tok.Children.[index] else null
           
-        (*
-        *)
         let private text (tok:AntlrToken) = 
           tok.Text
 
-        (*
-        *)
         let private jsString (tok:AntlrToken) = 
           let str = text tok
           str.Substring(1, str.Length - 2)

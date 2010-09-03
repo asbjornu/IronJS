@@ -3,6 +3,10 @@
   module Types =
 
     open IronJS
+    open System
+    open System.Reflection
+    open System.Reflection.Emit
+
     type ClrType = System.Type
 
     (*
@@ -43,6 +47,8 @@
       | ArrFunc         = 96  // Array | Function
       | ArrFuncNull     = 352 // Array | Function | Null
 
+    (*
+    *)
     let private _delegateCache = 
       new System.Collections.Concurrent.ConcurrentDictionary<
             System.RuntimeTypeHandle list, 
@@ -52,13 +58,38 @@
     let createDelegateType (types:ClrType seq) =
       let key = Seq.fold (fun s (t:ClrType) -> t.TypeHandle :: s) [] types
 
-      let rec getFor' types =
+      let rec createDelegateType' types =
         let success, func = _delegateCache.TryGetValue key
         if success then func
         else
           let funcType = Dlr.Expr.delegateType types
           if _delegateCache.TryAdd(key, funcType) 
             then funcType
-            else getFor' types
+            else createDelegateType' types
 
-      getFor' types
+      createDelegateType' types
+
+    (*
+    *)
+    let private _assemblyName = new AssemblyName("IronJS.DynamicAssembly");
+    let private _dynamicAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_assemblyName, AssemblyBuilderAccess.Run);
+    let private _dynamicModule = _dynamicAssembly.DefineDynamicModule("Module", "IronJS.DynamicAssembly.dll");
+    let private _typeCache = new Collections.Concurrent.ConcurrentDictionary<int, ClrType>()
+    let private _fieldAttributes = FieldAttributes.Public;
+    let private _typeAttributes = TypeAttributes.Public ||| TypeAttributes.AutoLayout 
+                                  ||| TypeAttributes.Class ||| TypeAttributes.Sealed
+
+    let rec createClosureType (genericCount:int) =
+      let success, type' = _typeCache.TryGetValue genericCount
+      if success then type'
+      else
+        let newType' = _dynamicModule.DefineType(sprintf "Closure%i" genericCount, _typeAttributes);
+        let genericParams = newType'.DefineGenericParameters(Array.init genericCount (fun i -> sprintf "T%i" i))
+
+        Array.iteri (fun i gp -> newType'.DefineField(sprintf "Item%i" i, gp, _fieldAttributes) |> ignore) genericParams
+
+        let concreteType = newType'.CreateType()
+
+        if _typeCache.TryAdd(genericCount, concreteType) 
+          then concreteType
+          else createClosureType genericCount

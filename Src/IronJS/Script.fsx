@@ -20,3 +20,18 @@ let stripped = Ast.stripVarStatements tree
 let levels = Ast.analyzeScopeLevels stripped
 let closures = Ast.analyzeClosureScopes levels
 let assign = Ast.analyzeAssignment closures
+
+
+let x = (Types.createClosureType 2).MakeGenericType([|typeof<int>; typeof<string>|]).GetConstructor([||]).Invoke([||])
+
+
+let f = x.GetType().GetField("Item0")
+
+f.SetValue(x, 1)
+
+f.GetValue(x)
+
+
+
+
+(Types.createClosureType 2) = (Types.createClosureType 3)
