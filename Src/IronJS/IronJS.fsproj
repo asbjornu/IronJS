@@ -60,7 +60,6 @@
   <ItemGroup>
     <Compile Include="Type.fs" />
     <Compile Include="Ast.fs" />
-    <Compile Include="Cst.fs" />
     <None Include="Script.fsx" />
     <Content Include="Script.js" />
   </ItemGroup>
