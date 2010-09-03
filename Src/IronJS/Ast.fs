@@ -2,37 +2,6 @@
 
   module Ast = 
 
-    type BinaryOp 
-      //Math
-      = Add
-      | Sub
-
-    type UnaryOp 
-      = Inc
-      | Dec
-
-    type Tree
-      //Constants
-      = String  of string
-      | Number  of double
-      | Boolean of bool
-      | Null
-      | Undefined
-
-      //Ops
-      | Binary  of BinaryOp * Tree * Tree
-      | Unary   of UnaryOp  * Tree
-
-      //
-      | Assign      of Tree * Tree
-      | Block       of Tree list
-      | Identifier  of string * (int * int)
-      | Var         of Tree
-      | Return      of Tree
-      | With        of Tree
-      | Function    of string option * string list * Tree
-      | AstRef      of int64
-
     type Scope = {
       Locals: string Set
     } with
@@ -40,32 +9,114 @@
         Locals = Set.ofSeq parms
       }
 
-    (**)
-    let splitTree ast index = 
-      let index = index + 1L
-      let astTrees = ref List.empty
+    module Tree =
 
-      let rec split ast =
-        match ast with
-        | Function(_, parms, ast) -> 
-          astTrees := (split ast, Scope.New parms) :: !astTrees
-          AstRef(int64 (!astTrees).Length+index)
+      type BinaryOp 
+        //Math
+        = Add
+        | Sub
 
-        | Var(t)          -> Var(split t)
-        | Assign(lt, rt)  -> Assign(split lt, split rt)
-        | Block(trees)    -> Block([for x in trees -> split x])
+      type UnaryOp 
+        = Inc
+        | Dec
 
-        //trees without sub-trees
-        | x -> x
+      type Node
+        //Constants
+        = String  of string
+        | Number  of double
+        | Boolean of bool
+        | Pass
+        | Null
+        | Undefined
 
-      (split ast, Scope.New []) :: (List.rev !astTrees)
-        |> List.mapi (fun i x -> (int64 i)+index, x)
-        |> Map.ofList
+        //Ops
+        | Binary  of BinaryOp * Node * Node
+        | Unary   of UnaryOp  * Node
+
+        //
+        | Assign      of Node * Node
+        | Block       of Node list
+        | Identifier  of string * (int * int)
+        | Var         of Node
+        | Return      of Node
+        | With        of Node * Node
+        | Function    of string option * string list * Node
+        | AstRef      of int64
+
+      let walk func tree = 
+        match tree with
+        | Identifier(_)
+        | Boolean(_)
+        | AstRef(_)
+        | String(_)
+        | Number(_)
+        | Pass
+        | Null
+        | Undefined -> 
+          tree
+
+        | Binary(op, ltree, rtree) -> Binary(op, func ltree, func rtree)
+        | Unary(op, tree) -> Unary(op, func tree)
+        
+        | Assign(ltree, rtree) -> Assign(func rtree, (func ltree))
+        | Block(trees) -> Block([for tree in trees -> func tree])
+        | Var(tree) -> Var(func tree)
+        | Return(tree) -> Return(func tree)
+        | With(target, tree) -> With(target, tree)
+        | Function(name, parms, tree) -> Function(name, parms, func tree)
+
+      (**)
+      let split tree index = 
+        let index = index + 1L
+        let astTrees = ref List.empty
+
+        let rec split ast =
+          match ast with
+          | Function(name, parms, ast) -> 
+            astTrees := (split ast, Scope.New parms) :: !astTrees
+
+            match name with
+            | None -> AstRef(int64 (!astTrees).Length+index)
+            | Some(name) -> AstRef(int64 (!astTrees).Length+index)
+
+          | Var(t)          -> Var(split t)
+          | Assign(lt, rt)  -> Assign(split lt, split rt)
+          | Block(trees)    -> Block([for x in trees -> split x])
+
+          //trees without sub-trees
+          | x -> x
+
+        (split tree, Scope.New []) :: (List.rev !astTrees)
+          |> List.mapi (fun i x -> (int64 i)+index, x)
+          |> Map.ofList
 
     module Filters =
-      
-      let collectVars trees =
-        trees
+        
+      let stripVariableDefinitions trees = 
+
+        let collectVars tree =
+          let vars = ref Set.empty
+
+          let rec walker tree =
+            match tree with
+            | Tree.Var(Tree.Assign(Tree.Identifier(n, r), rtree)) ->
+              vars := Set.add n !vars
+              Tree.Assign(Tree.Identifier(n, r), Tree.walk walker rtree)
+
+            | Tree.Var(Tree.Identifier(n, _)) -> 
+              vars := Set.add n !vars
+              Tree.Pass
+
+            | tree -> Tree.walk walker tree
+
+          walker tree, !vars
+
+        Map.map (fun _ (tree, scope) -> 
+          
+          let tree, vars = collectVars tree
+          tree, {scope with Locals = Set.union scope.Locals vars}
+
+        ) trees
 
     module Parsers =
 
