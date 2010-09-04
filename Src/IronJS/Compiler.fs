@@ -64,20 +64,17 @@
     *)
     let rec private resolveType tree func =
       match tree with
-      | Ast.Identifier(name) -> func name
-      | Ast.Boolean(_) -> Some(Types.JsType.Boolean)
-      | Ast.String(_) -> Some(Types.JsType.String)
-      | Ast.Number(_) -> Some(Types.JsType.Number)
-      | Ast.Typed(type', _) -> Some(type')
-      | Ast.Null -> Some(Types.JsType.Null)
-      | Ast.Undefined -> Some(Types.JsType.Undefined)
-      | Ast.Function(_, _) -> Some(Types.JsType.Function)
-      | Ast.Unary(op, tree) -> resolveType tree func
-      | Ast.Binary(op, ltree, rtree) -> 
-        match resolveType ltree func, resolveType rtree func with
-        | None, _ | _, None -> failwith "Que?"
-        | Some(ltype), Some(rtype) -> Some(ltype ||| rtype)
-      | _ -> None
+      | Ast.Identifier(name)          -> func name
+      | Ast.Boolean(_)                -> Types.JsType.Boolean
+      | Ast.String(_)                 -> Types.JsType.String
+      | Ast.Number(_)                 -> Types.JsType.Number
+      | Ast.Typed(type', _)           -> type'
+      | Ast.Null                      -> Types.JsType.Null
+      | Ast.Undefined                 -> Types.JsType.Undefined
+      | Ast.Function(_, _)            -> Types.JsType.Function
+      | Ast.Unary(op, tree)           -> resolveType tree func
+      | Ast.Binary(op, ltree, rtree)  -> resolveType ltree func ||| resolveType rtree func
+      | _                             -> Types.JsType.Nothing
         
     (*
     *)
