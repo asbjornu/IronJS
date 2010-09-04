@@ -1,15 +1,22 @@
-﻿namespace IronJS.Dlr
+﻿namespace IronJS
 
-  type Et = System.Linq.Expressions.Expression
-  type EtParam = System.Linq.Expressions.ParameterExpression
-  type AstUtils = Microsoft.Scripting.Ast.Utils
-  type DynamicUtils = Microsoft.Scripting.Utils.DynamicUtils
+  module Dlr = 
 
-  (*
-  Tools for working with DLR expressions
-  *)
-  module Expr =
+    type Et               = System.Linq.Expressions.Expression
+    type EtParam          = System.Linq.Expressions.ParameterExpression
+    type Expr             = System.Linq.Expressions.Expression
+    type ExprParam        = System.Linq.Expressions.ParameterExpression
 
+    type Br               = System.Dynamic.BindingRestrictions
+    type AstUtils         = Microsoft.Scripting.Ast.Utils
+    type DynamicUtils     = Microsoft.Scripting.Utils.DynamicUtils
+
+    type MetaObj          = System.Dynamic.DynamicMetaObject
+    type MetaObjProvider  = System.Dynamic.IDynamicMetaObjectProvider
+
+    (*
+    Tools for working with DLR expressions
+    *)
     open System.Linq.Expressions
 
     //Defaults
@@ -59,10 +66,10 @@
     let labelContinue() = Et.Label(typeof<System.Void>, "~continue")
 
     //Blocks
-    let mutable private tmpCounter = 0L
-    let private tmpName() = 
-      tmpCounter <- tmpCounter + 1L
-      sprintf "~tmp_%x" tmpCounter
+    let private _tmpCounter = ref 0L
+    let private _tmpName() = 
+      _tmpCounter := !_tmpCounter + 1L
+      sprintf "~tmp_%x" !_tmpCounter
 
     let blockWithLocals (parms:EtParam seq) (exprs:Et seq) = 
       if Seq.length exprs = 0 then void' else Et.Block(parms, exprs) :> Et
@@ -71,7 +78,7 @@
       blockWithLocals [] exprs
 
     let blockTmp typ (fn:EtParam -> Et list) = 
-      let tmp = Et.Parameter(typ, tmpName())
+      let tmp = Et.Parameter(typ, _tmpName())
       blockWithLocals [tmp] (fn tmp)
 
     let blockTmpT<'a> = 
@@ -81,7 +88,7 @@
       if var :? EtParam 
         then block (fn var) 
         else 
-          let tmp = Et.Parameter(typeof<'a>, tmpName())
+          let tmp = Et.Parameter(typeof<'a>, _tmpName())
           blockWithLocals [tmp] ([assign tmp var] @ (fn tmp))
 
     //Object fields and properties
@@ -264,3 +271,24 @@
 
     let not target = Et.OnesComplement target :> Et
     let notDefault target = notEq target (default' target.Type)
+
+    (*
+    Tools for working with DLR expression restrictions
+    *)
+    module Restrict =
+
+      let notAtAll = Br.Empty
+      let byExpr expr = Br.GetExpressionRestriction(expr)
+      let byType expr typ = Br.GetTypeRestriction(expr, typ)
+      let byInstance expr instance = Br.GetInstanceRestriction(expr, instance)
+
+      let argRestrict (a:System.Dynamic.DynamicMetaObject) =
+        let restriction = 
+          if a.HasValue && a.Value = null 
+            then Br.GetInstanceRestriction(a.Expression, null')
+            else Br.GetTypeRestriction(a.Expression, a.LimitType)
+
+        a.Restrictions.Merge(restriction)
+
+      let byArgs (args:System.Dynamic.DynamicMetaObject seq) =
+        Seq.fold (fun (s:Br) a -> s.Merge(argRestrict a)) Br.Empty args

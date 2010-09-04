@@ -54,6 +54,7 @@
     and Variable = {
       Name: string
       Index: int
+      Type: Types.JsType
       IsParameter: bool
       IsClosedOver: bool
       InitToUndefined: bool
@@ -62,6 +63,7 @@
       static member New = {
         Name = ""
         Index = -1
+        Type = Types.JsType.Nothing
         IsParameter = false
         IsClosedOver = false
         InitToUndefined = false
@@ -193,6 +195,7 @@
           match scope.HasVariable name with
           | false ->  ()
           | true  ->  
+
             let tree = 
               match analyzeType rtree with
               | None -> rtree
@@ -328,6 +331,7 @@
           
 
     module Parsers =
+
       (*
       *)
       module Ecma3 = 

@@ -4,13 +4,14 @@
 #r @"../Lib/Xebic.ES3.dll"
 #r @"../Lib/Microsoft.Dynamic.dll"
 
-#load "Dlr.Expr.fs"
-#load "Dlr.Restrict.fs"
 #load "Aliases.fs"
+#load "Dlr.fs"
 #load "Types.fs"
 #load "Ast.fs"
+#load "Compiler.fs"
 
 open IronJS
+open IronJS.Compiler
 open System
 
 IO.Directory.SetCurrentDirectory(@"C:\Users\fredrikhm\Personal\IronJS\Src\IronJS")
@@ -21,17 +22,21 @@ let levels = Ast.analyzeScopeLevels stripped
 let closures = Ast.analyzeClosureScopes levels
 let assign = Ast.analyzeAssignment closures
 
+let compiled = 
+  match assign with
+  | Ast.Function(_, scope, ast) -> 
 
-let x = (Types.createClosureType 2).MakeGenericType([|typeof<int>; typeof<string>|]).GetConstructor([||]).Invoke([||])
+    let target = {
+      Ast = ast
+      Scope = scope
+      Delegate = typeof<Func<Types.Closure, Types.Box>>
+    }
+
+    let options = {
+      DynamicScopeLevel = -1
+    }
+
+    Compiler.compile target options
 
 
-let f = x.GetType().GetField("Item0")
-
-f.SetValue(x, 1)
-
-f.GetValue(x)
-
-
-
-
-(Types.createClosureType 2) = (Types.createClosureType 3)
+  | _ -> failwith "Que?"

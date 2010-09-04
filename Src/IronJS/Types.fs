@@ -1,19 +1,28 @@
 ﻿namespace IronJS
 
+  #nowarn "9"
+
   module Types =
 
     open IronJS
+    open IronJS.Aliases
+
     open System
     open System.Reflection
     open System.Reflection.Emit
-
-    type ClrType = System.Type
+    open System.Runtime.InteropServices
 
     (*
+    Alias for System.Type so we have "ClrType" and "JsTypes"
+    *)
+    type ClrType        = System.Type
+    type StrongBox<'a>  = System.Runtime.CompilerServices.StrongBox<'a>
+
+    (*
+    Enumeration of all javascript types and combinations
     *)
     type JsType
       = Nothing   = 0   // NOT null
-      | Void      = 1
       | Number    = 2
       | Boolean   = 4
       | String    = 8
@@ -48,12 +57,106 @@
       | ArrFuncNull     = 352 // Array | Function | Null
 
     (*
+    Struct used to box dynamic values during runtime
+    *)
+    type [<StructLayout(LayoutKind.Explicit)>] Box =
+      struct
+        [<FieldOffset(0)>] val mutable Clr    : obj 
+
+        #if X64
+        [<FieldOffset(8)>]  val mutable Bool   : bool
+        [<FieldOffset(8)>]  val mutable Double : double
+        [<FieldOffset(16)>] val mutable Type   : Types
+        #else // X86
+        [<FieldOffset(4)>]  val mutable Bool   : bool
+        [<FieldOffset(4)>]  val mutable Double : double
+        [<FieldOffset(12)>] val mutable Type   : JsType
+        #endif
+      end
+
+    let strongBoxTypeDef = typedefof<System.Runtime.CompilerServices.StrongBox<_>>
+    let makeStrongBox type' = strongBoxTypeDef.MakeGenericType([|type'|])
+    let makeStrongBoxT<'a> = makeStrongBox typeof<'a>
+
+    let clrToJs (type':ClrType) =
+      if   type' = typeof<double>             then JsType.Number
+      elif type' = typeof<string>             then JsType.String
+      elif type' = typeof<bool>               then JsType.Boolean
+    //elif type' = typeof<Runtime.Object>     then JsType.Object
+    //elif type' = typeof<Runtime.Function>   then JsType.Function
+    //elif type' = typeof<Runtime.Undefined>  then JsType.Undefined
+      elif type' = typeof<ClrObject>          then JsType.Clr
+      elif type' = typeof<Box>                then JsType.Dynamic
+      else failwithf "Invalid type '%s'" type'.Name
+
+    let normalizeJsType type' =
+      match type' with
+      | JsType.Number    -> JsType.Number
+
+      | JsType.Boolean   -> JsType.Boolean
+
+      | JsType.StringNull 
+      | JsType.String    -> JsType.String
+
+      | JsType.ArrayNull
+      | JsType.Array     -> JsType.Array
+
+      | JsType.FunctionNull
+      | JsType.Function  -> JsType.Function
+
+      | JsType.UndefinedNull
+      | JsType.Undefined -> JsType.Undefined
+
+      | JsType.Null
+      | JsType.Clr       -> JsType.Clr
+      | JsType.ClrNull   -> JsType.Clr
+
+      | JsType.ObjectNull
+      | JsType.Object
+      | JsType.ArrFunc
+      | JsType.ArrFuncNull
+      | JsType.ObjArr
+      | JsType.ObjArrNull
+      | JsType.ObjFunc
+      | JsType.ObjFuncNull
+      | JsType.ObjFuncArr
+      | JsType.ObjFuncArrNull -> JsType.Object
+
+      | JsType.Dynamic 
+      | JsType.Nothing -> JsType.Dynamic
+
+      | _ -> failwithf "Unknown type %A" type'
+
+    (*Converts a JsType enum to ClrType object*)
+    let rec jsToClr typ =
+      match typ with
+      | JsType.Number     -> typeof<double>
+      | JsType.Boolean    -> typeof<bool>
+      | JsType.String     -> typeof<string>
+    //| JsType.Object     -> typeof<Runtime.Object>
+    //| JsType.Function   -> typeof<Runtime.Function>
+    //| JsType.Undefined  -> typeof<Runtime.Undefined>
+      | JsType.Dynamic    -> typeof<Box>
+      | JsType.Null       
+      | JsType.Clr        -> typeof<ClrObject>
+      | _                 -> jsToClr (normalizeJsType typ)
+
+
+    (*
+    Base type for all closures
+    *)
+    type Closure = 
+
+      val mutable Object : obj
+      
+      new(obj) = {
+        Object = obj
+      }
+
+    (*
     *)
     let private _delegateCache = 
-      new System.Collections.Concurrent.ConcurrentDictionary<
-            System.RuntimeTypeHandle list, 
-            ClrType
-          >()
+      new Collections.Concurrent.ConcurrentDictionary<System.RuntimeTypeHandle list, ClrType>()
 
     let createDelegateType (types:ClrType seq) =
       let key = Seq.fold (fun s (t:ClrType) -> t.TypeHandle :: s) [] types
@@ -62,7 +165,7 @@
         let success, func = _delegateCache.TryGetValue key
         if success then func
         else
-          let funcType = Dlr.Expr.delegateType types
+          let funcType = Dlr.delegateType types
           if _delegateCache.TryAdd(key, funcType) 
             then funcType
             else createDelegateType' types
@@ -72,7 +175,7 @@
     (*
     *)
     let private _assemblyName = new AssemblyName("IronJS.DynamicAssembly");
-    let private _dynamicAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_assemblyName, AssemblyBuilderAccess.Run);
+    let private _dynamicAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_assemblyName, AssemblyBuilderAccess.RunAndCollect);
     let private _dynamicModule = _dynamicAssembly.DefineDynamicModule("Module", "IronJS.DynamicAssembly.dll");
     let private _typeCache = new Collections.Concurrent.ConcurrentDictionary<int, ClrType>()
     let private _fieldAttributes = FieldAttributes.Public;
@@ -83,7 +186,7 @@
       let success, type' = _typeCache.TryGetValue genericCount
       if success then type'
       else
-        let newType' = _dynamicModule.DefineType(sprintf "Closure%i" genericCount, _typeAttributes);
+        let newType' = _dynamicModule.DefineType(sprintf "Closure%i" genericCount, _typeAttributes, typeof<Closure>);
         let genericParams = newType'.DefineGenericParameters(Array.init genericCount (fun i -> sprintf "T%i" i))
 
         Array.iteri (fun i gp -> newType'.DefineField(sprintf "Item%i" i, gp, _fieldAttributes) |> ignore) genericParams
