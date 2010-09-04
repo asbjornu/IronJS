@@ -34,22 +34,20 @@
         | IsClosedOver
         | InitToUndefined
 
-      let name (n, _, _, _) = n
-      let index (_, i, _, _) = i
-      let options (_, _, o, _) = o
-      let assignedFrom (_, _, _, a) = a
-      let isClosedOver (o:Set<Opts>) = o.Contains Opts.IsClosedOver
-      let needsProxy (o:Set<Opts>) = o.Contains Opts.NeedsProxy
-      let isParameter (o:Set<Opts>) = o.Contains Opts.IsParameter
-      let initToUndefined (o:Set<Opts>) = o.Contains Opts.InitToUndefined
+      let name = Utils.Quad.fst
+      let index = Utils.Quad.snd
+      let options = Utils.Quad.trd
+      let assignedFrom = Utils.Quad.fth
 
-    (*
-    module Closure =
-      let name (n, _, _, _) = n
-      let index (_, i, _, _) = i
-      let from (_, _, f, _) = f
-      let dsl (_, _, _, d) = d
-    *)
+      let isClosedOver (_, _, o:Set<_>, _) = o.Contains Opts.IsClosedOver
+      let needsProxy (_, _, o:Set<_>, _) = o.Contains Opts.NeedsProxy
+      let isParameter (_, _, o:Set<_>, _) = o.Contains Opts.IsParameter
+      let initToUndefined (_, _, o:Set<_>, _) = o.Contains Opts.InitToUndefined
+
+      let addOpt (n, i, o:Set<_>, a) opt = n, i, o.Add opt, a
+      let addAssign (n, i, o, a:Set<_>) tree = n, i, o, a.Add tree
+
+      let newParam i n = n, i, set [Opts.IsParameter], Set.empty
         
     (*
     *)
@@ -79,46 +77,26 @@
       
     (*
     *)
-    and [<CustomEquality; CustomComparison>] Scope = {
+    and Scope = {
       Variables: Set<string * int * Set<Var.Opts> * Set<Tree>>
       Closures: Set<string * int * int * int>
       DynamicScopeLevel: int
     } with
-
-      interface System.IComparable with
-        member x.CompareTo y =
-          match y with
-          | :? Scope as y -> compare x y
-          | _ -> failwith "Que?"
-
-      override x.Equals (obj) =
-        match obj with
-        | :? Scope as scope -> false
-        | _ -> false
-
-      override x.GetHashCode () =
-        x.Variables.GetHashCode()
 
       member x.UpdateVariable name func = 
         match x.TryGetVariable name with
         | None -> failwith "Que?"
         | Some(v) -> {x with Variables = x.Variables.Remove(v).Add(func v)}
         
-      member x.AddVariable var = 
-        {x with Variables = x.Variables.Add(var)}
-        
-      member x.AddClosure closure = 
-        {x with Closures = x.Closures.Add(closure)}
-        
-      member x.TryGetVariable name = 
-        Seq.tryFind (fun (n, _, _, _) -> n = name) x.Variables
-        
-      member x.TryGetClosure name =
-        Seq.tryFind (fun (n, _, _, _) -> n = name) x.Closures
+      member x.AddVariable var = {x with Variables = x.Variables.Add(var)}
+      member x.AddClosure closure = {x with Closures = x.Closures.Add(closure)}
+
+      member x.TryGetVariable name = Seq.tryFind (fun (n, _, _, _) -> n = name) x.Variables
+      member x.TryGetClosure name = Seq.tryFind (fun (n, _, _, _) -> n = name) x.Closures
         
       static member New parms = {
         Closures = set []
-        Variables = parms |> Seq.mapi (fun i x -> x, i, set [Var.Opts.IsParameter], set []) |> Set.ofSeq
+        Variables = ["~closure"] @ parms |> Seq.mapi Var.newParam |> Set.ofSeq
         DynamicScopeLevel = -1
       }
         
@@ -177,7 +155,7 @@
               | Function(_, _) -> Typed(Types.JsType.Function, Pass)
               | _ -> rtree
 
-            scopes := scope.UpdateVariable name (fun (n, i, o, a) -> n, i, o, a.Add tree) :: List.tail !scopes
+            scopes := scope.UpdateVariable name (fun v -> Var.addAssign v tree) :: List.tail !scopes
 
           //Return node
           Assign(Identifier(name), analyze rtree)
@@ -266,11 +244,11 @@
 
                     match itm.TryGetVariable name with
                     | None              ->  None, itm :: scopes
-                    | Some(_, _, o, _)  -> 
+                    | Some(v)  -> 
                       let scope = 
-                        if Var.isClosedOver o
+                        if Var.isClosedOver v
                           then itm
-                          else itm.UpdateVariable name (fun (n, i, o, a) -> n, i, o.Add Var.Opts.IsClosedOver, a)
+                          else itm.UpdateVariable name (fun v -> Var.addOpt v Var.Opts.IsClosedOver)
                           
                       Some(scopes.Length, itm.DynamicScopeLevel), scope :: scopes
 
