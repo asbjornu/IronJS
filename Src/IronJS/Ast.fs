@@ -27,7 +27,7 @@
       | Void
 
     [<System.Flags>]
-    type VariableOptions 
+    type VarOpts 
       = Nothing = 0
       | IsParameter = 1
       | NeedsProxy = 2
@@ -65,15 +65,13 @@
     and Variable = {
       Name: string
       Index: int
-      Type: Types.JsType
-      Options: VariableOptions
+      Options: Set<VarOpts>
       AssignedFrom: Set<Tree>
     } with 
       static member New = {
         Name = ""
         Index = -1
-        Type = Types.JsType.Nothing
-        Options = VariableOptions.Nothing
+        Options = Set.empty
         AssignedFrom = Set.empty
       }
 
@@ -81,22 +79,22 @@
         {x with AssignedFrom = x.AssignedFrom.Add tree}
 
       member x.AddOption option = 
-        {x with Options = x.Options ||| option}
+        {x with Options = x.Options.Add option}
 
       member x.HasOption option = 
-        x.Options.HasFlag(option)
+        x.Options.Contains option
 
       member x.IsParameter =
-        x.Options.HasFlag(VariableOptions.IsParameter)
+        x.HasOption VarOpts.IsParameter
 
       member x.IsClosedOver =
-        x.Options.HasFlag(VariableOptions.IsClosedOver)
+        x.HasOption VarOpts.IsClosedOver
 
       member x.NeedsProxy =
-        x.Options.HasFlag(VariableOptions.NeedsProxy)
+        x.HasOption VarOpts.NeedsProxy
 
       member x.InitToUndefined =
-        x.Options.HasFlag(VariableOptions.InitToUndefined)
+        x.HasOption VarOpts.InitToUndefined
       
     (*
     *)
@@ -158,7 +156,7 @@
                           {Variable.New with 
                             Name = x; 
                             Index = i; 
-                            Options = VariableOptions.IsParameter
+                            Options = set [VarOpts.IsParameter]
                           }
                         )  
                     |>  Set.ofSeq
@@ -313,9 +311,9 @@
                     | None              ->  None, itm :: scopes
                     | Some(v:Variable)  -> 
                       let scope = 
-                        if v.Options.HasFlag(VariableOptions.IsClosedOver)
+                        if v.IsClosedOver
                           then itm
-                          else itm.UpdateVariable name (fun v -> v.AddOption VariableOptions.IsClosedOver)
+                          else itm.UpdateVariable name (fun v -> v.AddOption VarOpts.IsClosedOver)
                           
                       Some(scopes.Length, itm.DynamicScopeLevel), scope :: scopes
 

@@ -63,6 +63,7 @@
     *)
     let rec private resolveType tree func =
       match tree with
+      | Ast.Identifier(name) -> func name
       | Ast.Boolean(_) -> Some(Types.JsType.Boolean)
       | Ast.String(_) -> Some(Types.JsType.String)
       | Ast.Number(_) -> Some(Types.JsType.Number)
@@ -70,14 +71,11 @@
       | Ast.Null -> Some(Types.JsType.Null)
       | Ast.Undefined -> Some(Types.JsType.Undefined)
       | Ast.Function(_, _, _) -> Some(Types.JsType.Function)
-      
       | Ast.Unary(op, tree) -> resolveType tree func
       | Ast.Binary(op, ltree, rtree) -> 
         match resolveType ltree func, resolveType rtree func with
         | None, _ | _, None -> failwith "Que?"
         | Some(ltype), Some(rtype) -> Some(ltype ||| rtype)
-      
-      | Ast.Identifier(name) -> func name
       | _ -> None
         
     (*
@@ -94,17 +92,12 @@
           | None -> None
           | Some(var) ->
             if var.IsParameter then
-              if var.Index >= target.ParamCount then
-                failwith "Que?"
-              else
-                Some(Types.clrToJs (target.ParamType var.Index))
+              if var.Index >= target.ParamCount 
+                then Some(Types.JsType.Undefined)
+                else Some(Types.clrToJs (target.ParamType var.Index))
 
-            elif Set.contains name !activeVars then
-              Some(Types.JsType.Nothing)
-
-            elif var.AssignedFrom.Count = 0 then
-              Some(Types.JsType.Undefined)
-
+            elif Set.contains name !activeVars  then Some(Types.JsType.Nothing)
+            elif var.AssignedFrom.Count = 0     then Some(Types.JsType.Undefined)
             else
               activeVars := Set.add name !activeVars
 
@@ -138,6 +131,40 @@
         Target = target
       }
 
-      let varTypeMap = resolveVarTypes target
       ()
+      (*
+      resolveVarTypes target
+        |>  Map.map (fun name type' -> 
+                match ctx.Target.Scope.TryGetVariable name with
+                | None -> failwith "Que?"
+                | Some(var) -> 
+
+                  let options = 
+                    var.Options
+                      |>  (fun o -> 
+                            if var.IsParameter && var.Index < target.ParamCount 
+                                then (o.Remove VarOpts.IsParameter).Add VarOpts.InitToUndefined
+                                else o.Remove VarOpts.InitToUndefined
+                          )
+
+                      |>  (fun o ->
+                            if type' 
+                          )
+
+                  let options = 
+                    var.Options
+                      |>  Seq.map (fun opt -> 
+                            match opt with
+                            | Ast.VariableOptions.IsParameter -> 
+                              if var.Index < target.ParamCount 
+                                then [Ast.VariableOptions.InitToUndefined] 
+                                else [opt]
+                            | _ -> [opt]
+                          )
+                      |>  Seq.concat
+                      |>  Set.ofSeq
+
+                  type', var.Index, options
+            )
+        *)
       
