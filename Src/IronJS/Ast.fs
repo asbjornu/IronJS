@@ -8,20 +8,23 @@
     *)
     type BinaryOp 
       //Math
-      = Add
-      | Sub
-      | Eq
-      | NotEq
-      | Lt
-      | LtEq
-      | Gt
-      | GtEq
-        
+      = Add = 1
+      | Sub = 2
+      | Eq = 100
+      | NotEq = 101
+      | Lt = 102
+      | LtEq = 103
+      | Gt = 104
+      | GtEq = 105
+      
     (*
     *)
     type UnaryOp 
       = Inc
       | Dec
+      | PostInc
+      | PostDec
+      | Void
         
     (*
     *)
@@ -123,17 +126,14 @@
       member x.AddClosure func = 
         {x with Closures = x.Closures.Add(func {Closure.New with Index = x.Closures.Count})}
         
-      member x.HasVariable name =
-        Seq.exists (fun (v:Variable) -> v.Name = name) x.Variables
-        
-      member x.HasClosure name =
-        Seq.exists (fun (c) -> c.Name = name) x.Closures
-        
       member x.TryGetVariable name = 
         Seq.tryFind (fun (v:Variable) -> v.Name = name) x.Variables
         
       member x.TryGetClosure name =
         Seq.tryFind (fun c -> c.Name = name) x.Closures
+
+      member x.TryGetParameter index =
+        Seq.tryFind (fun (v:Variable) -> v.Index = index) x.Variables
         
       static member New parms = {
         Variables = Set.ofSeq (Seq.mapi (fun i x -> {Variable.New with Name = x; Index = i; IsParameter = true}) parms)
@@ -178,9 +178,27 @@
 
     (*
     *)
-    let analyzeType tree =
+    let rec evaluateType tree func =
       match tree with
+      | Boolean(_) -> Some(Types.JsType.Boolean)
+      | String(_) -> Some(Types.JsType.String)
+      | Number(_) -> Some(Types.JsType.Number)
+      | Typed(type', _) -> Some(type')
+      | Null -> Some(Types.JsType.Null)
+      | Undefined -> Some(Types.JsType.Undefined)
       | Function(_, _, _) -> Some(Types.JsType.Function)
+      
+      | Unary(op, tree) -> evaluateType tree func
+      | Binary(op, ltree, rtree) -> 
+        let ltype = evaluateType ltree func
+        let rtype = evaluateType rtree func 
+
+        match ltype, rtype with
+        | None, _ | _, None -> None
+        | Some(ltype), Some(rtype) -> Some(ltype ||| rtype)
+      
+      | Identifier(name) -> match func with None -> None | Some(func) -> func name
+
       | _ -> None
 
     (*
@@ -194,13 +212,13 @@
           let scope:Scope = currentScope scopes
 
           //Update scopes
-          match scope.HasVariable name with
-          | false ->  ()
-          | true  ->  
+          match scope.TryGetVariable name with
+          | None ->  ()
+          | _ ->  
 
             let tree = 
-              match analyzeType rtree with
-              | None -> rtree
+              match evaluateType rtree None with
+              | None -> rtree 
               | Some(t) -> Typed(t, Pass)
 
             scopes := scope.UpdateVariable name (fun (v:Variable) -> v.AddAssignedFrom tree) :: List.tail !scopes
@@ -247,7 +265,7 @@
       let scopes = ref List.empty
 
       let updateTopScope name =
-        if (!scopes).Length > 1 then 
+        if (!scopes).Length > 0 then 
           let scope:Scope = List.head !scopes
           scopes := scope.AddVariable (fun v -> {v with Name = name}) :: List.tail !scopes
 
@@ -303,9 +321,9 @@
                   | Some(fromScope, dynamicScopeLevel)  -> 
 
                     let scope = 
-                      match itm.HasClosure name with
-                      | true  ->  itm
-                      | false ->  itm.AddClosure (
+                      match itm.TryGetClosure name with
+                      | Some(_) ->  itm
+                      | None ->  itm.AddClosure (
                                       fun c -> {c with 
                                                   Name = name; 
                                                   FromScope = fromScope; 

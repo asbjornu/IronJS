@@ -63,8 +63,45 @@
         
     (*
     *)
-    let analyzeVariableTypes (target:Target) =
-      target.DelegateTypeArgs
+    let resolveVarTypes (target:Target) =
+      let activeVariables = ref Set.empty
+      let resolvedVariables = ref Map.empty
+
+      let rec resolveVarType (var:Ast.Variable) =
+        match var.Type with
+        | Types.JsType.Nothing ->
+          if var.AssignedFrom.Count = 0 then
+            Some(Types.JsType.Dynamic)
+          else
+            let type'  =
+              var.AssignedFrom
+                |>  Seq.map   (fun tree -> 
+                                match evaluateNodeType tree with
+                                | None -> failwith "Que?"
+                                | Some(type') -> type' )
+                |>  Seq.fold  (fun state type' -> type' ||| state) Types.JsType.Nothing
+
+            Some(type')
+        | _ -> Some(var.Type)
+
+      and evaluateNodeType tree =
+        Ast.evaluateType tree (Some(fun name -> 
+          if Set.contains name !activeVariables then
+            Some(Types.JsType.Nothing)
+          else
+            activeVariables := Set.add name !activeVariables
+            match target.Scope.TryGetVariable name with
+            | Some(var) -> 
+              let type' = resolveVarType var
+              activeVariables := Set.remove name !activeVariables
+              type'
+
+            | None -> failwith "Que?"
+        ))
+
+      target.Scope.Variables
+        |>  Seq.map (fun v -> v.Name, resolveVarType v)
+        |>  Map.ofSeq
 
     (*
     *)
@@ -75,7 +112,5 @@
         Target = target
       }
 
-      let types = target.DelegateType.GetGenericArguments()
-
-      ()
+      resolveVarTypes target
       
