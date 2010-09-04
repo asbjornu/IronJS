@@ -11,6 +11,7 @@
 #load "Compiler.fs"
 
 open IronJS
+open IronJS.Ast
 open IronJS.Compiler
 open System
 
@@ -24,11 +25,11 @@ let assign = Ast.analyzeAssignment closures
 
 let compiled = 
   match assign with
-  | Ast.Function(_, scope, ast) -> 
+  | Ast.Function(scope, ast) -> 
 
     let target = {
       Ast = ast
-      Scope = scope.AddVariable (fun v -> {v with Options = set [Ast.VariableOptions.IsParameter] ; Index = 0; Name = "~closure"})
+      Scope = scope.AddVariable ("~closure", 0, set [Var.Opts.IsParameter], set [])
       Delegate = typeof<Func<Types.Closure, Types.Box>>
     }
 

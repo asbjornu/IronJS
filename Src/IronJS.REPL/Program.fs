@@ -12,7 +12,7 @@ let assign = Ast.analyzeAssignment closures
 
 let compiled = 
   match assign with
-  | Ast.Function(_, scope, ast) -> 
+  | Ast.Function(scope, ast) -> 
 
     let target = {
       Ast = ast

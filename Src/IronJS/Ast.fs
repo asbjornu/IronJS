@@ -26,13 +26,30 @@
       | PostDec
       | Void
 
-    [<System.Flags>]
-    type VarOpts 
-      = Nothing = 0
-      | IsParameter = 1
-      | NeedsProxy = 2
-      | IsClosedOver = 4
-      | InitToUndefined = 8
+    module Var = 
+
+      type Opts 
+        = IsParameter
+        | NeedsProxy
+        | IsClosedOver
+        | InitToUndefined
+
+      let name (n, _, _, _) = n
+      let index (_, i, _, _) = i
+      let options (_, _, o, _) = o
+      let assignedFrom (_, _, _, a) = a
+      let isClosedOver (o:Set<Opts>) = o.Contains Opts.IsClosedOver
+      let needsProxy (o:Set<Opts>) = o.Contains Opts.NeedsProxy
+      let isParameter (o:Set<Opts>) = o.Contains Opts.IsParameter
+      let initToUndefined (o:Set<Opts>) = o.Contains Opts.InitToUndefined
+
+    (*
+    module Closure =
+      let name (n, _, _, _) = n
+      let index (_, i, _, _) = i
+      let from (_, _, f, _) = f
+      let dsl (_, _, _, d) = d
+    *)
         
     (*
     *)
@@ -57,65 +74,14 @@
       | Var         of Tree
       | Return      of Tree
       | With        of Tree * Tree
-      | Function    of string option * Scope * Tree
+      | Function    of Scope * Tree
       | Typed       of Types.JsType * Tree
-  
-    (*
-    *)
-    and Variable = {
-      Name: string
-      Index: int
-      Options: Set<VarOpts>
-      AssignedFrom: Set<Tree>
-    } with 
-      static member New = {
-        Name = ""
-        Index = -1
-        Options = Set.empty
-        AssignedFrom = Set.empty
-      }
-
-      member x.AddAssignedFrom tree =
-        {x with AssignedFrom = x.AssignedFrom.Add tree}
-
-      member x.AddOption option = 
-        {x with Options = x.Options.Add option}
-
-      member x.HasOption option = 
-        x.Options.Contains option
-
-      member x.IsParameter =
-        x.HasOption VarOpts.IsParameter
-
-      member x.IsClosedOver =
-        x.HasOption VarOpts.IsClosedOver
-
-      member x.NeedsProxy =
-        x.HasOption VarOpts.NeedsProxy
-
-      member x.InitToUndefined =
-        x.HasOption VarOpts.InitToUndefined
-      
-    (*
-    *)
-    and Closure = {
-      Name: string
-      Index: int
-      FromScope: int
-      DynamicScopeLevel: int
-    } with
-      static member New = {
-        Name = ""
-        Index = -1
-        FromScope = -1
-        DynamicScopeLevel = -1
-      }
       
     (*
     *)
     and [<CustomEquality; CustomComparison>] Scope = {
-      Variables: Set<Variable>
-      Closures: Set<Closure>
+      Variables: Set<string * int * Set<Var.Opts> * Set<Tree>>
+      Closures: Set<string * int * int * int>
       DynamicScopeLevel: int
     } with
 
@@ -138,30 +104,21 @@
         | None -> failwith "Que?"
         | Some(v) -> {x with Variables = x.Variables.Remove(v).Add(func v)}
         
-      member x.AddVariable func = 
-        {x with Variables = x.Variables.Add(func Variable.New)}
+      member x.AddVariable var = 
+        {x with Variables = x.Variables.Add(var)}
         
-      member x.AddClosure func = 
-        {x with Closures = x.Closures.Add(func {Closure.New with Index = x.Closures.Count})}
+      member x.AddClosure closure = 
+        {x with Closures = x.Closures.Add(closure)}
         
       member x.TryGetVariable name = 
-        Seq.tryFind (fun (v:Variable) -> v.Name = name) x.Variables
+        Seq.tryFind (fun (n, _, _, _) -> n = name) x.Variables
         
       member x.TryGetClosure name =
-        Seq.tryFind (fun c -> c.Name = name) x.Closures
+        Seq.tryFind (fun (n, _, _, _) -> n = name) x.Closures
         
       static member New parms = {
-        Variables = parms
-                    |>  Seq.mapi (fun i x -> 
-                          {Variable.New with 
-                            Name = x; 
-                            Index = i; 
-                            Options = set [VarOpts.IsParameter]
-                          }
-                        )  
-                    |>  Set.ofSeq
-
-        Closures = Set.empty
+        Closures = set []
+        Variables = parms |> Seq.mapi (fun i x -> x, i, set [Var.Opts.IsParameter], set []) |> Set.ofSeq
         DynamicScopeLevel = -1
       }
         
@@ -198,7 +155,7 @@
       | Var(tree) -> Var(func tree)
       | Return(tree) -> Return(func tree)
       | With(target, tree) -> With(func target, func tree)
-      | Function(name, scope, tree) -> Function(name, scope, func tree) 
+      | Function( scope, tree) -> Function(scope, func tree) 
 
     (*
     *)
@@ -217,17 +174,17 @@
 
             let tree = 
               match rtree with
-              | Function(_, _, _) -> Typed(Types.JsType.Function, Pass)
+              | Function(_, _) -> Typed(Types.JsType.Function, Pass)
               | _ -> rtree
 
-            scopes := scope.UpdateVariable name (fun (v:Variable) -> v.AddAssignedFrom tree) :: List.tail !scopes
+            scopes := scope.UpdateVariable name (fun (n, i, o, a) -> n, i, o, a.Add tree) :: List.tail !scopes
 
           //Return node
           Assign(Identifier(name), analyze rtree)
           
-        | Function(name, scope, tree) ->
+        | Function(scope, tree) ->
           let scope, tree = doInsideScope scopes scope (fun () -> analyze tree)
-          Function(name, scope, tree)
+          Function(scope, tree)
 
         | _ -> walk analyze tree
 
@@ -250,9 +207,9 @@
 
           With(target, tree)
             
-        | Function(name, scope, tree) ->
+        | Function(scope, tree) ->
           let scope, tree = doInsideScope scopes {scope with DynamicScopeLevel = !dynamicScopeLevel} (fun () -> analyze tree)
-          Function(name, scope, tree)
+          Function(scope, tree)
 
         | tree -> walk analyze tree
 
@@ -266,7 +223,7 @@
       let updateTopScope name =
         if (!scopes).Length > 0 then 
           let scope:Scope = List.head !scopes
-          scopes := scope.AddVariable (fun v -> {v with Name = name}) :: List.tail !scopes
+          scopes := scope.AddVariable (name, -1, set[], set[]) :: List.tail !scopes
 
       let rec strip tree =
         match tree with
@@ -278,9 +235,9 @@
           updateTopScope name
           Pass
 
-        | Function(name, scope, tree) ->
+        | Function(scope, tree) ->
           let scope, tree = doInsideScope scopes scope (fun () -> strip tree)
-          Function(name, scope, tree)
+          Function(scope, tree)
 
         | tree -> walk strip tree
 
@@ -309,11 +266,11 @@
 
                     match itm.TryGetVariable name with
                     | None              ->  None, itm :: scopes
-                    | Some(v:Variable)  -> 
+                    | Some(_, _, o, _)  -> 
                       let scope = 
-                        if v.IsClosedOver
+                        if Var.isClosedOver o
                           then itm
-                          else itm.UpdateVariable name (fun v -> v.AddOption VarOpts.IsClosedOver)
+                          else itm.UpdateVariable name (fun (n, i, o, a) -> n, i, o.Add Var.Opts.IsClosedOver, a)
                           
                       Some(scopes.Length, itm.DynamicScopeLevel), scope :: scopes
 
@@ -322,11 +279,8 @@
                     let scope = 
                       match itm.TryGetClosure name with
                       | Some(_) ->  itm
-                      | None ->  itm.AddClosure (
-                                      fun c -> {c with 
-                                                  Name = name; 
-                                                  FromScope = fromScope; 
-                                                  DynamicScopeLevel = dynamicScopeLevel})
+                      | None    ->  itm.AddClosure (name, itm.Closures.Count, fromScope, dynamicScopeLevel)
+
                     level, scope :: scopes
 
                 ) !scopes (None, [])
@@ -340,9 +294,9 @@
             | Some(_) ->  tree
           | Some(_)   ->  tree
 
-        | Function(name, scope, tree) ->
+        | Function(scope, tree) ->
           let scope, tree = doInsideScope scopes scope (fun () -> analyze tree)
-          Function(name, scope, tree)
+          Function(scope, tree)
 
         | tree -> walk analyze tree
 
@@ -398,7 +352,7 @@
           | ES3Parser.WITH            -> With(translate (child tok 0), translate(child tok 1))
 
           | ES3Parser.FUNCTION -> 
-            Function(None, Scope.New [for x in (children (child tok 0)) -> text x], translate (child tok 1))
+            Function(Scope.New [for x in (children (child tok 0)) -> text x], translate (child tok 1))
 
           | _ -> failwithf "No parser for token %s (%i)" (ES3Parser.tokenNames.[tok.Type]) tok.Type
   
@@ -408,6 +362,6 @@
         let parse str = 
           let lexer = new Xebic.ES3.ES3Lexer(new Antlr.Runtime.ANTLRStringStream(str))
           let parser = new Xebic.ES3.ES3Parser(new Antlr.Runtime.CommonTokenStream(lexer))
-          Function(None, Scope.New [], translate (parser.program().Tree :?> AntlrToken))
+          Function(Scope.New [], translate (parser.program().Tree :?> AntlrToken))
 
 

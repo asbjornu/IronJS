@@ -4,6 +4,7 @@
     
     open IronJS
     open IronJS.Aliases
+    open IronJS.Ast
     
     (*
     *)
@@ -38,22 +39,22 @@
     *)
     let private generateVarMap (target:Target) (varMap:Map<string, Types.JsType>) =
       target.Scope.Variables
-        |>  Seq.map (fun v ->
-              let type' = Types.jsToClr varMap.[v.Name]
-
+        |>  Seq.map (fun var ->
+              let name, index, opts, _ = var
+              let type' = Types.jsToClr varMap.[name]
               let varExpr = 
-                if v.IsClosedOver 
-                  then  Dlr.param v.Name (Types.makeStrongBox type')
-                  else  Dlr.param v.Name type'
+                if Var.isClosedOver opts
+                  then  Dlr.param name (Types.makeStrongBox type')
+                  else  Dlr.param name type'
 
-              v.Name,
-                if v.IsParameter then
-                    match target.ParamType v.Index <> type', v.NeedsProxy with
+              name,
+                if Var.isParameter opts then
+                    match target.ParamType index <> type', Var.needsProxy opts with
                     | true, _ | _, true ->  
-                      let varProxy = Dlr.param (sprintf "%s_proxy" v.Name) type'
-                      Proxied(varExpr, varProxy, v.Index)
+                      let varProxy = Dlr.param (sprintf "%s_proxy" name) type'
+                      Proxied(varExpr, varProxy, index)
 
-                    | _ -> Variable(varExpr, Param(v.Index))
+                    | _ -> Variable(varExpr, Param(index))
                 else
                   Variable(varExpr, Local)
             )
@@ -70,7 +71,7 @@
       | Ast.Typed(type', _) -> Some(type')
       | Ast.Null -> Some(Types.JsType.Null)
       | Ast.Undefined -> Some(Types.JsType.Undefined)
-      | Ast.Function(_, _, _) -> Some(Types.JsType.Function)
+      | Ast.Function(_, _) -> Some(Types.JsType.Function)
       | Ast.Unary(op, tree) -> resolveType tree func
       | Ast.Binary(op, ltree, rtree) -> 
         match resolveType ltree func, resolveType rtree func with
@@ -90,19 +91,21 @@
         | None ->
           match target.Scope.TryGetVariable name with
           | None -> None
-          | Some(var) ->
-            if var.IsParameter then
-              if var.Index >= target.ParamCount 
+          | Some(v) ->
+            let name, index, opts, assignedFrom = v
+
+            if Var.isParameter opts then
+              if index >= target.ParamCount 
                 then Some(Types.JsType.Undefined)
-                else Some(Types.clrToJs (target.ParamType var.Index))
+                else Some(Types.clrToJs (target.ParamType index))
 
             elif Set.contains name !activeVars  then Some(Types.JsType.Nothing)
-            elif var.AssignedFrom.Count = 0     then Some(Types.JsType.Undefined)
+            elif assignedFrom.Count = 0         then Some(Types.JsType.Undefined)
             else
               activeVars := Set.add name !activeVars
 
               let type' =               
-                var.AssignedFrom
+                assignedFrom
                   |>  Seq.map   (fun tree -> 
                                   match resolveType tree resolveVarType with
                                   | None -> failwith "Que?"
@@ -113,10 +116,10 @@
               Some(type')
   
       target.Scope.Variables
-        |>  Seq.iter (fun v -> 
-              match resolveVarType v.Name with
+        |>  Seq.iter (fun (name, _, _, _) -> 
+              match resolveVarType name with
               | None -> failwith "Que?"
-              | Some(type') -> jsTypeMap := Map.add v.Name type' !jsTypeMap
+              | Some(type') -> jsTypeMap := Map.add name type' !jsTypeMap
             )
 
       !jsTypeMap
@@ -131,7 +134,8 @@
         Target = target
       }
 
-      ()
+      resolveVarTypes target
+
       (*
       resolveVarTypes target
         |>  Map.map (fun name type' -> 
