@@ -47,7 +47,7 @@
       | Return      of Node
       | With        of Node * Node
       | Function    of string option * Scope * Node
-      | TypeHolder  of Types.JsType
+      | Typed       of Types.JsType * Node
   
     (*
     *)
@@ -58,6 +58,7 @@
       IsParameter: bool
       IsClosedOver: bool
       InitToUndefined: bool
+      NeedsProxy: bool
       AssignedFrom: Set<Node>
     } with 
       static member New = {
@@ -67,6 +68,7 @@
         IsParameter = false
         IsClosedOver = false
         InitToUndefined = false
+        NeedsProxy = false
         AssignedFrom = Set.empty
       }
 
@@ -159,7 +161,7 @@
       | Boolean(_)
       | String(_)
       | Number(_)
-      | TypeHolder(_)
+      | Typed(_, _)
       | Pass
       | Null
       | Undefined -> tree
@@ -199,7 +201,7 @@
             let tree = 
               match analyzeType rtree with
               | None -> rtree
-              | Some(t) -> TypeHolder(t)
+              | Some(t) -> Typed(t, Pass)
 
             scopes := scope.UpdateVariable name (fun (v:Variable) -> v.AddAssignedFrom tree) :: List.tail !scopes
 
