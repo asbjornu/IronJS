@@ -8,7 +8,7 @@
     (*
     *)
     type Target = {
-      Ast: Ast.Node
+      Ast: Ast.Tree
       Scope: Ast.Scope
       Delegate: Types.ClrType
     } with
@@ -36,72 +36,98 @@
 
     (*
     *)
-    let generateVariableMap (target:Target) =
-
-      let createVarExpr (var:Ast.Variable) =
-        if var.IsClosedOver 
-          then  Dlr.param var.Name (Types.jsToClr var.Type)
-          else  Dlr.param var.Name (Types.makeStrongBox (Types.jsToClr var.Type))
-          
-      let createVarProxy (var:Ast.Variable) =
-        Dlr.param (sprintf "%s_proxy" var.Name) (target.ParamType var.Index)
-
+    let private generateVarMap (target:Target) (varMap:Map<string, Types.JsType>) =
       target.Scope.Variables
         |>  Seq.map (fun v ->
-              if v.IsParameter then
-                v.Name,
-                  match target.ParamType v.Index <> Types.jsToClr v.Type, v.NeedsProxy with
-                  | true, true
-                  | true, false 
-                  | false, true -> Proxied(createVarExpr v, createVarProxy v, v.Index)
-                  | _ -> Variable(createVarExpr v, Param(v.Index))
-              else
-                v.Name, 
-                  Variable(createVarExpr v, Local)
+              let type' = Types.jsToClr varMap.[v.Name]
+
+              let varExpr = 
+                if v.IsClosedOver 
+                  then  Dlr.param v.Name (Types.makeStrongBox type')
+                  else  Dlr.param v.Name type'
+
+              v.Name,
+                if v.IsParameter then
+                    match target.ParamType v.Index <> type', v.NeedsProxy with
+                    | true, _ | _, true ->  
+                      let varProxy = Dlr.param (sprintf "%s_proxy" v.Name) type'
+                      Proxied(varExpr, varProxy, v.Index)
+
+                    | _ -> Variable(varExpr, Param(v.Index))
+                else
+                  Variable(varExpr, Local)
             )
         |>  Map.ofSeq
+
+    (*
+    *)
+    let rec private resolveType tree func =
+      match tree with
+      | Ast.Boolean(_) -> Some(Types.JsType.Boolean)
+      | Ast.String(_) -> Some(Types.JsType.String)
+      | Ast.Number(_) -> Some(Types.JsType.Number)
+      | Ast.Typed(type', _) -> Some(type')
+      | Ast.Null -> Some(Types.JsType.Null)
+      | Ast.Undefined -> Some(Types.JsType.Undefined)
+      | Ast.Function(_, _, _) -> Some(Types.JsType.Function)
+      
+      | Ast.Unary(op, tree) -> resolveType tree func
+      | Ast.Binary(op, ltree, rtree) -> 
+        match resolveType ltree func, resolveType rtree func with
+        | None, _ | _, None -> failwith "Que?"
+        | Some(ltype), Some(rtype) -> Some(ltype ||| rtype)
+      
+      | Ast.Identifier(name) -> func name
+      | _ -> None
         
     (*
     *)
-    let resolveVarTypes (target:Target) =
-      let activeVariables = ref Set.empty
-      let resolvedVariables = ref Map.empty
+    let private resolveVarTypes (target:Target) =
+      let jsTypeMap = ref Map.empty
+      let activeVars = ref Set.empty
 
-      let rec resolveVarType (var:Ast.Variable) =
-        match var.Type with
-        | Types.JsType.Nothing ->
-          if var.AssignedFrom.Count = 0 then
-            Some(Types.JsType.Dynamic)
-          else
-            let type'  =
-              var.AssignedFrom
-                |>  Seq.map   (fun tree -> 
-                                match evaluateNodeType tree with
-                                | None -> failwith "Que?"
-                                | Some(type') -> type' )
-                |>  Seq.fold  (fun state type' -> type' ||| state) Types.JsType.Nothing
+      let rec resolveVarType (name:string) =
+        match Map.tryFind name !jsTypeMap with
+        | Some(type') -> Some(type')
+        | None ->
+          match target.Scope.TryGetVariable name with
+          | None -> None
+          | Some(var) ->
+            if var.IsParameter then
+              if var.Index >= target.ParamCount then
+                failwith "Que?"
+              else
+                Some(Types.clrToJs (target.ParamType var.Index))
 
-            Some(type')
-        | _ -> Some(var.Type)
+            elif Set.contains name !activeVars then
+              Some(Types.JsType.Nothing)
 
-      and evaluateNodeType tree =
-        Ast.evaluateType tree (Some(fun name -> 
-          if Set.contains name !activeVariables then
-            Some(Types.JsType.Nothing)
-          else
-            activeVariables := Set.add name !activeVariables
-            match target.Scope.TryGetVariable name with
-            | Some(var) -> 
-              let type' = resolveVarType var
-              activeVariables := Set.remove name !activeVariables
-              type'
+            elif var.AssignedFrom.Count = 0 then
+              Some(Types.JsType.Undefined)
 
-            | None -> failwith "Que?"
-        ))
+            else
+              activeVars := Set.add name !activeVars
 
+              let type' =               
+                var.AssignedFrom
+                  |>  Seq.map   (fun tree -> 
+                                  match resolveType tree resolveVarType with
+                                  | None -> failwith "Que?"
+                                  | Some(type') -> type' )
+                  |>  Seq.fold  (fun state type' -> type' ||| state) Types.JsType.Nothing
+                  
+              activeVars := Set.remove name !activeVars
+              Some(type')
+  
       target.Scope.Variables
-        |>  Seq.map (fun v -> v.Name, resolveVarType v)
-        |>  Map.ofSeq
+        |>  Seq.iter (fun v -> 
+              match resolveVarType v.Name with
+              | None -> failwith "Que?"
+              | Some(type') -> jsTypeMap := Map.add v.Name type' !jsTypeMap
+            )
+
+      !jsTypeMap
+        |> Map.map (fun _ t -> Types.jsToClr t)
 
     (*
     *)
@@ -112,5 +138,6 @@
         Target = target
       }
 
-      resolveVarTypes target
+      let varTypeMap = resolveVarTypes target
+      ()
       

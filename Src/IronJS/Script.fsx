@@ -28,7 +28,7 @@ let compiled =
 
     let target = {
       Ast = ast
-      Scope = scope
+      Scope = scope.AddVariable (fun v -> {v with IsParameter = true; Index = 2; Name = "~closure"})
       Delegate = typeof<Func<Types.Closure, Types.Box>>
     }
 

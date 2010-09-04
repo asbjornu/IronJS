@@ -23,6 +23,7 @@
     *)
     type JsType
       = Nothing   = 0   // NOT null
+      | Closure   = 1
       | Number    = 2
       | Boolean   = 4
       | String    = 8
@@ -61,23 +62,29 @@
     *)
     type [<StructLayout(LayoutKind.Explicit)>] Box =
       struct
-        [<FieldOffset(0)>] val mutable Clr    : obj 
-
-        #if X64
+        [<FieldOffset(0)>]  val mutable Clr    : obj 
         [<FieldOffset(8)>]  val mutable Bool   : bool
         [<FieldOffset(8)>]  val mutable Double : double
-        [<FieldOffset(16)>] val mutable Type   : Types
-        #else // X86
-        [<FieldOffset(4)>]  val mutable Bool   : bool
-        [<FieldOffset(4)>]  val mutable Double : double
-        [<FieldOffset(12)>] val mutable Type   : JsType
-        #endif
+        [<FieldOffset(16)>] val mutable Type   : JsType
       end
 
     let strongBoxTypeDef = typedefof<System.Runtime.CompilerServices.StrongBox<_>>
     let makeStrongBox type' = strongBoxTypeDef.MakeGenericType([|type'|])
     let makeStrongBoxT<'a> = makeStrongBox typeof<'a>
 
+    (*
+    Base type for all closures
+    *)
+    type Closure = 
+
+      val mutable Object : obj
+      
+      new(obj) = {
+        Object = obj
+      }
+
+    (*
+    *)
     let clrToJs (type':ClrType) =
       if   type' = typeof<double>             then JsType.Number
       elif type' = typeof<string>             then JsType.String
@@ -86,11 +93,13 @@
     //elif type' = typeof<Runtime.Function>   then JsType.Function
     //elif type' = typeof<Runtime.Undefined>  then JsType.Undefined
       elif type' = typeof<ClrObject>          then JsType.Clr
+      elif type' = typeof<Closure>            then JsType.Closure
       elif type' = typeof<Box>                then JsType.Dynamic
       else failwithf "Invalid type '%s'" type'.Name
 
     let normalizeJsType type' =
       match type' with
+      | JsType.Closure   -> JsType.Closure
       | JsType.Number    -> JsType.Number
 
       | JsType.Boolean   -> JsType.Boolean
@@ -108,11 +117,11 @@
       | JsType.Undefined -> JsType.Undefined
 
       | JsType.Null
-      | JsType.Clr       -> JsType.Clr
+      | JsType.Clr
       | JsType.ClrNull   -> JsType.Clr
 
-      | JsType.ObjectNull
       | JsType.Object
+      | JsType.ObjectNull
       | JsType.ArrFunc
       | JsType.ArrFuncNull
       | JsType.ObjArr
@@ -130,28 +139,17 @@
     (*Converts a JsType enum to ClrType object*)
     let rec jsToClr typ =
       match typ with
+      | JsType.Closure    -> typeof<Closure>
       | JsType.Number     -> typeof<double>
       | JsType.Boolean    -> typeof<bool>
       | JsType.String     -> typeof<string>
-    //| JsType.Object     -> typeof<Runtime.Object>
-    //| JsType.Function   -> typeof<Runtime.Function>
-    //| JsType.Undefined  -> typeof<Runtime.Undefined>
+      | JsType.Object     -> typeof<ClrObject>
+      | JsType.Function   -> typeof<ClrObject>
+      | JsType.Undefined  -> typeof<ClrObject>
       | JsType.Dynamic    -> typeof<Box>
       | JsType.Null       
       | JsType.Clr        -> typeof<ClrObject>
       | _                 -> jsToClr (normalizeJsType typ)
-
-
-    (*
-    Base type for all closures
-    *)
-    type Closure = 
-
-      val mutable Object : obj
-      
-      new(obj) = {
-        Object = obj
-      }
 
     (*
     *)

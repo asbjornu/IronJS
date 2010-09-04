@@ -25,11 +25,19 @@
       | PostInc
       | PostDec
       | Void
+
+    [<System.Flags>]
+    type VariableOptions 
+      = Nothing = 0
+      | IsParameter = 1
+      | NeedsProxy = 2
+      | IsClosedOver = 4
+      | InitToUndefined = 8
         
     (*
     *)
     [<StructuralEquality; StructuralComparison>]
-    type Node
+    type Tree
       //Constants
       = String  of string
       | Number  of double
@@ -39,18 +47,18 @@
       | Undefined
 
       //Ops
-      | Binary  of BinaryOp * Node * Node
-      | Unary   of UnaryOp  * Node
+      | Binary  of BinaryOp * Tree * Tree
+      | Unary   of UnaryOp  * Tree
 
       //
-      | Assign      of Node * Node
-      | Block       of Node list
+      | Assign      of Tree * Tree
+      | Block       of Tree list
       | Identifier  of string
-      | Var         of Node
-      | Return      of Node
-      | With        of Node * Node
-      | Function    of string option * Scope * Node
-      | Typed       of Types.JsType * Node
+      | Var         of Tree
+      | Return      of Tree
+      | With        of Tree * Tree
+      | Function    of string option * Scope * Tree
+      | Typed       of Types.JsType * Tree
   
     (*
     *)
@@ -58,25 +66,37 @@
       Name: string
       Index: int
       Type: Types.JsType
-      IsParameter: bool
-      IsClosedOver: bool
-      InitToUndefined: bool
-      NeedsProxy: bool
-      AssignedFrom: Set<Node>
+      Options: VariableOptions
+      AssignedFrom: Set<Tree>
     } with 
       static member New = {
         Name = ""
         Index = -1
         Type = Types.JsType.Nothing
-        IsParameter = false
-        IsClosedOver = false
-        InitToUndefined = false
-        NeedsProxy = false
+        Options = VariableOptions.Nothing
         AssignedFrom = Set.empty
       }
 
       member x.AddAssignedFrom tree =
         {x with AssignedFrom = x.AssignedFrom.Add tree}
+
+      member x.AddOption option = 
+        {x with Options = x.Options ||| option}
+
+      member x.HasOption option = 
+        x.Options.HasFlag(option)
+
+      member x.IsParameter =
+        x.Options.HasFlag(VariableOptions.IsParameter)
+
+      member x.IsClosedOver =
+        x.Options.HasFlag(VariableOptions.IsClosedOver)
+
+      member x.NeedsProxy =
+        x.Options.HasFlag(VariableOptions.NeedsProxy)
+
+      member x.InitToUndefined =
+        x.Options.HasFlag(VariableOptions.InitToUndefined)
       
     (*
     *)
@@ -131,12 +151,18 @@
         
       member x.TryGetClosure name =
         Seq.tryFind (fun c -> c.Name = name) x.Closures
-
-      member x.TryGetParameter index =
-        Seq.tryFind (fun (v:Variable) -> v.Index = index) x.Variables
         
       static member New parms = {
-        Variables = Set.ofSeq (Seq.mapi (fun i x -> {Variable.New with Name = x; Index = i; IsParameter = true}) parms)
+        Variables = parms
+                    |>  Seq.mapi (fun i x -> 
+                          {Variable.New with 
+                            Name = x; 
+                            Index = i; 
+                            Options = VariableOptions.IsParameter
+                          }
+                        )  
+                    |>  Set.ofSeq
+
         Closures = Set.empty
         DynamicScopeLevel = -1
       }
@@ -174,32 +200,7 @@
       | Var(tree) -> Var(func tree)
       | Return(tree) -> Return(func tree)
       | With(target, tree) -> With(func target, func tree)
-      | Function(name, scope, tree) -> Function(name, scope, func tree)
-
-    (*
-    *)
-    let rec evaluateType tree func =
-      match tree with
-      | Boolean(_) -> Some(Types.JsType.Boolean)
-      | String(_) -> Some(Types.JsType.String)
-      | Number(_) -> Some(Types.JsType.Number)
-      | Typed(type', _) -> Some(type')
-      | Null -> Some(Types.JsType.Null)
-      | Undefined -> Some(Types.JsType.Undefined)
-      | Function(_, _, _) -> Some(Types.JsType.Function)
-      
-      | Unary(op, tree) -> evaluateType tree func
-      | Binary(op, ltree, rtree) -> 
-        let ltype = evaluateType ltree func
-        let rtype = evaluateType rtree func 
-
-        match ltype, rtype with
-        | None, _ | _, None -> None
-        | Some(ltype), Some(rtype) -> Some(ltype ||| rtype)
-      
-      | Identifier(name) -> match func with None -> None | Some(func) -> func name
-
-      | _ -> None
+      | Function(name, scope, tree) -> Function(name, scope, func tree) 
 
     (*
     *)
@@ -217,9 +218,9 @@
           | _ ->  
 
             let tree = 
-              match evaluateType rtree None with
-              | None -> rtree 
-              | Some(t) -> Typed(t, Pass)
+              match rtree with
+              | Function(_, _, _) -> Typed(Types.JsType.Function, Pass)
+              | _ -> rtree
 
             scopes := scope.UpdateVariable name (fun (v:Variable) -> v.AddAssignedFrom tree) :: List.tail !scopes
 
@@ -312,9 +313,9 @@
                     | None              ->  None, itm :: scopes
                     | Some(v:Variable)  -> 
                       let scope = 
-                        if v.IsClosedOver 
+                        if v.Options.HasFlag(VariableOptions.IsClosedOver)
                           then itm
-                          else itm.UpdateVariable name (fun v -> {v with IsClosedOver = true})
+                          else itm.UpdateVariable name (fun v -> v.AddOption VariableOptions.IsClosedOver)
                           
                       Some(scopes.Length, itm.DynamicScopeLevel), scope :: scopes
 
