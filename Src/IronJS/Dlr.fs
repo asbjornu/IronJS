@@ -72,7 +72,7 @@
       sprintf "~tmp_%x" !_tmpCounter
 
     let blockWithLocals (parms:EtParam seq) (exprs:Et seq) = 
-      if Seq.length exprs = 0 then void' else Et.Block(parms, exprs) :> Et
+      if Seq.length exprs = 0 then Et.Block(parms, [void']) :> Et else Et.Block(parms, exprs) :> Et
 
     let block exprs = 
       blockWithLocals [] exprs

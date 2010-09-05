@@ -3,6 +3,7 @@
   module Ast = 
 
     open IronJS
+    open IronJS.Utils
 
     (*
     *)
@@ -34,18 +35,19 @@
         | IsClosedOver
         | InitToUndefined
 
-      let name = Utils.Quad.fst
-      let index = Utils.Quad.snd
-      let options = Utils.Quad.trd
-      let assignedFrom = Utils.Quad.fth
+      let name          = Quad.fst
+      let index         = Quad.snd
+      let options       = Quad.trd
+      let assignedFrom  = Quad.fth
 
-      let isClosedOver (_, _, o:Set<_>, _) = o.Contains Opts.IsClosedOver
-      let needsProxy (_, _, o:Set<_>, _) = o.Contains Opts.NeedsProxy
-      let isParameter (_, _, o:Set<_>, _) = o.Contains Opts.IsParameter
+      let isClosedOver (_, _, o:Set<_>, _)    = o.Contains Opts.IsClosedOver
+      let needsProxy (_, _, o:Set<_>, _)      = o.Contains Opts.NeedsProxy
+      let isParameter (_, _, o:Set<_>, _)     = o.Contains Opts.IsParameter
       let initToUndefined (_, _, o:Set<_>, _) = o.Contains Opts.InitToUndefined
 
-      let addOpt (n, i, o:Set<_>, a) opt = n, i, o.Add opt, a
-      let addAssign (n, i, o, a:Set<_>) tree = n, i, o, a.Add tree
+      let addOpt (n, i, o:Set<_>, a) opt      = n, i, o.Add opt, a
+      let delOpt (n, i, o:Set<_>, a) opt      = n, i, o.Remove opt, a
+      let addAssign (n, i, o, a:Set<_>) tree  = n, i, o, a.Add tree
 
       let newParam i n = n, i, set [Opts.IsParameter], Set.empty
         
@@ -77,9 +79,11 @@
       
     (*
     *)
+    and VarQuad = string * int * Set<Var.Opts> * Set<Tree>
+    and ClosureQuad = string * int * int * int
     and Scope = {
-      Variables: Set<string * int * Set<Var.Opts> * Set<Tree>>
-      Closures: Set<string * int * int * int>
+      Variables: Set<VarQuad>
+      Closures: Set<ClosureQuad>
       DynamicScopeLevel: int
     } with
 
@@ -108,9 +112,6 @@
       let scope   = List.head !scopes
       scopes     := List.tail !scopes
       scope, result
-        
-    let private currentScope scopes =
-      List.head !scopes
         
     (*
     *)
@@ -143,7 +144,7 @@
       let rec analyze tree =
         match tree with
         | Assign(Identifier(name), rtree) ->
-          let scope:Scope = currentScope scopes
+          let scope:Scope = List.head !scopes
 
           //Update scopes
           match scope.TryGetVariable name with
@@ -195,7 +196,7 @@
       
     (*
     *)
-    let stripVarStatements tree =
+    let stripVarDeclarations tree =
       let scopes = ref List.empty
 
       let updateTopScope name =
@@ -230,7 +231,7 @@
         match tree with
         | Identifier(name) -> 
 
-          let scope:Scope = currentScope scopes
+          let scope:Scope = List.head !scopes
 
           match scope.TryGetVariable name with
           | None  -> 
@@ -252,12 +253,12 @@
                           
                       Some(scopes.Length, itm.DynamicScopeLevel), scope :: scopes
 
-                  | Some(fromScope, dynamicScopeLevel)  -> 
+                  | Some(fs, dsl)  -> 
 
                     let scope = 
                       match itm.TryGetClosure name with
                       | Some(_) ->  itm
-                      | None    ->  itm.AddClosure (name, itm.Closures.Count, fromScope, dynamicScopeLevel)
+                      | None    ->  itm.AddClosure (name, itm.Closures.Count, fs, dsl)
 
                     level, scope :: scopes
 

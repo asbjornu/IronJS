@@ -66,16 +66,43 @@
         [<FieldOffset(8)>]  val mutable Bool   : bool
         [<FieldOffset(8)>]  val mutable Double : double
         [<FieldOffset(16)>] val mutable Type   : JsType
+
+        #if FAST_CAST
+        [<FieldOffset(0)>] val mutable Object : Object
+        [<FieldOffset(0)>] val mutable Func   : Function
+        [<FieldOffset(0)>] val mutable String : string
+        #endif
       end
 
     let strongBoxTypeDef = typedefof<System.Runtime.CompilerServices.StrongBox<_>>
     let makeStrongBox type' = strongBoxTypeDef.MakeGenericType([|type'|])
     let makeStrongBoxT<'a> = makeStrongBox typeof<'a>
 
+    type Undefined() =
+      static let instance = new Undefined()
+      static member Instance = instance
+      static member InstanceExpr = Dlr.constant instance
+
+    type Object = 
+      
+      val mutable ClassId: int64
+
+      new (classId) = {
+        ClassId = classId
+      }
+
+    and Function =
+
+      val mutable Closure : Closure
+
+      new(closure) = {
+        Closure = closure
+      }
+
     (*
     Base type for all closures
     *)
-    type Closure = 
+    and Closure = 
 
       val mutable Object : obj
       
@@ -89,9 +116,9 @@
       if   type' = typeof<double>             then JsType.Number
       elif type' = typeof<string>             then JsType.String
       elif type' = typeof<bool>               then JsType.Boolean
-    //elif type' = typeof<Runtime.Object>     then JsType.Object
-    //elif type' = typeof<Runtime.Function>   then JsType.Function
-    //elif type' = typeof<Runtime.Undefined>  then JsType.Undefined
+      elif type' = typeof<Object>             then JsType.Object
+      elif type' = typeof<Function>           then JsType.Function
+      elif type' = typeof<Undefined>          then JsType.Undefined
       elif type' = typeof<ClrObject>          then JsType.Clr
       elif type' = typeof<Closure>            then JsType.Closure
       elif type' = typeof<Box>                then JsType.Dynamic
@@ -143,9 +170,9 @@
       | JsType.Number     -> typeof<double>
       | JsType.Boolean    -> typeof<bool>
       | JsType.String     -> typeof<string>
-      | JsType.Object     -> typeof<ClrObject>
-      | JsType.Function   -> typeof<ClrObject>
-      | JsType.Undefined  -> typeof<ClrObject>
+      | JsType.Object     -> typeof<Object>
+      | JsType.Function   -> typeof<Function>
+      | JsType.Undefined  -> typeof<Undefined>
       | JsType.Dynamic    -> typeof<Box>
       | JsType.Null       
       | JsType.Clr        -> typeof<ClrObject>

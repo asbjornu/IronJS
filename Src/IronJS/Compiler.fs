@@ -17,6 +17,15 @@
       member x.ParamType i = x.DelegateTypeArgs.[i]
       member x.ParamCount = x.DelegateTypeArgs.Length - 1
 
+    type VariableType
+      = Local
+      | Param of int
+
+    type Variable
+      = Expr     of Dlr.Expr
+      | Variable of Dlr.Expr * VariableType
+      | Proxied  of Dlr.Expr * Dlr.Expr * int
+
     type Options = {
       DynamicScopeLevel: int
     }
@@ -24,45 +33,16 @@
     type Context = {
       Options: Options
       Target: Target
-    }
-
-    type VariableType
-      = Local
-      | Param of int
-
-    type Variable
-      = Expr     of Dlr.Expr
-      | Variable of Dlr.ExprParam * VariableType
-      | Proxied  of Dlr.ExprParam * Dlr.ExprParam * int
-
-    (*
-    *)
-    let private generateVarMap (target:Target) (varMap:Map<string, Types.JsType>) =
-      target.Scope.Variables
-        |>  Seq.map (fun var ->
-              let name, index, opts, _ = var
-              let type' = Types.jsToClr varMap.[name]
-              let varExpr = 
-                if Var.isClosedOver opts
-                  then  Dlr.param name (Types.makeStrongBox type')
-                  else  Dlr.param name type'
-
-              name,
-                if Var.isParameter opts then
-                    match target.ParamType index <> type', Var.needsProxy opts with
-                    | true, _ | _, true ->  
-                      let varProxy = Dlr.param (sprintf "%s_proxy" name) type'
-                      Proxied(varExpr, varProxy, index)
-
-                    | _ -> Variable(varExpr, Param(index))
-                else
-                  Variable(varExpr, Local)
-            )
-        |>  Map.ofSeq
-
-    (*
-    *)
-    let rec private resolveType tree func =
+      VarMap: seq<string * Variable>
+      VarResolver: Context -> string -> Dlr.Expr
+    } with
+      member x.ResolveVar name =
+        x.VarResolver x name
+    
+    //-------------------------------------------------------------------------
+    // Resolves the type of an Ast.Tree object, invoking 'func'
+    // to resolve the type of Ast.Identifier objects
+    let rec private resolveAstType tree func =
       match tree with
       | Ast.Identifier(name)          -> func name
       | Ast.Boolean(_)                -> Types.JsType.Boolean
@@ -72,100 +52,195 @@
       | Ast.Null                      -> Types.JsType.Null
       | Ast.Undefined                 -> Types.JsType.Undefined
       | Ast.Function(_, _)            -> Types.JsType.Function
-      | Ast.Unary(op, tree)           -> resolveType tree func
-      | Ast.Binary(op, ltree, rtree)  -> resolveType ltree func ||| resolveType rtree func
+      | Ast.Unary(op, tree)           -> resolveAstType tree func
+      | Ast.Binary(op, ltree, rtree)  -> resolveAstType ltree func ||| resolveAstType rtree func
       | _                             -> Types.JsType.Nothing
         
-    (*
-    *)
+    //-------------------------------------------------------------------------
+    // Resolves the JsType of every variable on target.Scope.Variables
+    // and returns a seq<string * int * Set<Ast.Var.Opts> * Types.JsType>
     let private resolveVarTypes (target:Target) =
-      let jsTypeMap = ref Map.empty
       let activeVars = ref Set.empty
 
       let rec resolveVarType (name:string) =
-        match Map.tryFind name !jsTypeMap with
-        | Some(type') -> Some(type')
-        | None ->
-          match target.Scope.TryGetVariable name with
-          | None -> None
-          | Some(v) ->
-            let name, index, opts, assignedFrom = v
+        match target.Scope.TryGetVariable name with
+        | None -> failwith "Que?"
+        | Some(var) ->
+          let name, index, opts, assignedFrom = var
 
-            if Var.isParameter opts then
-              if index >= target.ParamCount 
-                then Some(Types.JsType.Undefined)
-                else Some(Types.clrToJs (target.ParamType index))
+          if Var.isParameter var then
+            if index >= target.ParamCount 
+              then Types.JsType.Undefined
+              else Types.clrToJs (target.ParamType index)
 
-            elif Set.contains name !activeVars  then Some(Types.JsType.Nothing)
-            elif assignedFrom.Count = 0         then Some(Types.JsType.Undefined)
-            else
-              activeVars := Set.add name !activeVars
+          elif Set.contains name !activeVars  then Types.JsType.Nothing
+          elif assignedFrom.Count = 0         then Types.JsType.Undefined
 
-              let type' =               
-                assignedFrom
-                  |>  Seq.map   (fun tree -> 
-                                  match resolveType tree resolveVarType with
-                                  | None -> failwith "Que?"
-                                  | Some(type') -> type' )
-                  |>  Seq.fold  (fun state type' -> type' ||| state) Types.JsType.Nothing
+          else
+            activeVars := Set.add name !activeVars
+
+            let type' =               
+              assignedFrom
+                |>  Seq.map   (fun tree -> resolveAstType tree resolveVarType)
+                |>  Seq.fold  (fun state type' -> type' ||| state) Types.JsType.Nothing
                   
-              activeVars := Set.remove name !activeVars
-              Some(type')
-  
+            activeVars := Set.remove name !activeVars
+            type'
+
       target.Scope.Variables
-        |>  Seq.iter (fun (name, _, _, _) -> 
-              match resolveVarType name with
-              | None -> failwith "Que?"
-              | Some(type') -> jsTypeMap := Map.add name type' !jsTypeMap
+        |>  Seq.map (fun (n, i, o, _) -> n, i, o, resolveVarType n)
+        #if DEBUG
+        |>  Seq.toArray
+        #endif
+        
+    //-------------------------------------------------------------------------
+    // Normalizes all Ast.Var.Opts values for every variable in varSeq
+    let private normalizeVarOptions (target:Target) varSeq =
+
+      let removeParamsWithoutArgValues (name, index, opts:Set<_>, type') =
+        let index, opts = 
+          if Set.contains Var.IsParameter opts && index >= target.ParamCount 
+            then -1, Set.add Var.InitToUndefined (Set.remove Var.IsParameter opts)
+            else index, Set.remove Var.InitToUndefined opts
+
+        name, index, opts, type'
+
+      let resolveProxyNeed (name, index, opts:Set<_>, type') =
+        let opts =
+          if Set.contains Var.IsParameter opts then
+            if Set.contains Var.IsClosedOver opts then Set.add Var.NeedsProxy opts
+            elif type' <> (Types.clrToJs (target.ParamType index)) then Set.add Var.NeedsProxy opts
+            else opts
+          else
+            opts
+
+        name, index, opts, type'
+
+      varSeq
+        |> Seq.map removeParamsWithoutArgValues
+        |> Seq.map resolveProxyNeed
+        #if DEBUG
+        |>  Seq.toArray
+        #endif
+        
+    //-------------------------------------------------------------------------
+    // Generates a variable map of type list<name * Variable> 
+    let private generateVarMap (target:Target) =
+      let varTypes = resolveVarTypes target
+      let varMap = normalizeVarOptions target varTypes
+
+      varMap
+        |>  Seq.map (fun var ->
+              let name, index, opts, type' = var
+              let type' = Types.jsToClr type'
+
+              let varExpr = 
+                if Var.isClosedOver var
+                  then  Dlr.param name (Types.makeStrongBox type')
+                  else  Dlr.param name type'
+
+              let varExprs = 
+                if Var.isParameter var then
+                    if Var.needsProxy var then
+                      let varProxy = Dlr.param (sprintf "%s_proxy" name) type'
+                      Proxied(varExpr, varProxy, index)
+                    else
+                      Variable(varExpr, Param(index))
+                else
+                  Variable(varExpr, Local)
+
+              name, varExprs
             )
 
-      !jsTypeMap
-        |> Map.map (fun _ t -> Types.jsToClr t)
+        |>  List.ofSeq
+        
+    //-------------------------------------------------------------------------
+    // Functions used to filter/extract values out of Variable unions
+    let private isLocal (_, var:Variable) =
+      match var with
+      | Variable(_, Local) -> true
+      | Proxied(_, _, _) -> true
+      | _ -> false
 
-    (*
-    *)
+    let private toLocal (_, var:Variable) =
+      match var with
+      | Variable(l, Local) -> l
+      | Proxied(l, _, _)  -> l
+      | _ -> failwith "Que?"
+
+    let private isParameter (_, var:Variable) =
+      match var with
+      | Variable(_, Param(_)) -> true
+      | Proxied(_, _, _) -> true
+      | _ -> false
+
+    let private toParameter (_, var:Variable) =
+      match var with
+      | Variable(p, Param(i)) -> p, i
+      | Proxied(_, p, i)  -> p, i
+      | _ -> failwith "Que?"
+
+    let private isProxied (_, var:Variable) =
+      match var with
+      | Proxied(_, _, _) -> true
+      | _ -> false
+
+    let rec private compileAst (ctx:Context) tree =
+      match tree with
+      //Literals
+      | String(s) -> Dlr.constant s
+      | Number(n) -> Dlr.constant n
+      | Boolean(b) -> Dlr.constant b
+
+      | Identifier(name) -> ctx.ResolveVar name
+
+      //
+      | Block(trees) -> Dlr.block [for tree in trees -> compileAst ctx tree]
+      | Assign(ltree, rtree) -> compileAssign ctx ltree rtree
+      | _ -> failwithf "Failed to compile %A" tree
+
+    and private compileAssign (ctx:Context) ltree rtree =
+      let rexpr = compileAst ctx rtree
+      let lexpr = 
+        match ltree with
+        | Identifier(i) -> ctx.ResolveVar i
+        | _ -> failwith "Failed to compile %A" ltree
+
+      Dlr.assign lexpr rexpr
+
+    let defaultVarResolver (ctx:Context) (name:string) =
+      match Seq.find (fun (n, _) -> n = name) ctx.VarMap with
+      | _, Variable(expr, _)
+      | _, Proxied(expr, _, _) 
+      | _, Expr(expr) -> expr
+      
+    //-------------------------------------------------------------------------
+    //Main compiler function
     let compile (target:Target) (options:Options) =
 
       let ctx = {
         Options = options
         Target = target
+        VarMap = generateVarMap target
+        VarResolver = defaultVarResolver
       }
 
-      resolveVarTypes target
+      let locals =
+        ctx.VarMap
+          |> Seq.filter isLocal
+          |> Seq.map toLocal
+          |> Seq.cast<Dlr.ExprParam>
 
-      (*
-      resolveVarTypes target
-        |>  Map.map (fun name type' -> 
-                match ctx.Target.Scope.TryGetVariable name with
-                | None -> failwith "Que?"
-                | Some(var) -> 
+      let parameters =
+        ctx.VarMap
+          |> Seq.filter isParameter
+          |> Seq.map toParameter
+          |> Seq.sortBy (fun pair -> snd pair)
+          |> Seq.map (fun pair -> fst pair)
+          |> Seq.cast<Dlr.ExprParam>
+          #if DEBUG
+          |> Seq.toArray
+          #endif
 
-                  let options = 
-                    var.Options
-                      |>  (fun o -> 
-                            if var.IsParameter && var.Index < target.ParamCount 
-                                then (o.Remove VarOpts.IsParameter).Add VarOpts.InitToUndefined
-                                else o.Remove VarOpts.InitToUndefined
-                          )
-
-                      |>  (fun o ->
-                            if type' 
-                          )
-
-                  let options = 
-                    var.Options
-                      |>  Seq.map (fun opt -> 
-                            match opt with
-                            | Ast.VariableOptions.IsParameter -> 
-                              if var.Index < target.ParamCount 
-                                then [Ast.VariableOptions.InitToUndefined] 
-                                else [opt]
-                            | _ -> [opt]
-                          )
-                      |>  Seq.concat
-                      |>  Set.ofSeq
-
-                  type', var.Index, options
-            )
-        *)
+      Dlr.lambda target.Delegate parameters (Dlr.blockWithLocals locals [Dlr.constant 1])
       
