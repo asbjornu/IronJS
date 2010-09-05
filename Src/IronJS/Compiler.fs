@@ -2,8 +2,11 @@
 
   module Compiler =
     
+    open System
+
     open IronJS
     open IronJS.Aliases
+    open IronJS.Utils
     open IronJS.Ast
     
     //-------------------------------------------------------------------------
@@ -24,8 +27,8 @@
 
     type Variable
       = Expr     of Dlr.Expr
-      | Variable of Dlr.Expr * VariableType
-      | Proxied  of Dlr.Expr * Dlr.Expr * int
+      | Variable of Dlr.Expr * Set<Var.Opts> * VariableType
+      | Proxied  of Dlr.Expr * Set<Var.Opts> * Dlr.Expr * int
 
     type Options = {
       DynamicScopeLevel: int
@@ -144,11 +147,11 @@
                 if Var.isParameter var then
                     if Var.needsProxy var then
                       let varProxy = Dlr.param (sprintf "%s_proxy" name) type'
-                      Proxied(varExpr, varProxy, index)
+                      Proxied(varExpr, opts, varProxy, index)
                     else
-                      Variable(varExpr, Param(index))
+                      Variable(varExpr, opts, Param(index))
                 else
-                  Variable(varExpr, Local)
+                  Variable(varExpr, opts, Local)
 
               name, varExprs
             )
@@ -159,32 +162,38 @@
     // Functions used to filter/extract values out of Variable unions
     let private isLocal (_, var:Variable) =
       match var with
-      | Variable(_, Local) -> true
-      | Proxied(_, _, _) -> true
+      | Variable(_, _, Local) -> true
+      | Proxied(_, _, _, _) -> true
+      | _ -> false
+
+    let private isParameter (_, var:Variable) =
+      match var with
+      | Variable(_, _, Param(_)) -> true
+      | Proxied(_, _, _, _) -> true
+      | _ -> false
+
+    let private isProxied (_, var:Variable) =
+      match var with
+      | Proxied(_, _, _, _) -> true
       | _ -> false
 
     let private toLocal (_, var:Variable) =
       match var with
-      | Variable(l, Local) -> l
-      | Proxied(l, _, _)  -> l
+      | Variable(l, _,Local) -> l
+      | Proxied(l, _, _,_)  -> l
       | _ -> failwith "Que?"
-
-    let private isParameter (_, var:Variable) =
-      match var with
-      | Variable(_, Param(_)) -> true
-      | Proxied(_, _, _) -> true
-      | _ -> false
 
     let private toParameter (_, var:Variable) =
       match var with
-      | Variable(p, Param(i)) -> p, i
-      | Proxied(_, p, i)  -> p, i
+      | Variable(p, _,Param(i)) -> p, i
+      | Proxied(_, _,p, i)  -> p, i
       | _ -> failwith "Que?"
 
-    let private isProxied (_, var:Variable) =
+    let private toExpr (_, var:Variable) =
       match var with
-      | Proxied(_, _, _) -> true
-      | _ -> false
+      | Variable(expr, _, _)
+      | Proxied(expr, _, _, _)
+      | Expr(expr) -> expr
 
     let rec private compileAst (ctx:Context) tree =
       match tree with
@@ -202,7 +211,38 @@
       | _ -> failwithf "Failed to compile %A" tree
 
     and private compileFunction ctx scope tree =
-      Dlr.defaultT<Types.Function>
+
+      let types =
+        scope.Closures
+          |> Seq.sortBy (fun v -> Quad.snd v)
+          |> Seq.map (fun v -> Quad.fst v)
+          |> Seq.map (fun n -> (ctx.ResolveVar n).Type)
+          |> Array.ofSeq
+
+      let closureType = 
+        Types.createClosureType types
+
+      let target = {
+        Ast = tree
+        Scope = scope
+        Delegate = null
+        Closure = closureType
+      }
+
+      let funCompiler = 
+        new Func<Types.ClrType, Delegate>(
+          fun x -> compile {target with Delegate = x} {DynamicScopeLevel = -1}
+        )
+
+      Dlr.blockTmp closureType (fun tmp ->
+        let createClosureInitExpr c =
+          let field = Dlr.field tmp (sprintf "Item%i" (Quad.snd c))
+          Dlr.assign field (ctx.ResolveVar (Quad.fst c))
+        
+        [Dlr.newArgsT<Types.Function> [tmp; Dlr.constant funCompiler]] 
+          |> Seq.append (scope.Closures |> Seq.map createClosureInitExpr)
+          |> Seq.append [Dlr.assign tmp (Dlr.new' closureType)]
+      )
 
     and private compileAssign (ctx:Context) ltree rtree =
       let rexpr = compileAst ctx rtree
@@ -211,16 +251,18 @@
         | Identifier(i) -> ctx.ResolveVar i
         | _ -> failwith "Failed to compile %A" ltree
 
-      Dlr.assign lexpr rexpr
+      if Types.isStrongBox lexpr.Type 
+        then Dlr.assign (Dlr.field lexpr "Value") rexpr
+        else Dlr.assign lexpr rexpr
 
     and private defaultVarResolver (ctx:Context) (name:string) =
       match Seq.find (fun (n, _) -> n = name) ctx.VarMap with
-      | _, Variable(expr, _)
-      | _, Proxied(expr, _, _) 
+      | _, Variable(expr, _,_)
+      | _, Proxied(expr, _, _, _) 
       | _, Expr(expr) -> expr
 
     //-------------------------------------------------------------------------
-    //Main compiler function that setups compilation and invokes compileAst
+    // Main compiler function that setups compilation and invokes compileAst
     and compile (target:Target) (options:Options) =
 
       let ctx = {
@@ -248,5 +290,6 @@
           #endif
 
       let functionBody = Dlr.blockWithLocals locals [compileAst ctx target.Ast]
-      Dlr.lambda target.Delegate parameters functionBody
+      let lambda = Dlr.lambda target.Delegate parameters functionBody
+      lambda.Compile()
       

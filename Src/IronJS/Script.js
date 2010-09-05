@@ -4,6 +4,6 @@ var x = z;
 
 var scope1 = function (a) {
 
-    
-    
+    var _ = x;
+
 };

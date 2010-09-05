@@ -74,6 +74,7 @@
     let strongBoxTypeDef = typedefof<System.Runtime.CompilerServices.StrongBox<_>>
     let makeStrongBox type' = strongBoxTypeDef.MakeGenericType([|type'|])
     let makeStrongBoxT<'a> = makeStrongBox typeof<'a>
+    let isStrongBox (type':System.Type) = type'.IsGenericType && type'.GetGenericTypeDefinition() = strongBoxTypeDef
 
     type Undefined() =
       static let instance = new Undefined()
@@ -81,12 +82,7 @@
       static member InstanceExpr = Dlr.constant instance
 
     type Object = 
-      
-      val mutable ClassId: int64
-
-      new (classId) = {
-        ClassId = classId
-      }
+      new() = new Object()
 
     and Function =
 
@@ -101,12 +97,7 @@
     //-------------------------------------------------------------------------
     // Base type for all closures
     and Closure = 
-
-      val mutable Object : obj
-      
-      new(obj) = {
-        Object = obj
-      }
+      new() = new Closure()
 
     (*
     *)

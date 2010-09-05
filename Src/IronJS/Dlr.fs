@@ -2,22 +2,23 @@
 
   module Dlr = 
 
-    type Et               = System.Linq.Expressions.Expression
-    type EtParam          = System.Linq.Expressions.ParameterExpression
-    type Expr             = System.Linq.Expressions.Expression
-    type ExprParam        = System.Linq.Expressions.ParameterExpression
+    open System.Linq.Expressions
+    open System.Dynamic
 
-    type Br               = System.Dynamic.BindingRestrictions
+    open IronJS
+    open IronJS.Utils
+
+    type Et               = Expression
+    type EtParam          = ParameterExpression
+    type Expr             = Expression
+    type ExprParam        = ParameterExpression
+
+    type Br               = BindingRestrictions
     type AstUtils         = Microsoft.Scripting.Ast.Utils
     type DynamicUtils     = Microsoft.Scripting.Utils.DynamicUtils
 
-    type MetaObj          = System.Dynamic.DynamicMetaObject
-    type MetaObjProvider  = System.Dynamic.IDynamicMetaObjectProvider
-
-    (*
-    Tools for working with DLR expressions
-    *)
-    open System.Linq.Expressions
+    type MetaObj          = DynamicMetaObject
+    type MetaObjProvider  = IDynamicMetaObjectProvider
 
     //Defaults
     let void' = AstUtils.Empty() :> Et
@@ -77,7 +78,7 @@
     let block exprs = 
       blockWithLocals [] exprs
 
-    let blockTmp typ (fn:EtParam -> Et list) = 
+    let blockTmp typ (fn:EtParam -> Et seq) = 
       let tmp = Et.Parameter(typ, _tmpName())
       blockWithLocals [tmp] (fn tmp)
 
@@ -144,9 +145,8 @@
     let newGenericT<'a> = 
       newGeneric typedefof<'a>
 
-    (*
     let newArgs (typ:System.Type) (args:Et seq) = 
-      Et.New(Tools.Type.getCtor typ [for arg in args -> arg.Type], args) :> Et
+      Et.New(Utils.getCtor typ [for arg in args -> arg.Type], args) :> Et
 
     let newArgsT<'a> = 
       newArgs typeof<'a>
@@ -156,7 +156,6 @@
 
     let newGenericArgsT<'a> = 
       newGenericArgs typedefof<'a> 
-    *)
 
     //Delegates
     let delegateType (types:System.Type seq) = Et.GetDelegateType(Seq.toArray types)
