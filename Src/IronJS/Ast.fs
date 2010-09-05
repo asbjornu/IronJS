@@ -100,7 +100,7 @@
         
       static member New parms = {
         Closures = set []
-        Variables = ["~closure"] @ parms |> Seq.mapi Var.newParam |> Set.ofSeq
+        Variables = ["~closure_proxy"] @ parms |> Seq.mapi Var.newParam |> Set.ofSeq
         DynamicScopeLevel = -1
       }
         

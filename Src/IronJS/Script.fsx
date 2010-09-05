@@ -43,3 +43,9 @@ let compiled =
 
 
   | _ -> failwith "Que?"
+
+let x = compiled.DynamicInvoke(new Types.Closure())
+let f = x :?> Types.Function
+
+f.Compile.Invoke(Types.createDelegateType [typeof<Types.Closure>; typeof<Types.Function>])
+

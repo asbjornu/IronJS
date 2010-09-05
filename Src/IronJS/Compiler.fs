@@ -21,18 +21,6 @@
       member x.ParamType i = x.DelegateTypeArgs.[i]
       member x.ParamCount = x.DelegateTypeArgs.Length - 1
 
-    type VariableType
-      = Local
-      | Param of int
-
-    type Variable
-      = Expr     of Dlr.Expr
-      | Variable of Dlr.Expr * Set<Var.Opts> * VariableType
-      | Proxied  of Dlr.Expr * Set<Var.Opts> * Dlr.Expr * int
-
-    type VarExprQuad = 
-      Dlr.Expr * Option<Dlr.Expr> * Set<Var.Opts> * int
-
     type Options = {
       DynamicScopeLevel: int
     }
@@ -40,12 +28,13 @@
     type Context = {
       Options: Options
       Target: Target
-      VarMap: seq<string * Variable>
+      VarMap: seq<string * int * Set<Var.Opts> * (Dlr.Expr * Option<Dlr.Expr>)>
       VarResolver: Context -> string -> Dlr.Expr
+      Closure: Dlr.Expr
     } with
       member x.ResolveVar name =
         x.VarResolver x name
-    
+        
     //-------------------------------------------------------------------------
     // Resolves the type of an Ast.Tree object, invoking 'func'
     // to resolve the type of Ast.Identifier objects
@@ -71,7 +60,13 @@
 
       let rec resolveVarType (name:string) =
         match target.Scope.TryGetVariable name with
-        | None -> failwith "Que?"
+        | None -> 
+          match target.Scope.TryGetClosure name with
+          | None -> failwith "Que, Global?"
+          | Some(_, index, _, _) ->
+            let sbType = (target.Closure.GetField(sprintf "Item%i" index).FieldType)
+            Types.clrToJs (sbType.GetGenericArguments().[0])
+
         | Some(var) ->
           let name, index, opts, assignedFrom = var
 
@@ -88,16 +83,16 @@
 
             let type' =               
               assignedFrom
-                |>  Seq.map   (fun tree -> resolveAstType tree resolveVarType)
-                |>  Seq.fold  (fun state type' -> type' ||| state) Types.JsType.Nothing
+                |>  Seq.map (fun tree -> resolveAstType tree resolveVarType)
+                |>  Seq.fold (fun state type' -> type' ||| state) Types.JsType.Nothing
                   
             activeVars := Set.remove name !activeVars
             type'
 
       target.Scope.Variables
-        |>  Seq.map (fun (n, i, o, _) -> n, i, o, resolveVarType n)
+        |> Seq.map (fun (n, i, o, _) -> n, i, o, resolveVarType n)
         #if DEBUG
-        |>  Seq.toArray
+        |> Seq.toArray
         #endif
         
     //-------------------------------------------------------------------------
@@ -127,7 +122,7 @@
         |> Seq.map removeParamsWithoutArgValues
         |> Seq.map resolveProxyNeed
         #if DEBUG
-        |>  Seq.toArray
+        |> Seq.toArray
         #endif
         
     //-------------------------------------------------------------------------
@@ -143,73 +138,50 @@
 
               let varExpr = 
                 if Var.isClosedOver var
-                  then  Dlr.param name (Types.makeStrongBox type')
-                  else  Dlr.param name type'
+                  then (Dlr.param name (Types.makeStrongBox type')) :> Dlr.Expr
+                  else (Dlr.param name type') :> Dlr.Expr
 
-              let varExprs = 
-                if Var.isParameter var then
-                    if Var.needsProxy var then
-                      let varProxy = Dlr.param (sprintf "%s_proxy" name) type'
-                      Proxied(varExpr, opts, varProxy, index)
-                    else
-                      Variable(varExpr, opts, Param(index))
-                else
-                  Variable(varExpr, opts, Local)
+              let proxyExpr = 
+                if Var.needsProxy var 
+                  then Some((Dlr.param (sprintf "%s_proxy" name) type') :> Dlr.Expr)
+                  else None
 
-              name, varExprs
+              name, index, opts, (varExpr, proxyExpr)
             )
 
-        |>  List.ofSeq
+        |>  Array.ofSeq
+        |>  Seq.ofArray
         
     //-------------------------------------------------------------------------
-    // Functions used to filter/extract values out of Variable unions
-    let private isLocal (_, var:Variable) =
+    // Functions used to filter/extract values out of Variable quads
+    let private isLocal var =
       match var with
-      | Variable(_, _, Local) -> true
-      | Proxied(_, _, _, _) -> true
+      | _, -1, _, _ -> true
       | _ -> false
 
-    let private isParameter (_, var:Variable) =
+    let private isParameter var = not (isLocal var)
+    let private isProxied var =
       match var with
-      | Variable(_, _, Param(_)) -> true
-      | Proxied(_, _, _, _) -> true
+      | _, _, _, (_, Some(_)) -> true
       | _ -> false
 
-    let private isProxied (_, var:Variable) =
+    let private isVar opt (_, _, o, _) = Set.contains opt o
+    let private isClosedOver = isVar Var.Opts.IsClosedOver
+    let private isInitUndefined =  isVar Var.Opts.InitToUndefined
+    let private toExpr (_, _, _, (expr, _)) = expr
+
+    let private toBothExprs var =
       match var with
-      | Proxied(_, _, _, _) -> true
-      | _ -> false
-
-    let private isVar opt (_, var:Variable) =
-      match var with
-      | Variable(_, o, _)
-      | Proxied(_, o, _, _) -> Set.contains opt o
-      | _ -> false
-
-    let private isClosedOver = 
-      isVar Var.Opts.IsClosedOver
-
-    let private isInitUndefined = 
-      isVar Var.Opts.InitToUndefined
-
-    let private toLocal (_, var:Variable) =
-      match var with
-      | Variable(l, _,Local) -> l
-      | Proxied(l, _, _,_)  -> l
+      | _, _, _, (exp, Some(proxy)) -> exp, proxy
       | _ -> failwith "Que?"
 
-    let private toParameter (_, var:Variable) =
+    let private toParameter var =
       match var with
-      | Variable(p, _,Param(i)) -> p, i
-      | Proxied(_, _, p, i)  -> p, i
-      | _ -> failwith "Que?"
-
-    let private toExpr (_, var:Variable) =
-      match var with
-      | Variable(expr, _, _)
-      | Proxied(expr, _, _, _)
-      | Expr(expr) -> expr
-
+      | _, _, _, (expr, None)
+      | _, _, _, (_, Some(expr)) -> expr
+      
+    //-------------------------------------------------------------------------
+    // Compiler functions
     let rec private compileAst (ctx:Context) tree =
       match tree with
       //Literals
@@ -268,10 +240,12 @@
       assign lexpr rexpr
 
     and private defaultVarResolver (ctx:Context) (name:string) =
-      match Seq.find (fun (n, _) -> n = name) ctx.VarMap with
-      | _, Variable(expr, _,_)
-      | _, Proxied(expr, _, _, _) 
-      | _, Expr(expr) -> expr
+      match Seq.tryFind (fun (n, _, _, _) -> n = name) ctx.VarMap with
+      | Some(_, _, _, (expr, _)) -> expr
+      | None -> 
+        match ctx.Target.Scope.TryGetClosure name with
+        | None -> failwith "Que?"
+        | Some(_, index, _, _) -> (Dlr.field (Dlr.field ctx.Closure (sprintf "Item%i" index)) "Value")
 
     and private assign lexpr rexpr =
       if Types.isStrongBox lexpr.Type 
@@ -287,7 +261,12 @@
         Target = target
         VarMap = generateVarMap target
         VarResolver = defaultVarResolver
+        Closure = Dlr.param "~closure" target.Closure
       }
+
+      //Initialization for closure
+      let initClosure =
+        [Dlr.assign ctx.Closure (Dlr.cast target.Closure (defaultVarResolver ctx "~closure_proxy"))]
 
       //Initialization for closed over variables
       let initClosedOver =
@@ -313,11 +292,8 @@
       let initProxied =
         ctx.VarMap
           |> Seq.filter isProxied
-          |> Seq.map (fun (_, expr) -> 
-                match expr with 
-                | Proxied(l, _, p, _) -> assign l p 
-                | _ -> failwith "Que?"
-             )
+          |> Seq.map toBothExprs
+          |> Seq.map (fun (expr, proxy) -> assign expr proxy)
           #if DEBUG
           |> Seq.toArray
           #endif
@@ -326,7 +302,8 @@
       let locals =
         ctx.VarMap
           |> Seq.filter isLocal
-          |> Seq.map toLocal
+          |> Seq.map toExpr
+          |> Seq.append [ctx.Closure]
           |> Seq.cast<Dlr.ExprParam>
           #if DEBUG
           |> Seq.toArray
@@ -336,20 +313,20 @@
       let parameters =
         ctx.VarMap
           |> Seq.filter isParameter
+          |> Seq.sortBy (fun quad -> Quad.snd quad)
           |> Seq.map toParameter
-          |> Seq.sortBy (fun pair -> snd pair)
-          |> Seq.map (fun pair -> fst pair)
           |> Seq.cast<Dlr.ExprParam>
           #if DEBUG
           |> Seq.toArray
           #endif
 
       let functionBody = 
-        (Dlr.blockWithLocals locals [compileAst ctx target.Ast] :: [])
+        (compileAst ctx target.Ast :: [])
+          |> Seq.append initClosure
           |> Seq.append initProxied
           |> Seq.append initUndefined
           |> Seq.append initClosedOver
-          |> Dlr.block
+          |> Dlr.blockWithLocals locals
 
       let lambda = Dlr.lambda target.Delegate parameters functionBody
       lambda.Compile()

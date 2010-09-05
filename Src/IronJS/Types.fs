@@ -81,8 +81,8 @@
       static member Instance = instance
       static member InstanceExpr = Dlr.constant instance
 
-    type Object = 
-      new() = new Object()
+    type Object() = 
+      let x = 1
 
     and Function =
 
@@ -96,8 +96,8 @@
 
     //-------------------------------------------------------------------------
     // Base type for all closures
-    and Closure = 
-      new() = new Closure()
+    and Closure() = 
+      let x = 1
 
     (*
     *)

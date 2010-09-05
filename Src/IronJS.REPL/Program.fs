@@ -1,4 +1,5 @@
-﻿open IronJS
+﻿
+open IronJS
 open IronJS.Ast
 open IronJS.Compiler
 open System
@@ -31,4 +32,8 @@ let compiled =
 
   | _ -> failwith "Que?"
 
-let b = 1;
+let x = compiled.DynamicInvoke(new Types.Closure())
+let f = x :?> Types.Function
+
+f.Compile.Invoke(Types.createDelegateType [typeof<Types.Closure>; typeof<Types.Function>])
+
