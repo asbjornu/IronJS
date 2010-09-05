@@ -13,8 +13,9 @@
     open System.Runtime.InteropServices
 
     //-------------------------------------------------------------------------
-    // Alias for System.Type so we have "ClrType" and "JsType"
-    type ClrType        = System.Type
+    // Aliases for .NET core types to give them more convenient names
+    type ClrType        = System.Type //So we have "ClrType" and "JsType"
+    type ClrObject      = System.Object
     type StrongBox<'a>  = System.Runtime.CompilerServices.StrongBox<'a>
 
     //-------------------------------------------------------------------------

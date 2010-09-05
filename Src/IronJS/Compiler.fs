@@ -41,6 +41,11 @@
     // Utility functions for compiling IronJS ast trees
     module Utils =
 
+      let assign (lexpr:Dlr.Expr) rexpr =
+        if Types.Utils.isStrongBox lexpr.Type 
+          then Dlr.assign (Dlr.field lexpr "Value") rexpr
+          else Dlr.assign lexpr rexpr
+
       let identifierIsGlobal (ctx:Context) name =
         match ctx.Target.Scope.TryGetVariable name with
         | Some(_) -> false
@@ -315,17 +320,17 @@
       )
       
     //-------------------------------------------------------------------------
-    // Compiles an assignment operatiom, foo = ...
+    // Compiles an assignment operatiom
     and private _compileAssign (ctx:Context) ltree rtree =
       let rexpr = compileAst ctx rtree
 
       match ltree with
-      | Identifier(name) -> 
+      | Identifier(name) -> //Variable assignment, foo = 1
         if Utils.identifierIsGlobal ctx name 
           then Utils.Object.setProperty ctx.Globals name rexpr
-          else assign (ctx.ResolveVar name) rexpr
+          else Utils.assign (ctx.ResolveVar name) rexpr
 
-      | Property(tree, name) ->
+      | Property(tree, name) -> //Property assignment, foo.bar = 1
         let target = compileAst ctx tree
         if Types.Utils.isObject target.Type 
           then Utils.Object.setProperty target name rexpr
@@ -333,12 +338,7 @@
 
       | _ -> failwithf "Failed to compile assign for: %A" ltree
 
-    and private assign lexpr rexpr =
-      if Types.Utils.isStrongBox lexpr.Type 
-        then Dlr.assign (Dlr.field lexpr "Value") rexpr
-        else Dlr.assign lexpr rexpr
-
-    and private defaultVarResolver (ctx:Context) (name:string) =
+    and private _defaultVarResolver (ctx:Context) (name:string) =
       match Seq.tryFind (fun (n, _, _, _) -> n = name) ctx.VarMap with
       | Some(_, _, _, (expr, _)) -> expr
       | None -> //Not a normal variable
@@ -356,14 +356,14 @@
         Options = options
         Target = target
         VarMap = generateVarMap target
-        VarResolver = defaultVarResolver
+        VarResolver = _defaultVarResolver
         Closure = Dlr.param "~closure" target.Closure
         ReturnLabel = Dlr.labelT<Types.Box> "~return"
       }
 
       //Initialization for closure
       let initClosure =
-        [Dlr.assign ctx.Closure (Dlr.cast target.Closure (defaultVarResolver ctx "~closure_proxy"))]
+        [Dlr.assign ctx.Closure (Dlr.cast target.Closure (ctx.ResolveVar "~closure_proxy"))]
 
       //Initialization for closed over variables
       let initClosedOver =
@@ -390,7 +390,7 @@
         ctx.VarMap
           |> Seq.filter isProxied
           |> Seq.map toBothExprs
-          |> Seq.map (fun (expr, proxy) -> assign expr proxy)
+          |> Seq.map (fun (expr, proxy) -> Utils.assign expr proxy)
           #if DEBUG
           |> Seq.toArray
           #endif
