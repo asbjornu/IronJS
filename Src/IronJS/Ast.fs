@@ -5,28 +5,6 @@
     open IronJS
     open IronJS.Utils
 
-    (*
-    *)
-    type BinaryOp 
-      //Math
-      = Add = 1
-      | Sub = 2
-      | Eq = 100
-      | NotEq = 101
-      | Lt = 102
-      | LtEq = 103
-      | Gt = 104
-      | GtEq = 105
-      
-    (*
-    *)
-    type UnaryOp 
-      = Inc
-      | Dec
-      | PostInc
-      | PostDec
-      | Void
-
     module Var = 
 
       type Opts 
@@ -50,10 +28,31 @@
       let addAssign (n, i, o, a:Set<_>) tree  = n, i, o, a.Add tree
 
       let newParam i n = n, i, set [Opts.IsParameter], Set.empty
+
+    (*
+    *)
+    type BinaryOp 
+      //Math
+      = Add = 1
+      | Sub = 2
+      | Eq = 100
+      | NotEq = 101
+      | Lt = 102
+      | LtEq = 103
+      | Gt = 104
+      | GtEq = 105
+      
+    (*
+    *)
+    type UnaryOp 
+      = Inc
+      | Dec
+      | PostInc
+      | PostDec
+      | Void
         
     (*
     *)
-    [<StructuralEquality; StructuralComparison>]
     type Tree
       //Constants
       = String  of string
@@ -77,6 +76,8 @@
       | Function    of Scope * Tree
       | Typed       of Types.JsType * Tree
       | Invoke      of Tree * Tree list
+      | New         of Types.JsType * Option<Tree> * Option<Tree list>
+      | Property    of Tree * string
       
     (*
     *)
@@ -129,7 +130,21 @@
 
       | Binary(op, ltree, rtree) -> Binary(op, func ltree, func rtree)
       | Unary(op, tree) -> Unary(op, func tree)
+      | New(type', ftree, itrees) ->
         
+        let ftree =
+          match ftree with
+          | None -> None
+          | Some(tree) -> Some(func tree)
+
+        let itrees =
+          match itrees with
+          | None -> None
+          | Some(trees) -> Some([for tree in trees -> func tree])
+
+        New(type', ftree, itrees)
+
+      | Property(tree, name) -> Property(func tree, name)
       | Assign(ltree, rtree) -> Assign(func ltree, (func rtree))
       | Block(trees) -> Block([for tree in trees -> func tree])
       | Var(tree) -> Var(func tree)
@@ -150,7 +165,7 @@
 
           //Update scopes
           match scope.TryGetVariable name with
-          | None ->  ()
+          | None -> ()
           | _ ->  
 
             let tree = 
@@ -202,7 +217,7 @@
       let scopes = ref List.empty
 
       let updateTopScope name =
-        if (!scopes).Length > 0 then 
+        if (!scopes).Length > 1 then 
           let scope:Scope = List.head !scopes
           scopes := scope.AddVariable (name, -1, set[], set[]) :: List.tail !scopes
 
@@ -346,6 +361,8 @@
           | ES3Parser.DecimalLiteral  -> Number(double (text tok))
           | ES3Parser.WITH            -> With(translate (child tok 0), translate (child tok 1))
           | ES3Parser.CALL            -> Invoke(translate (child tok 0), [for x in (children (child tok 1)) -> translate x])
+          | ES3Parser.OBJECT          -> New(Types.JsType.Object, None, None)
+          | ES3Parser.BYFIELD         -> Property(translate (child tok 0), text (child tok 1))
 
           | ES3Parser.FUNCTION -> 
             Function(Scope.New [for x in (children (child tok 0)) -> text x], translate (child tok 1))

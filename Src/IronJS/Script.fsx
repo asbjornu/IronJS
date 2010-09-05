@@ -27,25 +27,19 @@ let assign = Ast.analyzeAssignment closures
 let compiled = 
   match assign with
   | Ast.Function(scope, ast) -> 
-
     let target = {
       Ast = ast
       Scope = scope
-      Delegate = Types.createDelegateType [typeof<Types.Closure>; typeof<Types.Box>]
+      Delegate = Types.Utils.createDelegateType [typeof<Types.Closure>; typeof<Types.Box>]
       Closure = typeof<Types.Closure>
     }
-
-    let options = {
-      DynamicScopeLevel = -1
-    }
-
+    let options = { DynamicScopeLevel = -1 }
     Compiler.compile target options
-
-
   | _ -> failwith "Que?"
 
-let x = compiled.DynamicInvoke(new Types.Closure())
-let f = x :?> Types.Function
+let env = new Types.Environment()
+let closure = new Types.Closure()
+closure.Env <- env
+compiled.DynamicInvoke(closure)
 
-f.Compile.Invoke(Types.createDelegateType [typeof<Types.Closure>; typeof<System.String>]).DynamicInvoke(f.Closure)
-
+env.Globals.Get("obj").Type
