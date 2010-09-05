@@ -6,13 +6,14 @@
     open IronJS.Aliases
     open IronJS.Ast
     
-    (*
-    *)
+    //-------------------------------------------------------------------------
     type Target = {
       Ast: Ast.Tree
       Scope: Ast.Scope
       Delegate: Types.ClrType
+      Closure: Types.ClrType
     } with
+      member x.ClosureTypeArgs = x.Closure.GetGenericArguments()
       member x.DelegateTypeArgs = x.Delegate.GetGenericArguments()
       member x.ParamType i = x.DelegateTypeArgs.[i]
       member x.ParamCount = x.DelegateTypeArgs.Length - 1
@@ -193,11 +194,15 @@
       | Boolean(b) -> Dlr.constant b
 
       | Identifier(name) -> ctx.ResolveVar name
+      | Function(scope, tree) -> compileFunction ctx scope tree
 
       //
       | Block(trees) -> Dlr.block [for tree in trees -> compileAst ctx tree]
       | Assign(ltree, rtree) -> compileAssign ctx ltree rtree
       | _ -> failwithf "Failed to compile %A" tree
+
+    and private compileFunction ctx scope tree =
+      Dlr.defaultT<Types.Function>
 
     and private compileAssign (ctx:Context) ltree rtree =
       let rexpr = compileAst ctx rtree
@@ -208,15 +213,15 @@
 
       Dlr.assign lexpr rexpr
 
-    let defaultVarResolver (ctx:Context) (name:string) =
+    and private defaultVarResolver (ctx:Context) (name:string) =
       match Seq.find (fun (n, _) -> n = name) ctx.VarMap with
       | _, Variable(expr, _)
       | _, Proxied(expr, _, _) 
       | _, Expr(expr) -> expr
-      
+
     //-------------------------------------------------------------------------
-    //Main compiler function
-    let compile (target:Target) (options:Options) =
+    //Main compiler function that setups compilation and invokes compileAst
+    and compile (target:Target) (options:Options) =
 
       let ctx = {
         Options = options
@@ -242,5 +247,6 @@
           |> Seq.toArray
           #endif
 
-      Dlr.lambda target.Delegate parameters (Dlr.blockWithLocals locals [Dlr.constant 1])
+      let functionBody = Dlr.blockWithLocals locals [compileAst ctx target.Ast]
+      Dlr.lambda target.Delegate parameters functionBody
       

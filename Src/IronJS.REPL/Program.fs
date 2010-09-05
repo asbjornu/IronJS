@@ -18,7 +18,8 @@ let compiled =
     let target = {
       Ast = ast
       Scope = scope
-      Delegate = typeof<Action<Types.Closure>>
+      Delegate = Types.createDelegateType [typeof<Types.Closure>; typeof<Types.Function>]
+      Closure = typeof<Types.Closure>
     }
 
     let options = {
@@ -30,4 +31,4 @@ let compiled =
 
   | _ -> failwith "Que?"
 
-let brake = 1;
+let b = 1;

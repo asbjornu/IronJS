@@ -12,15 +12,13 @@
     open System.Reflection.Emit
     open System.Runtime.InteropServices
 
-    (*
-    Alias for System.Type so we have "ClrType" and "JsTypes"
-    *)
+    //-------------------------------------------------------------------------
+    // Alias for System.Type so we have "ClrType" and "JsTypes"
     type ClrType        = System.Type
     type StrongBox<'a>  = System.Runtime.CompilerServices.StrongBox<'a>
 
-    (*
-    Enumeration of all javascript types and combinations
-    *)
+    //-------------------------------------------------------------------------
+    // Enumeration of all javascript types and combinations
     type JsType
       = Nothing   = 0   // NOT null
       | Closure   = 1
@@ -57,9 +55,8 @@
       | ArrFunc         = 96  // Array | Function
       | ArrFuncNull     = 352 // Array | Function | Null
 
-    (*
-    Struct used to box dynamic values during runtime
-    *)
+    //-------------------------------------------------------------------------
+    // Struct used to box dynamic values during runtime
     type [<StructLayout(LayoutKind.Explicit)>] Box =
       struct
         [<FieldOffset(0)>]  val mutable Clr    : obj 
@@ -94,14 +91,15 @@
     and Function =
 
       val mutable Closure : Closure
+      val mutable Compile : Func<ClrType, Delegate>
 
-      new(closure) = {
+      new(closure, compile) = {
         Closure = closure
+        Compile = compile
       }
 
-    (*
-    Base type for all closures
-    *)
+    //-------------------------------------------------------------------------
+    // Base type for all closures
     and Closure = 
 
       val mutable Object : obj
@@ -163,7 +161,9 @@
 
       | _ -> failwithf "Unknown type %A" type'
 
-    (*Converts a JsType enum to ClrType object*)
+      
+    //-------------------------------------------------------------------------
+    // Converts a JsType enum to ClrType object
     let rec jsToClr typ =
       match typ with
       | JsType.Closure    -> typeof<Closure>
@@ -199,25 +199,29 @@
 
     (*
     *)
-    let private _assemblyName = new AssemblyName("IronJS.DynamicAssembly");
-    let private _dynamicAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_assemblyName, AssemblyBuilderAccess.RunAndCollect);
-    let private _dynamicModule = _dynamicAssembly.DefineDynamicModule("Module", "IronJS.DynamicAssembly.dll");
-    let private _typeCache = new Collections.Concurrent.ConcurrentDictionary<int, ClrType>()
-    let private _fieldAttributes = FieldAttributes.Public;
-    let private _typeAttributes = TypeAttributes.Public ||| TypeAttributes.AutoLayout 
-                                  ||| TypeAttributes.Class ||| TypeAttributes.Sealed
+    let private _assemblyName = new AssemblyName("IronJS.DynamicAssembly")
+    let private _dynamicAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_assemblyName, AssemblyBuilderAccess.RunAndCollect)
+    let private _dynamicModule = _dynamicAssembly.DefineDynamicModule("Module", "IronJS.DynamicAssembly.dll")
+    let private _closureCache = new Collections.Concurrent.ConcurrentDictionary<int, ClrType>()
+    let private _closureFieldAttributes = FieldAttributes.Public
+    let private _closureTypeAttributes = TypeAttributes.Public ||| TypeAttributes.AutoLayout 
+                                         ||| TypeAttributes.Class ||| TypeAttributes.Sealed
 
-    let rec createClosureType (genericCount:int) =
-      let success, type' = _typeCache.TryGetValue genericCount
+    let rec createClosureType (types:ClrType array) =
+      let typeCount = types.Length
+      let success, type' = _closureCache.TryGetValue typeCount
       if success then type'
       else
-        let newType' = _dynamicModule.DefineType(sprintf "Closure%i" genericCount, _typeAttributes, typeof<Closure>);
-        let genericParams = newType'.DefineGenericParameters(Array.init genericCount (fun i -> sprintf "T%i" i))
+        let newType' = _dynamicModule.DefineType(sprintf "Closure%i" typeCount, _closureTypeAttributes, typeof<Closure>);
+        let genericParams = newType'.DefineGenericParameters(Array.init typeCount (fun i -> sprintf "T%i" i))
 
-        Array.iteri (fun i gp -> newType'.DefineField(sprintf "Item%i" i, gp, _fieldAttributes) |> ignore) genericParams
+        Array.iteri (fun i type' -> newType'.DefineField(sprintf "Item%i" i, type', _closureFieldAttributes) |> ignore) genericParams
 
         let concreteType = newType'.CreateType()
 
-        if _typeCache.TryAdd(genericCount, concreteType) 
-          then concreteType
-          else createClosureType genericCount
+        let type' = 
+          if _closureCache.TryAdd(typeCount, concreteType) 
+            then concreteType
+            else createClosureType types
+
+        type'.MakeGenericType(types)

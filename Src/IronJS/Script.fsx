@@ -31,7 +31,8 @@ let compiled =
     let target = {
       Ast = ast
       Scope = scope
-      Delegate = Types.createDelegateType [typeof<Types.Closure>; typeof<int>]
+      Delegate = Types.createDelegateType [typeof<Types.Closure>; typeof<Types.Function>]
+      Closure = typeof<Types.Closure>
     }
 
     let options = {
