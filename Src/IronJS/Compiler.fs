@@ -30,6 +30,9 @@
       | Variable of Dlr.Expr * Set<Var.Opts> * VariableType
       | Proxied  of Dlr.Expr * Set<Var.Opts> * Dlr.Expr * int
 
+    type VarExprQuad = 
+      Dlr.Expr * Option<Dlr.Expr> * Set<Var.Opts> * int
+
     type Options = {
       DynamicScopeLevel: int
     }
@@ -177,6 +180,18 @@
       | Proxied(_, _, _, _) -> true
       | _ -> false
 
+    let private isVar opt (_, var:Variable) =
+      match var with
+      | Variable(_, o, _)
+      | Proxied(_, o, _, _) -> Set.contains opt o
+      | _ -> false
+
+    let private isClosedOver = 
+      isVar Var.Opts.IsClosedOver
+
+    let private isInitUndefined = 
+      isVar Var.Opts.InitToUndefined
+
     let private toLocal (_, var:Variable) =
       match var with
       | Variable(l, _,Local) -> l
@@ -186,7 +201,7 @@
     let private toParameter (_, var:Variable) =
       match var with
       | Variable(p, _,Param(i)) -> p, i
-      | Proxied(_, _,p, i)  -> p, i
+      | Proxied(_, _, p, i)  -> p, i
       | _ -> failwith "Que?"
 
     let private toExpr (_, var:Variable) =
@@ -211,7 +226,6 @@
       | _ -> failwithf "Failed to compile %A" tree
 
     and private compileFunction ctx scope tree =
-
       let types =
         scope.Closures
           |> Seq.sortBy (fun v -> Quad.snd v)
@@ -251,15 +265,18 @@
         | Identifier(i) -> ctx.ResolveVar i
         | _ -> failwith "Failed to compile %A" ltree
 
-      if Types.isStrongBox lexpr.Type 
-        then Dlr.assign (Dlr.field lexpr "Value") rexpr
-        else Dlr.assign lexpr rexpr
+      assign lexpr rexpr
 
     and private defaultVarResolver (ctx:Context) (name:string) =
       match Seq.find (fun (n, _) -> n = name) ctx.VarMap with
       | _, Variable(expr, _,_)
       | _, Proxied(expr, _, _, _) 
       | _, Expr(expr) -> expr
+
+    and private assign lexpr rexpr =
+      if Types.isStrongBox lexpr.Type 
+        then Dlr.assign (Dlr.field lexpr "Value") rexpr
+        else Dlr.assign lexpr rexpr
 
     //-------------------------------------------------------------------------
     // Main compiler function that setups compilation and invokes compileAst
@@ -272,12 +289,50 @@
         VarResolver = defaultVarResolver
       }
 
+      //Initialization for closed over variables
+      let initClosedOver =
+        ctx.VarMap
+          |> Seq.filter isClosedOver
+          |> Seq.map toExpr
+          |> Seq.map (fun expr -> Dlr.assign expr (Dlr.new' expr.Type))
+          #if DEBUG
+          |> Seq.toArray
+          #endif
+
+      //Initialization for undefined variables
+      let initUndefined =
+        ctx.VarMap
+          |> Seq.filter isInitUndefined
+          |> Seq.map toExpr
+          |> Seq.map (fun expr -> Dlr.assign expr (Types.Undefined.InstanceExpr))
+          #if DEBUG
+          |> Seq.toArray
+          #endif
+
+      //Intialization for proxied parameters
+      let initProxied =
+        ctx.VarMap
+          |> Seq.filter isProxied
+          |> Seq.map (fun (_, expr) -> 
+                match expr with 
+                | Proxied(l, _, p, _) -> assign l p 
+                | _ -> failwith "Que?"
+             )
+          #if DEBUG
+          |> Seq.toArray
+          #endif
+
+      //Local variables
       let locals =
         ctx.VarMap
           |> Seq.filter isLocal
           |> Seq.map toLocal
           |> Seq.cast<Dlr.ExprParam>
+          #if DEBUG
+          |> Seq.toArray
+          #endif
 
+      //Parameter variables
       let parameters =
         ctx.VarMap
           |> Seq.filter isParameter
@@ -289,7 +344,13 @@
           |> Seq.toArray
           #endif
 
-      let functionBody = Dlr.blockWithLocals locals [compileAst ctx target.Ast]
+      let functionBody = 
+        (Dlr.blockWithLocals locals [compileAst ctx target.Ast] :: [])
+          |> Seq.append initProxied
+          |> Seq.append initUndefined
+          |> Seq.append initClosedOver
+          |> Dlr.block
+
       let lambda = Dlr.lambda target.Delegate parameters functionBody
       lambda.Compile()
       
