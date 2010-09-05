@@ -94,6 +94,9 @@
         Compile = compile
       }
 
+      member x.CompileAs<'a when 'a :> Delegate>() =
+        x.Compile.Invoke(typeof<'a>) :?> 'a
+
     //-------------------------------------------------------------------------
     // Base type for all closures
     and Closure() = 
@@ -117,7 +120,6 @@
       match type' with
       | JsType.Closure   -> JsType.Closure
       | JsType.Number    -> JsType.Number
-
       | JsType.Boolean   -> JsType.Boolean
 
       | JsType.StringNull 
@@ -216,3 +218,11 @@
             else createClosureType types
 
         type'.MakeGenericType(types)
+
+    module Utils =
+
+      let isFunction (expr:Dlr.Expr) =
+        expr.Type = typeof<Function>
+
+      let getFunctionClosure (expr:Dlr.Expr) =
+        Dlr.field expr "Closure"

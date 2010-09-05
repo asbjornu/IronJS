@@ -76,14 +76,15 @@
       | With        of Tree * Tree
       | Function    of Scope * Tree
       | Typed       of Types.JsType * Tree
+      | Invoke      of Tree * Tree list
       
     (*
     *)
-    and VarQuad = string * int * Set<Var.Opts> * Set<Tree>
-    and ClosureQuad = string * int * int * int
+    //and VarQuad = string * int * Set<Var.Opts> * Set<Tree>
+    //and ClosureQuad = string * int * int * int
     and Scope = {
-      Variables: Set<VarQuad>
-      Closures: Set<ClosureQuad>
+      Variables: Set<string * int * Set<Var.Opts> * Set<Tree>>
+      Closures: Set<string * int * int * int>
       DynamicScopeLevel: int
     } with
 
@@ -135,6 +136,7 @@
       | Return(tree) -> Return(func tree)
       | With(target, tree) -> With(func target, func tree)
       | Function( scope, tree) -> Function(scope, func tree) 
+      | Invoke(tree, trees) -> Invoke(func tree, [for tree in trees -> func tree])
 
     (*
     *)
@@ -233,19 +235,28 @@
 
           let scope:Scope = List.head !scopes
 
+          //Check if we have a local varible by name
           match scope.TryGetVariable name with
           | None  -> 
+            //Check if we already have a closure variable for this name
             match scope.TryGetClosure name with
             | None  -> 
               //Build new scope objects with closure variables set
               let _, newScopes = 
                 List.foldBack (fun (itm:Scope) (level, scopes) ->
                   match level with
+                  //We havn't found the scope with the variable in yet
                   | None  ->
 
                     match itm.TryGetVariable name with
-                    | None              ->  None, itm :: scopes
+                    //Not in this scope either
+                    | None     ->  None, itm :: scopes
+
+                    //Found in this scope
                     | Some(v)  -> 
+
+                      //Update scope and add the Var.Opts.IsClosedOver
+                      //value to the local varible in this scope
                       let scope = 
                         if Var.isClosedOver v
                           then itm
@@ -253,8 +264,10 @@
                           
                       Some(scopes.Length, itm.DynamicScopeLevel), scope :: scopes
 
+                  //We have found the scope
                   | Some(fs, dsl)  -> 
 
+                    //Make sure the current scope closes over the variable
                     let scope = 
                       match itm.TryGetClosure name with
                       | Some(_) ->  itm
@@ -270,7 +283,10 @@
               //Return tree
               tree
 
+            //Already have variable as closure
             | Some(_) ->  tree
+
+          //Local variable exists
           | Some(_)   ->  tree
 
         | Function(scope, tree) ->
@@ -328,7 +344,8 @@
           | ES3Parser.Identifier      -> Identifier(text tok)
           | ES3Parser.StringLiteral   -> String(jsString tok)
           | ES3Parser.DecimalLiteral  -> Number(double (text tok))
-          | ES3Parser.WITH            -> With(translate (child tok 0), translate(child tok 1))
+          | ES3Parser.WITH            -> With(translate (child tok 0), translate (child tok 1))
+          | ES3Parser.CALL            -> Invoke(translate (child tok 0), [for x in (children (child tok 1)) -> translate x])
 
           | ES3Parser.FUNCTION -> 
             Function(Scope.New [for x in (children (child tok 0)) -> text x], translate (child tok 1))

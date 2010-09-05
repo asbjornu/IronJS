@@ -13,6 +13,8 @@
     type Expr             = Expression
     type ExprParam        = ParameterExpression
 
+    type Label            = LabelTarget
+
     type Br               = BindingRestrictions
     type AstUtils         = Microsoft.Scripting.Ast.Utils
     type DynamicUtils     = Microsoft.Scripting.Utils.DynamicUtils
@@ -49,6 +51,7 @@
     //Constants
     let true' = constant true
     let false' = constant false
+    let int_1 = constant -1
     let int0 = constant 0
     let int1 = constant 1
 
@@ -122,6 +125,13 @@
     //Function call
     let call (expr:Et) name (args:Et list) =
       Et.Call(expr, expr.Type.GetMethod(name), args) :> Et
+
+    let callGeneric (expr:Expr) name (typeArgs:System.Type seq) (args:Expr seq) =
+      let method' = expr.Type.GetMethod(name).MakeGenericMethod(Seq.toArray typeArgs)
+      Et.Call(expr, method', args) :> Expr
+
+    let callGenericT<'a> (expr:Expr) name (args:Expr seq) =
+      callGeneric expr name [typeof<'a>] args
 
     //Casts
     let cast typ expr = Et.Convert(expr, typ) :> Et
@@ -291,3 +301,12 @@
 
       let byArgs (args:System.Dynamic.DynamicMetaObject seq) =
         Seq.fold (fun (s:Br) a -> s.Merge(argRestrict a)) Br.Empty args
+
+    module Utils =
+      let private _dbgViewProp = 
+        typeof<System.Linq.Expressions.Expression>.
+          GetProperty("DebugView", System.Reflection.BindingFlags.NonPublic ||| System.Reflection.BindingFlags.Instance)
+
+      let printDebugView (obj:Expr) =
+        printf "%A" (_dbgViewProp.GetValue(obj, null))
+

@@ -7,3 +7,5 @@ var scope1 = function (a) {
     var _ = x;
 
 };
+
+scope1(y);

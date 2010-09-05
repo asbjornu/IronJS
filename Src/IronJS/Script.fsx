@@ -31,7 +31,7 @@ let compiled =
     let target = {
       Ast = ast
       Scope = scope
-      Delegate = Types.createDelegateType [typeof<Types.Closure>; typeof<Types.Function>]
+      Delegate = Types.createDelegateType [typeof<Types.Closure>; typeof<Types.Box>]
       Closure = typeof<Types.Closure>
     }
 
@@ -47,5 +47,5 @@ let compiled =
 let x = compiled.DynamicInvoke(new Types.Closure())
 let f = x :?> Types.Function
 
-f.Compile.Invoke(Types.createDelegateType [typeof<Types.Closure>; typeof<Types.Function>])
+f.Compile.Invoke(Types.createDelegateType [typeof<Types.Closure>; typeof<System.String>]).DynamicInvoke(f.Closure)
 

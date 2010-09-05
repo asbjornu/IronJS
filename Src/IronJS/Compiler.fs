@@ -31,6 +31,7 @@
       VarMap: seq<string * int * Set<Var.Opts> * (Dlr.Expr * Option<Dlr.Expr>)>
       VarResolver: Context -> string -> Dlr.Expr
       Closure: Dlr.Expr
+      ReturnLabel: Dlr.Label
     } with
       member x.ResolveVar name =
         x.VarResolver x name
@@ -190,14 +191,45 @@
       | Boolean(b) -> Dlr.constant b
 
       | Identifier(name) -> ctx.ResolveVar name
-      | Function(scope, tree) -> compileFunction ctx scope tree
-
-      //
+      | Function(scope, tree) -> _compileFunction ctx scope tree
+      | Invoke(ctree, atrees) -> _compileInvoke ctx ctree atrees
       | Block(trees) -> Dlr.block [for tree in trees -> compileAst ctx tree]
-      | Assign(ltree, rtree) -> compileAssign ctx ltree rtree
+      | Assign(ltree, rtree) -> _compileAssign ctx ltree rtree
       | _ -> failwithf "Failed to compile %A" tree
 
-    and private compileFunction ctx scope tree =
+      
+    //-------------------------------------------------------------------------
+    // Compiles an invoke statement, foo(...)
+    and private _compileInvoke ctx ctree atrees =
+      let callTarg = compileAst ctx ctree
+      let callArgs = [for tree in atrees -> compileAst ctx tree]
+
+      let buildFuncType callArgs =
+        Types.createDelegateType (
+          List.foldBack 
+            (fun (itm:Dlr.Expr) state -> itm.Type :: state) 
+            callArgs 
+            [typeof<Types.Box>]
+        )
+
+      if Types.Utils.isFunction callTarg then
+        
+        Dlr.blockTmpT<Types.Function> (fun tmp ->
+          let callArgs = (Types.Utils.getFunctionClosure tmp) :: callArgs
+          let funcType = buildFuncType callArgs
+          let compiled = Dlr.callGeneric tmp "CompileAs" [funcType] []
+          [
+            Dlr.assign tmp callTarg;
+            Dlr.invoke compiled callArgs
+          ] |> Seq.ofList
+        )
+
+      else
+        failwith "Que?"
+        
+    //-------------------------------------------------------------------------
+    // Compiles a function definition NOT the function itself, function(...) { ... }
+    and private _compileFunction ctx scope tree =
       let types =
         scope.Closures
           |> Seq.sortBy (fun v -> Quad.snd v)
@@ -229,8 +261,10 @@
           |> Seq.append (scope.Closures |> Seq.map createClosureInitExpr)
           |> Seq.append [Dlr.assign tmp (Dlr.new' closureType)]
       )
-
-    and private compileAssign (ctx:Context) ltree rtree =
+      
+    //-------------------------------------------------------------------------
+    // Compiles an assignment operatiom, foo = ...
+    and private _compileAssign (ctx:Context) ltree rtree =
       let rexpr = compileAst ctx rtree
       let lexpr = 
         match ltree with
@@ -239,6 +273,11 @@
 
       assign lexpr rexpr
 
+    and private assign lexpr rexpr =
+      if Types.isStrongBox lexpr.Type 
+        then Dlr.assign (Dlr.field lexpr "Value") rexpr
+        else Dlr.assign lexpr rexpr
+
     and private defaultVarResolver (ctx:Context) (name:string) =
       match Seq.tryFind (fun (n, _, _, _) -> n = name) ctx.VarMap with
       | Some(_, _, _, (expr, _)) -> expr
@@ -246,11 +285,6 @@
         match ctx.Target.Scope.TryGetClosure name with
         | None -> failwith "Que?"
         | Some(_, index, _, _) -> (Dlr.field (Dlr.field ctx.Closure (sprintf "Item%i" index)) "Value")
-
-    and private assign lexpr rexpr =
-      if Types.isStrongBox lexpr.Type 
-        then Dlr.assign (Dlr.field lexpr "Value") rexpr
-        else Dlr.assign lexpr rexpr
 
     //-------------------------------------------------------------------------
     // Main compiler function that setups compilation and invokes compileAst
@@ -262,6 +296,7 @@
         VarMap = generateVarMap target
         VarResolver = defaultVarResolver
         Closure = Dlr.param "~closure" target.Closure
+        ReturnLabel = Dlr.labelT<Types.Box> "~return"
       }
 
       //Initialization for closure
@@ -321,7 +356,8 @@
           #endif
 
       let functionBody = 
-        (compileAst ctx target.Ast :: [])
+        [Dlr.labelExprT<Types.Box> ctx.ReturnLabel]
+          |> Seq.append [compileAst ctx target.Ast]
           |> Seq.append initClosure
           |> Seq.append initProxied
           |> Seq.append initUndefined
