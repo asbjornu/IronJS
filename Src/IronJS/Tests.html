@@ -17,9 +17,9 @@
 
             //define var in eval + get it in eval in closure
             fun = function () {
-
                 var closure = function () {
-                    eval("alert(x)");
+                    var y = eval("x");
+                    return y;
                 };
 
                 eval("var x = 'oh yes'");

@@ -87,13 +87,12 @@
     and ScopeOpts
       = HasEval
       | HasWith
-      | IsEval
       
     and Scope = {
       Variables: Set<string * int * Set<Var.Opts> * Set<Tree>>
       Closures: Set<string * int * int * int>
       Options: Set<ScopeOpts>
-      DynamicScopeLevel: int
+      WithLevel: int
     } with
 
       member x.UpdateVariable name func = 
@@ -108,11 +107,12 @@
       member x.TryGetClosure name = Seq.tryFind (fun (n, _, _, _) -> n = name) x.Closures
 
       member x.AddOpt opt = {x with Options = x.Options.Add opt}
+      member x.VarCount = x.Variables.Count
         
       static member New parms = {
         Closures = set[]
-        Variables = ["~closure_proxy"] @ parms |> Seq.mapi Var.newParam |> Set.ofSeq
-        DynamicScopeLevel = -1
+        Variables = ["~closure"] @ parms |> Seq.mapi Var.newParam |> Set.ofSeq
+        WithLevel = 0
         Options = set[]
       }
         
@@ -196,50 +196,25 @@
         | _ -> walk analyze tree
 
       analyze tree
-
-    (*
-    *)
-    let analyzeScopeLevels tree =
-      let scopes = ref List.empty<Scope>
-      let dynamicScopeLevel = ref -1
-
-      let rec analyze tree =
-        match tree with
-        | With(target, tree) -> 
-          let target = analyze target
-
-          dynamicScopeLevel := !dynamicScopeLevel + 1
-          let tree = analyze tree
-          dynamicScopeLevel := !dynamicScopeLevel - 1
-
-          With(target, tree)
-            
-        | Function(scope, tree) ->
-          let scope, tree = doInsideScope scopes {scope with DynamicScopeLevel = !dynamicScopeLevel} (fun () -> analyze tree)
-          Function(scope, tree)
-
-        | tree -> walk analyze tree
-
-      analyze tree
       
     (*
     *)
     let stripVarDeclarations tree =
       let scopes = ref List.empty<Scope>
 
-      let updateTopScope name =
+      let updateTopScope name opts =
         if (!scopes).Length > 1 then 
           let scope = List.head !scopes
-          scopes := scope.AddVariable (name, -1, set[], set[]) :: List.tail !scopes
+          scopes := scope.AddVariable (name, scope.VarCount, opts, set[]) :: List.tail !scopes
 
       let rec strip tree =
         match tree with
         | Var(Assign(Identifier(name), rtree)) ->
-          updateTopScope name
+          updateTopScope name (set[])
           Assign(Identifier(name), strip rtree)
 
         | Var(Identifier(name)) ->
-          updateTopScope name
+          updateTopScope name (set[Var.InitToUndefined])
           Pass
 
         | Function(scope, tree) ->
@@ -255,10 +230,8 @@
 
       let forceClosure var =
         match var with
-        | "~closure_proxy", _, _, _ -> var
-        | _ -> var
-                |> Var.addOpt2 Var.IsClosedOver
-                |> Var.addOpt2 Var.ForceDynamic
+        | "~closure", _, _, _ -> var
+        | _ -> var |> Var.addOpt2 Var.ForceDynamic
 
       let rec analyze tree =
         match tree with
@@ -315,16 +288,16 @@
                           then itm
                           else itm.UpdateVariable name (fun v -> Var.addOpt2 Var.Opts.IsClosedOver v)
                           
-                      Some(scopes.Length, itm.DynamicScopeLevel), scope :: scopes
+                      Some(scopes.Length, Quad.snd v), scope :: scopes
 
                   //We have found the scope
-                  | Some(fs, dsl)  -> 
+                  | Some(fromScope, indexInScope)  -> 
 
                     //Make sure the current scope closes over the variable
                     let scope = 
                       match itm.TryGetClosure name with
                       | Some(_) ->  itm
-                      | None    ->  itm.AddClosure (name, itm.Closures.Count, fs, dsl)
+                      | None    ->  itm.AddClosure (name, -1, fromScope, indexInScope)
 
                     level, scope :: scopes
 
@@ -401,6 +374,7 @@
           | ES3Parser.CALL            -> Invoke(translate (child tok 0), [for x in (children (child tok 1)) -> translate x])
           | ES3Parser.OBJECT          -> New(Types.JsType.Object, None, None)
           | ES3Parser.BYFIELD         -> Property(translate (child tok 0), text (child tok 1))
+          | ES3Parser.RETURN          -> Return(translate (child tok 0))
 
           | ES3Parser.FUNCTION -> 
             Function(Scope.New [for x in (children (child tok 0)) -> text x], translate (child tok 1))

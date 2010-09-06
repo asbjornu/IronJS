@@ -18,6 +18,7 @@
     type Br               = BindingRestrictions
     type AstUtils         = Microsoft.Scripting.Ast.Utils
     type DynamicUtils     = Microsoft.Scripting.Utils.DynamicUtils
+    type ArrayUtils       = Microsoft.Scripting.Utils.ArrayUtils
 
     type MetaObj          = DynamicMetaObject
     type MetaObjProvider  = IDynamicMetaObjectProvider

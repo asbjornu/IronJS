@@ -123,27 +123,29 @@
 
     //-------------------------------------------------------------------------
     // Base class for all closures
-    and Closure() = 
-      [<DefaultValue>] val mutable Env : Environment
-      
-    //-------------------------------------------------------------------------
-    // 
-    and EvalScope =
-      val mutable Variables : CDict<string, StrongBox<Box>>
+    and Closure = 
+      val mutable Env : Environment
+      val mutable Scopes : Scope array
 
-      new () = {
-        Variables = new CDict<string, StrongBox<Box>>()
+      new (env, scopes, nextScope) = {
+        Env = env
+        Scopes = Dlr.ArrayUtils.Append(scopes, nextScope)
+      }
+
+      new (env) = {
+        Env = env
+        Scopes = [||]
       }
       
     //-------------------------------------------------------------------------
     // 
     and Scope =
-      val mutable EvalScope : EvalScope
-      val mutable WithScopes : Object list
+      val mutable Names : CDict<string, int>
+      val mutable Values : Box array
 
-      new (evalScope) = {
-        EvalScope = evalScope
-        WithScopes = []
+      new (values:int) = {
+        Names = new CDict<string, int>()
+        Values = Array.zeroCreate<Box> values
       }
       
     //-------------------------------------------------------------------------

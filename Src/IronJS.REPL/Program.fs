@@ -6,19 +6,17 @@ open System
 IO.Directory.SetCurrentDirectory(@"C:\Users\fredrikhm\Personal\IronJS\Src\IronJS")
 
 let tree = Ast.Parsers.Ecma3.parse (IO.File.ReadAllText("Script.js"))
-let stripped = Ast.stripVarDeclarations tree
-let eval = Ast.analyzeEval stripped
-let levels = Ast.analyzeScopeLevels eval
-let closures = Ast.analyzeClosureScopes levels
-let assign = Ast.analyzeAssignment closures
-
-let t1 = Ast.Function(Ast.Scope.New [], Pass)
-let t2 = Ast.walk (fun x -> x) t1
-
-t2.GetHashCode()
+let filters = 
+  [
+    Ast.stripVarDeclarations
+    Ast.analyzeEval
+    Ast.analyzeClosureScopes
+    Ast.analyzeAssignment
+  ]
+let tree' = List.fold (fun t f -> f t) tree filters
 
 let compiled = 
-  match assign with
+  match tree' with
   | Ast.Function(scope, ast) -> 
     let target = {
       Ast = ast
@@ -31,6 +29,5 @@ let compiled =
   | _ -> failwith "Que?"
 
 let env = new Types.Environment()
-let closure = new Types.Closure()
-closure.Env <- env
-compiled.DynamicInvoke(closure)
+let closure = new Types.Closure(env)
+compiled.DynamicInvoke(closure);
