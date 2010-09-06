@@ -1,4 +1,6 @@
-﻿var y = 1;
-var z = "lol";
-var x = z;
-var obj = {}
+﻿var fun = function (a) {
+    var y = 2;
+    var x = "lol";
+}
+
+fun();

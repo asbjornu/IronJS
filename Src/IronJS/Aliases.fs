@@ -1,10 +1,13 @@
 ﻿namespace IronJS
 
   module Aliases = 
-    type CtorInfo = System.Reflection.ConstructorInfo
-    type ParmInfo = System.Reflection.ParameterInfo
-    type FieldInfo = System.Reflection.FieldInfo
-    type MethodInfo = System.Reflection.MethodInfo
+    open System
+
+    type CtorInfo = Reflection.ConstructorInfo
+    type ParmInfo = Reflection.ParameterInfo
+    type FieldInfo = Reflection.FieldInfo
+    type MethodInfo = Reflection.MethodInfo
+    type CDict<'a, 'b> = Collections.Generic.Dictionary<'a, 'b>
 
   module Constants =
     let closureParameterName = "~closure"

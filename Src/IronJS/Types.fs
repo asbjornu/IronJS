@@ -107,13 +107,15 @@
     and [<AllowNullLiteral>] Function =
       inherit Object
 
+      val mutable FuncKey : int64 * nativeint
       val mutable Closure : Closure
       val mutable Compile : Func<ClrType, Delegate>
 
-      new(closure, compile) = {
+      new(closure, compile, funcKey) = {
         inherit Object()
         Closure = closure
         Compile = compile
+        FuncKey = funcKey
       }
 
       member x.CompileAs<'a when 'a :> Delegate>() =
@@ -123,7 +125,29 @@
     // Base class for all closures
     and Closure() = 
       [<DefaultValue>] val mutable Env : Environment
+      
+    //-------------------------------------------------------------------------
+    // 
+    and EvalScope =
+      val mutable Variables : CDict<string, StrongBox<Box>>
 
+      new () = {
+        Variables = new CDict<string, StrongBox<Box>>()
+      }
+      
+    //-------------------------------------------------------------------------
+    // 
+    and Scope =
+      val mutable EvalScope : EvalScope
+      val mutable WithScopes : Object list
+
+      new (evalScope) = {
+        EvalScope = evalScope
+        WithScopes = []
+      }
+      
+    //-------------------------------------------------------------------------
+    // Environment object containing global scope, etc.
     and [<AllowNullLiteral>] Environment =
       val mutable Globals : Object
       
@@ -183,7 +207,7 @@
       | JsType.Dynamic 
       | JsType.Nothing -> JsType.Dynamic
 
-      | _ -> failwithf "Unknown type %A" type'
+      | _ -> failwithf "Invalid type (%A)" type'
       
     //-------------------------------------------------------------------------
     // Converts a JsType enum value to a ClrType object
@@ -204,16 +228,16 @@
     //-------------------------------------------------------------------------
     // Utility functions and values for dealing with all IronJS-related types
     module Utils =
-    
       //-------------------------------------------------------------------------
       // Functions and values for working with Object objects
-      let isObject (type':ClrType) = type' = typeof<Object> || type'.IsSubclassOf(typeof<Object>)
+      module Object = 
+        let isObject (type':ClrType) = type' = typeof<Object> || type'.IsSubclassOf(typeof<Object>)
 
       //-------------------------------------------------------------------------
       // Functions and values for working with Function objects
-      let isFunction (type':ClrType) = type' = typeof<Function>
-      let getFunctionClosure (expr:Dlr.Expr) = Dlr.field expr "Closure"
-      
+      module Function = 
+        let isFunction (type':ClrType) = type' = typeof<Function>
+
       //-------------------------------------------------------------------------
       // Functions and values for working with Box structs
       module Box = 
@@ -227,10 +251,48 @@
 
       //-------------------------------------------------------------------------
       // Functions and values for working with StrongBox<'a> objects
-      let strongBoxTypeDef = typedefof<System.Runtime.CompilerServices.StrongBox<_>>
-      let makeStrongBox type' = strongBoxTypeDef.MakeGenericType([|type'|])
-      let makeStrongBoxT<'a> = makeStrongBox typeof<'a>
-      let isStrongBox (type':System.Type) = type'.IsGenericType && type'.GetGenericTypeDefinition() = strongBoxTypeDef
+      module StrongBox =
+        let typeDef = typedefof<System.Runtime.CompilerServices.StrongBox<_>>
+        let make type' = typeDef.MakeGenericType([|type'|])
+        let makeT<'a> = make typeof<'a>
+        let isStrongBox (type':System.Type) = type'.IsGenericType && type'.GetGenericTypeDefinition() = typeDef
+
+      //-------------------------------------------------------------------------
+      // Functions and values for working with Closure objects
+      module Closure =
+        //-------------------------------------------------------------------------
+        // This function and bindings are used to create closure classes with 
+        // generic type parameters for closures, e.g: Closure<T0, T1, ...>. 
+        // Created classes are cached and re-used with new type parameters.
+        let private _assemblyName = new AssemblyName("IronJS.DynamicAssembly")
+        let private _dynamicAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_assemblyName, AssemblyBuilderAccess.RunAndCollect)
+        let private _dynamicModule = _dynamicAssembly.DefineDynamicModule("Module", "IronJS.DynamicAssembly.dll")
+        let private _closureCache = new Collections.Concurrent.ConcurrentDictionary<int, ClrType>()
+        let private _closureFieldAttributes = FieldAttributes.Public
+        let private _closureTypeAttributes = TypeAttributes.Public ||| TypeAttributes.AutoLayout 
+                                             ||| TypeAttributes.Class ||| TypeAttributes.Sealed
+
+        let rec createType (types:ClrType array) =
+          if types.Length = 0 then
+            typeof<Closure>
+          else
+            let typeCount = types.Length
+            let success, type' = _closureCache.TryGetValue typeCount
+            if success then type'.MakeGenericType(types)
+            else
+              let newType' = _dynamicModule.DefineType(sprintf "Closure%i" typeCount, _closureTypeAttributes, typeof<Closure>);
+              let genericParams = newType'.DefineGenericParameters(Array.init typeCount (fun i -> sprintf "T%i" i))
+
+              Array.iteri (fun i type' -> newType'.DefineField(sprintf "Item%i" i, type', _closureFieldAttributes) |> ignore) genericParams
+
+              let concreteType = newType'.CreateType()
+
+              let type' = 
+                if _closureCache.TryAdd(typeCount, concreteType) 
+                  then concreteType
+                  else createType types
+
+              type'.MakeGenericType(types)
       
       //-------------------------------------------------------------------------
       // Function + cache that creates delegates for IronJS functions, delegates
@@ -253,34 +315,3 @@
               else createDelegateType' types
 
         createDelegateType' types
-        
-      //-------------------------------------------------------------------------
-      // This function and bindings are used to create closure classes with 
-      // generic type parameters for closures, e.g: Closure<T0, T1, ...>. 
-      // Created classes are cached and re-used with new type parameters.
-      let private _assemblyName = new AssemblyName("IronJS.DynamicAssembly")
-      let private _dynamicAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_assemblyName, AssemblyBuilderAccess.RunAndCollect)
-      let private _dynamicModule = _dynamicAssembly.DefineDynamicModule("Module", "IronJS.DynamicAssembly.dll")
-      let private _closureCache = new Collections.Concurrent.ConcurrentDictionary<int, ClrType>()
-      let private _closureFieldAttributes = FieldAttributes.Public
-      let private _closureTypeAttributes = TypeAttributes.Public ||| TypeAttributes.AutoLayout 
-                                           ||| TypeAttributes.Class ||| TypeAttributes.Sealed
-
-      let rec createClosureType (types:ClrType array) =
-        let typeCount = types.Length
-        let success, type' = _closureCache.TryGetValue typeCount
-        if success then type'.MakeGenericType(types)
-        else
-          let newType' = _dynamicModule.DefineType(sprintf "Closure%i" typeCount, _closureTypeAttributes, typeof<Closure>);
-          let genericParams = newType'.DefineGenericParameters(Array.init typeCount (fun i -> sprintf "T%i" i))
-
-          Array.iteri (fun i type' -> newType'.DefineField(sprintf "Item%i" i, type', _closureFieldAttributes) |> ignore) genericParams
-
-          let concreteType = newType'.CreateType()
-
-          let type' = 
-            if _closureCache.TryAdd(typeCount, concreteType) 
-              then concreteType
-              else createClosureType types
-
-          type'.MakeGenericType(types)

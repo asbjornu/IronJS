@@ -12,6 +12,7 @@
         | NeedsProxy
         | IsClosedOver
         | InitToUndefined
+        | ForceDynamic
 
       let name          = Quad.fst
       let index         = Quad.snd
@@ -21,10 +22,13 @@
       let isClosedOver (_, _, o:Set<_>, _)    = o.Contains Opts.IsClosedOver
       let needsProxy (_, _, o:Set<_>, _)      = o.Contains Opts.NeedsProxy
       let isParameter (_, _, o:Set<_>, _)     = o.Contains Opts.IsParameter
+      let forceDynamic (_, _, o:Set<_>, _)     = o.Contains Opts.ForceDynamic
       let initToUndefined (_, _, o:Set<_>, _) = o.Contains Opts.InitToUndefined
 
       let addOpt (n, i, o:Set<_>, a) opt      = n, i, o.Add opt, a
+      let addOpt2 opt (n, i, o:Set<_>, a)     = n, i, o.Add opt, a
       let delOpt (n, i, o:Set<_>, a) opt      = n, i, o.Remove opt, a
+      let delOpt2 opt (n, i, o:Set<_>, a)     = n, i, o.Remove opt, a
       let addAssign (n, i, o, a:Set<_>) tree  = n, i, o, a.Add tree
 
       let newParam i n = n, i, set [Opts.IsParameter], Set.empty
@@ -69,6 +73,7 @@
       //
       | Assign      of Tree * Tree
       | Block       of Tree list
+      | Eval        of Tree
       | Identifier  of string
       | Var         of Tree
       | Return      of Tree
@@ -78,14 +83,16 @@
       | Invoke      of Tree * Tree list
       | New         of Types.JsType * Option<Tree> * Option<Tree list>
       | Property    of Tree * string
+
+    and ScopeOpts
+      = HasEval
+      | HasWith
+      | IsEval
       
-    (*
-    *)
-    //and VarQuad = string * int * Set<Var.Opts> * Set<Tree>
-    //and ClosureQuad = string * int * int * int
     and Scope = {
       Variables: Set<string * int * Set<Var.Opts> * Set<Tree>>
       Closures: Set<string * int * int * int>
+      Options: Set<ScopeOpts>
       DynamicScopeLevel: int
     } with
 
@@ -99,11 +106,14 @@
 
       member x.TryGetVariable name = Seq.tryFind (fun (n, _, _, _) -> n = name) x.Variables
       member x.TryGetClosure name = Seq.tryFind (fun (n, _, _, _) -> n = name) x.Closures
+
+      member x.AddOpt opt = {x with Options = x.Options.Add opt}
         
       static member New parms = {
-        Closures = set []
+        Closures = set[]
         Variables = ["~closure_proxy"] @ parms |> Seq.mapi Var.newParam |> Set.ofSeq
         DynamicScopeLevel = -1
+        Options = set[]
       }
         
     (*
@@ -143,7 +153,8 @@
           | Some(trees) -> Some([for tree in trees -> func tree])
 
         New(type', ftree, itrees)
-
+        
+      | Eval(tree)           -> Eval(func tree)
       | Property(tree, name) -> Property(func tree, name)
       | Assign(ltree, rtree) -> Assign(func ltree, (func rtree))
       | Block(trees) -> Block([for tree in trees -> func tree])
@@ -156,12 +167,12 @@
     (*
     *)
     let analyzeAssignment tree =
-      let scopes = ref List.empty
+      let scopes = ref List.empty<Scope>
 
       let rec analyze tree =
         match tree with
         | Assign(Identifier(name), rtree) ->
-          let scope:Scope = List.head !scopes
+          let scope = List.head !scopes
 
           //Update scopes
           match scope.TryGetVariable name with
@@ -189,7 +200,7 @@
     (*
     *)
     let analyzeScopeLevels tree =
-      let scopes = ref List.empty
+      let scopes = ref List.empty<Scope>
       let dynamicScopeLevel = ref -1
 
       let rec analyze tree =
@@ -214,11 +225,11 @@
     (*
     *)
     let stripVarDeclarations tree =
-      let scopes = ref List.empty
+      let scopes = ref List.empty<Scope>
 
       let updateTopScope name =
         if (!scopes).Length > 1 then 
-          let scope:Scope = List.head !scopes
+          let scope = List.head !scopes
           scopes := scope.AddVariable (name, -1, set[], set[]) :: List.tail !scopes
 
       let rec strip tree =
@@ -239,16 +250,43 @@
 
       strip tree
 
+    let analyzeEval tree =
+      let scopes = ref List.empty<Scope>
+
+      let forceClosure var =
+        match var with
+        | "~closure_proxy", _, _, _ -> var
+        | _ -> var
+                |> Var.addOpt2 Var.IsClosedOver
+                |> Var.addOpt2 Var.ForceDynamic
+
+      let rec analyze tree =
+        match tree with
+        | Invoke(Identifier("eval"), expr :: []) ->
+          let newScopes = [for scope in !scopes -> {scope with Variables = Set.map forceClosure scope.Variables}]
+          let topScope  = (List.head newScopes).AddOpt (ScopeOpts.HasEval)
+
+          scopes := topScope :: List.tail newScopes
+          Eval(expr)
+
+        | Function(scope, tree) ->
+          let scope, tree = doInsideScope scopes scope (fun () -> analyze tree)
+          Function(scope, tree)
+
+        | tree -> walk analyze tree
+
+      analyze tree
+
     (*
     *)
     let analyzeClosureScopes tree =
-      let scopes = ref List.empty
+      let scopes = ref List.empty<Scope>
 
       let rec analyze tree =
         match tree with
         | Identifier(name) -> 
 
-          let scope:Scope = List.head !scopes
+          let scope = List.head !scopes
 
           //Check if we have a local varible by name
           match scope.TryGetVariable name with
@@ -275,7 +313,7 @@
                       let scope = 
                         if Var.isClosedOver v
                           then itm
-                          else itm.UpdateVariable name (fun v -> Var.addOpt v Var.Opts.IsClosedOver)
+                          else itm.UpdateVariable name (fun v -> Var.addOpt2 Var.Opts.IsClosedOver v)
                           
                       Some(scopes.Length, itm.DynamicScopeLevel), scope :: scopes
 

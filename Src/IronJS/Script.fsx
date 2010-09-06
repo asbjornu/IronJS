@@ -20,7 +20,8 @@ IO.Directory.SetCurrentDirectory(@"C:\Users\fredrikhm\Personal\IronJS\Src\IronJS
 
 let tree = Ast.Parsers.Ecma3.parse (IO.File.ReadAllText("Script.js"))
 let stripped = Ast.stripVarDeclarations tree
-let levels = Ast.analyzeScopeLevels stripped
+let eval = Ast.analyzeEval stripped
+let levels = Ast.analyzeScopeLevels eval
 let closures = Ast.analyzeClosureScopes levels
 let assign = Ast.analyzeAssignment closures
 
@@ -41,5 +42,3 @@ let env = new Types.Environment()
 let closure = new Types.Closure()
 closure.Env <- env
 compiled.DynamicInvoke(closure)
-
-env.Globals.Get("obj").Type

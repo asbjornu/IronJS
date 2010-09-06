@@ -32,6 +32,7 @@
       VarResolver: Context -> string -> Dlr.Expr
       Closure: Dlr.Expr
       ReturnLabel: Dlr.Label
+      EvalScope: Dlr.Expr
     } with
       member x.ResolveVar name = x.VarResolver x name
       member x.Environment = Dlr.field x.Closure "Env"
@@ -40,11 +41,6 @@
     //-------------------------------------------------------------------------
     // Utility functions for compiling IronJS ast trees
     module Utils =
-
-      let assign (lexpr:Dlr.Expr) rexpr =
-        if Types.Utils.isStrongBox lexpr.Type 
-          then Dlr.assign (Dlr.field lexpr "Value") rexpr
-          else Dlr.assign lexpr rexpr
 
       let identifierIsGlobal (ctx:Context) name =
         match ctx.Target.Scope.TryGetVariable name with
@@ -55,11 +51,9 @@
           | None -> true
 
       module Box = 
-        let typeToField (expr:Dlr.Expr) type' =
-          Dlr.field expr (Types.Utils.Box.typeToFieldName type')
-
-        let typeField (expr:Dlr.Expr) =
-          Dlr.field expr "Type"
+        let typeToField expr type' = Dlr.field expr (Types.Utils.Box.typeToFieldName type')
+        let typeField expr = Dlr.field expr "Type"
+        let clrField expr = Dlr.field expr "Clr"
 
         let boxValue (value:Dlr.Expr) = 
           if Types.Utils.Box.isBox value.Type then value
@@ -67,19 +61,57 @@
             let type' = Types.clrToJs value.Type
             Dlr.blockTmpT<Types.Box> (fun tmp ->
               [
-                Dlr.assign (typeField tmp) (Dlr.constant type');
-                Dlr.assign (typeToField tmp type') value;
-                tmp :> Dlr.Expr
+                (Dlr.assign (typeField tmp) (Dlr.constant type'))
+                (Dlr.assign (typeToField tmp type') value)
+                (tmp :> Dlr.Expr)
               ] |> Seq.ofList
+            )
+
+        let typeCheck expr (type':Types.JsType) true' false' =
+          (Dlr.ternary 
+            (Dlr.eq (typeField expr) (Dlr.constant type'))
+            (true')
+            (false')
+          )
+
+        let unBox type' (expr:Dlr.Expr) =
+          if Types.Utils.Box.isBox expr.Type 
+            then Dlr.cast type' (clrField expr)
+            else failwith "Que?"
+
+        let unBoxT<'a> expr = unBox typeof<'a> expr
+
+        let assignValue (lexpr:Dlr.Expr) (rexpr:Dlr.Expr) =
+          let type' = Types.clrToJs rexpr.Type
+
+          if Types.Utils.Box.isBox rexpr.Type then
+            Dlr.assign lexpr rexpr
+          else
+            (Dlr.block
+              [
+                (Dlr.assign (typeField lexpr) (Dlr.constant type'))
+                (Dlr.assign (typeToField lexpr type') rexpr)
+              ]
             )
       
       module Object =
-        
-        let setProperty (expr:Dlr.Expr) (name:string) (value:Dlr.Expr) =
-          Dlr.call expr "Set" [Dlr.constant name; Box.boxValue value]
+        let setProperty expr (name:string) value = Dlr.call expr "Set" [Dlr.constant name; Box.boxValue value]
+        let getProperty expr (name:string) = Dlr.call expr "Get" [Dlr.constant name]
+        let unBox expr = Box.unBoxT<Types.Object> expr
 
-        let getProperty (expr:Dlr.Expr) (name:string) =
-          Dlr.call expr "Get" [Dlr.constant name]
+      module Function =
+        let closureExpr (expr:Dlr.Expr) = Dlr.field expr "Closure"
+        let unBox expr = Box.unBoxT<Types.Function> expr
+
+      let assign (lexpr:Dlr.Expr) rexpr =
+        let lexpr = 
+          if Types.Utils.StrongBox.isStrongBox lexpr.Type
+            then Dlr.field lexpr "Value"
+            else lexpr
+
+        if Types.Utils.Box.isBox lexpr.Type 
+          then Box.assignValue lexpr rexpr
+          else Dlr.assign lexpr rexpr
         
     //-------------------------------------------------------------------------
     // Resolves the type of an Ast.Tree object, invoking 'func'
@@ -107,31 +139,37 @@
       let activeVars = ref Set.empty
 
       let rec resolveVarType (name:string) =
-        match target.Scope.TryGetVariable name with
-        | None -> //Not a normal variable, try closure
-          match target.Scope.TryGetClosure name with
-          | None -> Types.JsType.Dynamic //Not a closure either, must be global
-          | Some(_, index, _, _) -> //Closure variable
-            let sbType = (target.Closure.GetField(sprintf "Item%i" index).FieldType)
-            Types.clrToJs (sbType.GetGenericArguments().[0])
+        match name with
+        | "~closure_proxy" -> Types.JsType.Closure
+        | _ -> 
+          match target.Scope.TryGetVariable name with
+          | None -> //Not a normal variable, try closure
+            match target.Scope.TryGetClosure name with
+            | None -> Types.JsType.Dynamic //Not a closure either, must be global
+            | Some(_, index, _, _) -> //Closure variable
+              let strongBoxType = target.Closure.GetField(sprintf "Item%i" index).FieldType
+              Types.clrToJs (strongBoxType.GetGenericArguments().[0])
 
-        | Some(var) -> //Normal variable, 
-          let name, index, opts, assignedFrom = var
+          | Some(var) -> //Normal variable, 
+            let name, index, opts, assignedFrom = var
 
-          if Var.isParameter var then
-            if index >= target.ParamCount 
-              then Types.JsType.Undefined //BUG: This causes missing params to be typed Undefined
-              else Types.clrToJs (target.ParamType index)
-          elif Set.contains name !activeVars  then Types.JsType.Nothing
-          elif assignedFrom.Count = 0         then Types.JsType.Undefined
-          else
-            activeVars := Set.add name !activeVars
-            let type' =               
-              assignedFrom
-                |>  Seq.map (fun tree -> resolveAstType tree resolveVarType)
-                |>  Seq.fold (fun state type' -> type' ||| state) Types.JsType.Nothing
-            activeVars := Set.remove name !activeVars
-            type'
+            //This mutable hack deals with undefined params
+            let paramType = ref Types.JsType.Nothing
+            if index >= target.ParamCount then paramType := Types.JsType.Undefined
+            
+            //Evaluate type of property
+            if Var.forceDynamic var             then Types.JsType.Dynamic
+            elif Var.isParameter var            then Types.clrToJs (target.ParamType index)
+            elif Set.contains name !activeVars  then Types.JsType.Nothing
+            elif assignedFrom.Count = 0         then Types.JsType.Undefined
+            else
+              activeVars := Set.add name !activeVars
+              let type' =               
+                assignedFrom
+                  |>  Seq.map (fun tree -> resolveAstType tree resolveVarType)
+                  |>  Seq.fold (fun state type' -> type' ||| state) Types.JsType.Nothing
+              activeVars := Set.remove name !activeVars
+              type' ||| !paramType
 
       target.Scope.Variables
         |> Seq.map (fun (n, i, o, _) -> n, i, o, resolveVarType n)
@@ -180,12 +218,12 @@
 
               let varExpr = 
                 if Var.isClosedOver var
-                  then (Dlr.param name (Types.Utils.makeStrongBox type')) :> Dlr.Expr
+                  then (Dlr.param name (Types.Utils.StrongBox.make type')) :> Dlr.Expr
                   else (Dlr.param name type') :> Dlr.Expr
 
               let proxyExpr = 
                 if Var.needsProxy var 
-                  then Some((Dlr.param (sprintf "%s_proxy" name) type') :> Dlr.Expr)
+                  then Some((Dlr.param (sprintf "%s_proxy" name) (target.ParamType index)) :> Dlr.Expr)
                   else None
 
               name, index, opts, (varExpr, proxyExpr)
@@ -198,10 +236,15 @@
     // Functions used to filter/extract values out of Variable quads
     let private isLocal var =
       match var with
+      | _, _, _, (_, Some(_))
       | _, -1, _, _ -> true
       | _ -> false
 
-    let private isParameter var = not (isLocal var)
+    let private isParameter var = 
+      match var with
+      | _, -1, _, _ -> false
+      | _ -> true
+
     let private isProxied var =
       match var with
       | _, _, _, (_, Some(_)) -> true
@@ -231,14 +274,50 @@
       | Number(n) -> Dlr.constant n
       | Boolean(b) -> Dlr.constant b
 
-      | New(type', ftree, itrees) -> _compileNew ctx type' ftree itrees
+      | New(type', funcTree, initTrees) -> _compileNew ctx type' funcTree initTrees
       | Property(tree, name) -> _compileProperty ctx tree name
       | Identifier(name) -> ctx.ResolveVar name
       | Function(scope, tree) -> _compileFunction ctx scope tree
-      | Invoke(ctree, atrees) -> _compileInvoke ctx ctree atrees
+      | Invoke(callTree, argTrees) -> _compileInvoke ctx callTree argTrees
       | Block(trees) -> Dlr.block [for tree in trees -> compileAst ctx tree]
       | Assign(ltree, rtree) -> _compileAssign ctx ltree rtree
+      | Eval(tree) -> _compileEval ctx tree
       | _ -> failwithf "Failed to compile %A" tree
+      
+    and eval (vars:CDict<string, Types.StrongBox<Types.Box>>) (closure:Types.Closure) (source:string) = 
+      let tree = Ast.Parsers.Ecma3.parse source
+      Types.Undefined.Boxed
+
+    and private _compileEval ctx tree =
+      Dlr.void'
+      (*
+      let evalDelegate = new Func<array<string * Types.StrongBox<Types.Box>>, Types.Closure, string, Types.Box>(eval)
+
+      let closures =
+        ctx.Target.Scope.Closures
+          |>  Seq.map (fun (n, i, _, _) -> 
+                Dlr.newArgsT<string * Types.StrongBox<Types.Box>> [
+                  (Dlr.constant n)
+                  (Dlr.field ctx.Closure (sprintf "Item%i" i))
+                ]
+              )
+
+      let variables =
+        ctx.Target.Scope.Variables
+          |>  Seq.filter (fun (n, _, _, _) -> n.[0] <> '~')
+          |>  Seq.map (fun (n, i, _, _) -> 
+                Dlr.newArgsT<string * Types.StrongBox<Types.Box>> [
+                  (Dlr.constant n)
+                  (ctx.ResolveVar n)
+                ]
+              )
+
+      let vars = 
+        Dlr.newArrayItemsT<string * Types.StrongBox<Types.Box>> (Seq.append closures variables)
+
+      Dlr.invoke (Dlr.constant evalDelegate) [vars; ctx.Closure; compileAst ctx tree]
+      *)
+
 
     and private _compileNew ctx type' ftree itrees =
       match type' with
@@ -269,25 +348,38 @@
         Types.Utils.createDelegateType (
           List.foldBack 
             (fun (itm:Dlr.Expr) state -> itm.Type :: state) 
-            callArgs 
+            (callArgs)
             [typeof<Types.Box>]
         )
 
-      if Types.Utils.isFunction callTarg.Type then
+      let buildFuncCall callTarg =
         Dlr.blockTmpT<Types.Function> (fun tmp ->
-          let callArgs = (Types.Utils.getFunctionClosure tmp) :: callArgs
+          let callArgs = Utils.Function.closureExpr tmp :: callArgs
           let funcType = buildFuncType callArgs
           let compiled = Dlr.callGeneric tmp "CompileAs" [funcType] []
           [
-            Dlr.assign tmp callTarg;
-            Dlr.invoke compiled callArgs
+            (Dlr.assign tmp callTarg)
+            (Dlr.invoke compiled callArgs)
           ] |> Seq.ofList
         )
-      else
-        failwith "Que?"
+
+      if Types.Utils.Function.isFunction callTarg.Type 
+        then buildFuncCall callTarg
+        else
+          Dlr.blockTmpT<Types.Box> (fun tmp ->
+            [
+              (Dlr.assign tmp callTarg)
+              (Utils.Box.typeCheck
+                (tmp)
+                (Types.JsType.Function)
+                (buildFuncCall (Utils.Function.unBox tmp))
+                (Dlr.constant Types.Undefined.Boxed)
+              )
+            ] |> Seq.ofList
+          )
         
     //-------------------------------------------------------------------------
-    // Compiles a function definition NOT the function itself, function(...) { ... }
+    // Compiles a function definition (not the function itself), function(...) { ... }
     and private _compileFunction ctx scope tree =
       let types =
         scope.Closures
@@ -296,7 +388,7 @@
           |> Seq.map (fun n -> (ctx.ResolveVar n).Type)
           |> Array.ofSeq
 
-      let closureType = Types.Utils.createClosureType types
+      let closureType = Types.Utils.Closure.createType types
       let target = {
         Ast = tree
         Scope = scope
@@ -309,13 +401,16 @@
           fun x -> compile {target with Delegate = x} {DynamicScopeLevel = -1}
         )
 
+      let funKey = int64 (tree.GetHashCode()), closureType.TypeHandle.Value
+
       Dlr.blockTmp closureType (fun tmp ->
         let createClosureInitExpr c =
           let field = Dlr.field tmp (sprintf "Item%i" (Quad.snd c))
           Dlr.assign field (ctx.ResolveVar (Quad.fst c))
         
-        [Dlr.newArgsT<Types.Function> [tmp; Dlr.constant funCompiler]] 
+        [Dlr.newArgsT<Types.Function> [tmp; Dlr.constant funCompiler; Dlr.constant funKey]] 
           |> Seq.append (scope.Closures |> Seq.map createClosureInitExpr)
+          |> Seq.append [Dlr.assign (Dlr.field tmp "Env") (ctx.Environment)]
           |> Seq.append [Dlr.assign tmp (Dlr.new' closureType)]
       )
       
@@ -332,7 +427,7 @@
 
       | Property(tree, name) -> //Property assignment, foo.bar = 1
         let target = compileAst ctx tree
-        if Types.Utils.isObject target.Type 
+        if Types.Utils.Object.isObject target.Type 
           then Utils.Object.setProperty target name rexpr
           else failwith "Que?"
 
@@ -358,6 +453,7 @@
         VarMap = generateVarMap target
         VarResolver = _defaultVarResolver
         Closure = Dlr.param "~closure" target.Closure
+        EvalScope = Dlr.param "~evalScope" typeof<CDict<string, Types.StrongBox<Types.Box>>>
         ReturnLabel = Dlr.labelT<Types.Box> "~return"
       }
 
@@ -400,7 +496,7 @@
         ctx.VarMap
           |> Seq.filter isLocal
           |> Seq.map toExpr
-          |> Seq.append [ctx.Closure]
+          |> Seq.append [ctx.Closure; ctx.EvalScope]
           |> Seq.cast<Dlr.ExprParam>
           #if DEBUG
           |> Seq.toArray
@@ -417,15 +513,38 @@
           |> Seq.toArray
           #endif
 
+      //Initilization for scopes with eval inside them
+      let initEvalScope =
+        if Set.contains ScopeOpts.HasEval target.Scope.Options 
+          then 
+            ctx.VarMap
+              |> Seq.filter isLocal
+              |> Seq.map (fun (name, _, _, (expr, _)) -> name, expr)
+              |> Seq.map (fun (name, expr) -> Dlr.call ctx.EvalScope "Add" [Dlr.constant name; expr])
+              |> Seq.append [Dlr.assign ctx.EvalScope (Dlr.new' ctx.EvalScope.Type)]
+              #if DEBUG
+              |> Seq.toArray
+              #endif
+
+          else [Dlr.void'] 
+              |> Seq.ofList
+              #if DEBUG
+              |> Seq.toArray
+              #endif
+
       let functionBody = 
         [Dlr.labelExprT<Types.Box> ctx.ReturnLabel]
           |> Seq.append [compileAst ctx target.Ast]
-          |> Seq.append initClosure
+          |> Seq.append initEvalScope
           |> Seq.append initProxied
           |> Seq.append initUndefined
           |> Seq.append initClosedOver
+          |> Seq.append initClosure
           |> Dlr.blockWithLocals locals
 
       let lambda = Dlr.lambda target.Delegate parameters functionBody
+
+      Dlr.Utils.printDebugView lambda
+
       lambda.Compile()
       

@@ -1,0 +1,37 @@
+﻿<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <script type="text/javascript">
+
+            //define var in eval + closure
+            var fun = function () {
+                eval("var x = 'oh yes'");
+
+                var closure = function () {
+                    alert(x);
+                };
+
+                closure();
+            };
+
+            fun();
+
+            //define var in eval + get it in eval in closure
+            fun = function () {
+
+                var closure = function () {
+                    eval("alert(x)");
+                };
+
+                eval("var x = 'oh yes'");
+
+                closure();
+            };
+
+            fun();
+
+        </script>
+    </head>
+    <body>
+    
+    </body>
+</html>

@@ -71,6 +71,8 @@
     <Compile Include="Compiler.fs" />
     <None Include="Script.fsx" />
     <Content Include="Script.js" />
+    <Content Include="Notes.txt" />
+    <None Include="Tests.html" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Antlr3.Runtime">

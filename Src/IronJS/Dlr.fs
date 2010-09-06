@@ -51,7 +51,7 @@
     //Constants
     let true' = constant true
     let false' = constant false
-    let int_1 = constant -1
+    let neg1 = constant -1
     let int0 = constant 0
     let int1 = constant 1
 
