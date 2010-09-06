@@ -107,7 +107,7 @@
     and [<AllowNullLiteral>] Function =
       inherit Object
 
-      val mutable FuncKey : int64 * nativeint
+      val mutable FuncKey : int * int
       val mutable Closure : Closure
       val mutable Compile : Func<ClrType, Delegate>
 
@@ -143,7 +143,7 @@
       val mutable Names : CDict<string, int>
       val mutable Values : Box array
 
-      new (values:int) = {
+      new (values) = {
         Names = new CDict<string, int>()
         Values = Array.zeroCreate<Box> values
       }

@@ -15,19 +15,25 @@
 
             fun();
 
-            //define var in eval + get it in eval in closure
             fun = function () {
-                var closure = function () {
-                    var y = eval("x");
-                    return y;
-                };
-
-                eval("var x = 'oh yes'");
-
-                closure();
+                alert(x);
+                var x = 1;
             };
 
             fun();
+
+            //define var in eval + get it in eval in closure
+            fun = function () { var closure = function () { return eval("x"); }; eval("var x = 'oh yes'"); return closure(); }; fun();
+
+            fun = function () {
+                for (var i = 0; i < 10; ++i) {
+                    alert(i); 
+                    eval("break;");
+                }
+            };
+            fun();
+
+
 
         </script>
     </head>

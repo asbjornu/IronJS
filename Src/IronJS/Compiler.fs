@@ -104,8 +104,8 @@
             )
       
       module Object =
-        let setProperty expr (name:string) value = Dlr.call expr "Set" [Dlr.constant name; Box.boxValue value]
-        let getProperty expr (name:string) = Dlr.call expr "Get" [Dlr.constant name]
+        let setProperty expr name value = Dlr.call expr "Set" [Dlr.constant name; Box.boxValue value]
+        let getProperty expr name = Dlr.call expr "Get" [Dlr.constant name]
         let unBox expr = Box.unBoxT<Types.Object> expr
 
       module Function =
@@ -121,25 +121,6 @@
         if Types.Utils.Box.isBox lexpr.Type 
           then Box.assignValue lexpr rexpr
           else Dlr.assign lexpr rexpr
-        
-    //-------------------------------------------------------------------------
-    // Resolves the type of an Ast.Tree object, invoking 'func'
-    // to resolve the type of Ast.Identifier objects
-    let rec private resolveAstType tree func =
-      match tree with
-      | Ast.Identifier(name)          -> func name
-      | Ast.Boolean(_)                -> Types.JsType.Boolean
-      | Ast.String(_)                 -> Types.JsType.String
-      | Ast.Number(_)                 -> Types.JsType.Number
-      | Ast.Typed(type', _)           -> type'
-      | Ast.Null                      -> Types.JsType.Null
-      | Ast.Undefined                 -> Types.JsType.Undefined
-      | Ast.Function(_, _)            -> Types.JsType.Function
-      | Ast.Unary(op, tree)           -> resolveAstType tree func
-      | Ast.Binary(op, ltree, rtree)  -> resolveAstType ltree func ||| resolveAstType rtree func
-      | Ast.New(type', _, _)          -> type'
-      | Ast.Property(_, _)            -> Types.JsType.Dynamic
-      | _                             -> Types.JsType.Nothing
       
     //-------------------------------------------------------------------------
     // Compiler functions
@@ -154,16 +135,16 @@
 
       | Return(tree) -> _compileReturn ctx tree
       | New(type', funcTree, initTrees) -> _compileNew ctx type' funcTree initTrees
-      | Property(tree, name) -> _compileProperty ctx tree name
+      | Property(tree, name) -> _compilePropertyAccess ctx tree name
       | Identifier(name) -> ctx.ResolveVar name
       | Function(scope, tree) -> _compileFunction ctx scope tree
       | Invoke(callTree, argTrees) -> _compileInvoke ctx callTree argTrees
       | Block(trees) -> Dlr.block [for tree in trees -> compileAst ctx tree]
       | Assign(ltree, rtree) -> _compileAssign ctx ltree rtree
-      | Eval(tree) -> _compileEval ctx tree
+      | Eval(tree)-> _compileEval ctx tree
       | _ -> failwithf "Failed to compile %A" tree
       
-    and eval (vars:CDict<string, Types.StrongBox<Types.Box>>) (closure:Types.Closure) (source:string) = 
+    and eval (scope:Types.Scope) (closure:Types.Closure) (source:string) = 
       let tree = Ast.Parsers.Ecma3.parse source
       Types.Undefined.Boxed
       
@@ -174,34 +155,39 @@
       
     //-------------------------------------------------------------------------
     // Compiles a call to eval, e.g: eval('foo = 1');
-    and private _compileEval ctx tree =
-      Dlr.void'
+    and private _compileEval ctx evalTree =
+      let invokeTarget = Dlr.constant (new Func<Types.Scope, Types.Closure, string, Types.Box>(eval))
+      let invokeArgs = [ctx.Scope :> Dlr.Expr; ctx.Closure; compileAst ctx evalTree]
+      Dlr.invoke invokeTarget invokeArgs
       
     //-------------------------------------------------------------------------
     // Compiles a new operation, e.g: {}, [], new foo();
-    and private _compileNew ctx type' ftree itrees =
+    and private _compileNew ctx type' ctorTree initTrees =
       match type' with
       | Types.JsType.Object ->
 
-        let initExprs =
-          match itrees with
+        let initExpressions =
+          match initTrees with
           | None -> []
           | _ -> failwith "Que?"
         
-        match ftree with
+        match ctorTree with
         | Some(_) -> failwith "Que?"
         | None -> Dlr.newT<Types.Object>
 
       | _ -> failwith "Que?"
       
     //-------------------------------------------------------------------------
-    // Compiles access to a property, e.g: foo.bar
-    and private _compileProperty ctx tree name =
+    // Compiles access to a property, e.g: foo.bar;
+    and private _compilePropertyAccess ctx tree name =
       let target = compileAst ctx tree
-      Utils.Object.getProperty target name
+
+      if Types.Utils.Object.isObject target.Type 
+        then Utils.Object.getProperty target name
+        else failwith "Que?"
       
     //-------------------------------------------------------------------------
-    // Compiles an invoke statement, foo(arg1, arg2, [arg3, ...])
+    // Compiles an invoke statement, foo(arg1, arg2, [arg3, ...]);
     and private _compileInvoke ctx ctree atrees =
       let callTarg = compileAst ctx ctree
       let callArgs = [for tree in atrees -> compileAst ctx tree]
@@ -241,7 +227,7 @@
           )
         
     //-------------------------------------------------------------------------
-    // Compiles a function definition, e.g: var foo = function() { ... }
+    // Compiles a function definition, e.g: var foo = function() { ... };
     and private _compileFunction ctx scope tree =
       let closureType = typeof<Types.Closure>
 
@@ -257,22 +243,21 @@
           fun x -> compile {target with Delegate = x} {DynamicScopeLevel = -1}
         )
 
-      let funKey = int64 (tree.GetHashCode()), closureType.TypeHandle.Value
       let closureExpr = Dlr.newArgsT<Types.Closure> [ctx.Environment; ctx.Scopes; ctx.Scope]
-      Dlr.newArgsT<Types.Function> [closureExpr; Dlr.constant funCompiler; Dlr.constant funKey]
+      Dlr.newArgsT<Types.Function> [closureExpr; Dlr.constant funCompiler; Dlr.constant (0,0)]
       
     //-------------------------------------------------------------------------
-    // Compiles an assignment operation, e.g: foo = 1 or foo.bar = 1
+    // Compiles an assignment operation, e.g: foo = 1; or foo.bar = 1;
     and private _compileAssign (ctx:Context) ltree rtree =
       let rexpr = compileAst ctx rtree
 
       match ltree with
-      | Identifier(name) -> //Variable assignment, foo = 1
+      | Identifier(name) -> //Variable assignment: foo = 1
         if Utils.identifierIsGlobal ctx name 
           then Utils.Object.setProperty ctx.Globals name rexpr
           else Utils.assign (ctx.ResolveVar name) rexpr
 
-      | Property(tree, name) -> //Property assignment, foo.bar = 1
+      | Property(tree, name) -> //Property assignment: foo.bar = 1
         let target = compileAst ctx tree
         if Types.Utils.Object.isObject target.Type 
           then Utils.Object.setProperty target name rexpr
@@ -300,6 +285,26 @@
       // Resolves the JsType of every variable on target.Scope.Variables
       // and returns a seq<string * int * Set<Ast.Var.Opts> * Types.JsType>
       let resolveVarTypes (target:Target) =
+
+        //-------------------------------------------------------------------------
+        // Resolves the type of an Ast.Tree object, invoking 'func'
+        // to resolve the type of Ast.Identifier objects
+        let rec resolveAstType tree func =
+          match tree with
+          | Ast.Identifier(name)          -> func name
+          | Ast.Boolean(_)                -> Types.JsType.Boolean
+          | Ast.String(_)                 -> Types.JsType.String
+          | Ast.Number(_)                 -> Types.JsType.Number
+          | Ast.Typed(type', _)           -> type'
+          | Ast.Null                      -> Types.JsType.Null
+          | Ast.Undefined                 -> Types.JsType.Undefined
+          | Ast.Function(_, _)            -> Types.JsType.Function
+          | Ast.Unary(op, tree)           -> resolveAstType tree func
+          | Ast.Binary(op, ltree, rtree)  -> resolveAstType ltree func ||| resolveAstType rtree func
+          | Ast.New(type', _, _)          -> type'
+          | Ast.Property(_, _)            -> Types.JsType.Dynamic
+          | _                             -> Types.JsType.Nothing
+
         let activeVars = ref Set.empty
         
         let rec resolveVarType (name:string) =
@@ -385,6 +390,7 @@
 
       let toIndex (_, index, _, _) = index
       let hasOpt opt (_, _, o, _) = Set.contains opt o
+      let notPrivate (name:string, _, _, _) = name.[0] <> '~'
           
       //-------------------------------------------------------------------------
       // Main Context
@@ -402,6 +408,26 @@
         let args = [Dlr.constant ctx.Target.Scope.VarCount]
         let newScope = Dlr.newArgsT<Types.Scope> args
         Dlr.assign ctx.Scope newScope
+
+      //Store variable names for eval() scopes
+      let initForEval =
+        if ctx.Target.Scope.EvalMode.HasFlag(EvalMode.SaveNames) then
+          ctx.VarMap
+            |> Seq.filter notPrivate
+            |> Seq.map (fun (name, index, _ ,_ ) -> 
+                          let args = [Dlr.constant name; Dlr.constant index]
+                          let names = Dlr.field ctx.Scope "Names"
+                          Dlr.call names "Add" args
+                       )
+            #if DEBUG
+            |> Seq.toArray
+            #endif
+        else
+          [] 
+            |> Seq.ofList
+            #if DEBUG
+            |> Seq.toArray
+            #endif
 
       //Initilization for variables that need to be set to undefined
       let initUndefined =
@@ -433,6 +459,7 @@
         [Dlr.labelExprT<Types.Box> ctx.ReturnLabel]
           |> Seq.append [compileAst ctx target.Ast]
           |> Seq.append initUndefined
+          |> Seq.append initForEval
           |> Seq.append [initScope]
           |> Dlr.blockWithLocals [ctx.Scope]
 

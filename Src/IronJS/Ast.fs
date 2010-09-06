@@ -85,14 +85,20 @@
       | Property    of Tree * string
 
     and ScopeOpts
-      = HasEval
-      | HasWith
+      = Nothing
+
+    and EvalMode 
+      = Nothing = 0
+      | Inside = 1
+      | SaveNames = 2 
+      | RecursiveLookup = 4
       
     and Scope = {
       Variables: Set<string * int * Set<Var.Opts> * Set<Tree>>
       Closures: Set<string * int * int * int>
       Options: Set<ScopeOpts>
       WithLevel: int
+      EvalMode: EvalMode
     } with
 
       member x.UpdateVariable name func = 
@@ -112,8 +118,9 @@
       static member New parms = {
         Closures = set[]
         Variables = ["~closure"] @ parms |> Seq.mapi Var.newParam |> Set.ofSeq
-        WithLevel = 0
         Options = set[]
+        WithLevel = 0
+        EvalMode = EvalMode.Nothing
       }
         
     (*
@@ -225,30 +232,37 @@
 
       strip tree
 
-    let analyzeEval tree =
+    let detectEval tree =
       let scopes = ref List.empty<Scope>
 
-      let forceClosure var =
-        match var with
-        | "~closure", _, _, _ -> var
-        | _ -> var |> Var.addOpt2 Var.ForceDynamic
+      let forceDynamicVars (scope:Scope) =
+        let forceDynamic var =
+          match var with
+          | "~closure", _, _, _ -> var
+          | _ -> var |> Var.addOpt2 Var.ForceDynamic
 
-      let rec analyze tree =
+        {scope
+          with 
+            Variables = Set.map forceDynamic scope.Variables
+            EvalMode = scope.EvalMode ||| EvalMode.SaveNames
+        }
+
+      let rec detectEval' tree =
         match tree with
         | Invoke(Identifier("eval"), expr :: []) ->
-          let newScopes = [for scope in !scopes -> {scope with Variables = Set.map forceClosure scope.Variables}]
-          let topScope  = (List.head newScopes).AddOpt (ScopeOpts.HasEval)
-
-          scopes := topScope :: List.tail newScopes
+          let newScopes = [for scope in !scopes -> forceDynamicVars scope]
+          let topScope  = List.head newScopes
+          let topScope' = {topScope with EvalMode = topScope.EvalMode ||| EvalMode.RecursiveLookup}
+          scopes := topScope' :: List.tail newScopes
           Eval(expr)
 
         | Function(scope, tree) ->
-          let scope, tree = doInsideScope scopes scope (fun () -> analyze tree)
+          let scope, tree = doInsideScope scopes scope (fun () -> detectEval' tree)
           Function(scope, tree)
 
-        | tree -> walk analyze tree
+        | tree -> walk detectEval' tree
 
-      analyze tree
+      detectEval' tree
 
     (*
     *)

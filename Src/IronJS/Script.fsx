@@ -22,7 +22,7 @@ let tree = Ast.Parsers.Ecma3.parse (IO.File.ReadAllText("Script.js"))
 let filters = 
   [
     Ast.stripVarDeclarations
-    Ast.analyzeEval
+    Ast.detectEval
     Ast.analyzeClosureScopes
     Ast.analyzeAssignment
   ]
