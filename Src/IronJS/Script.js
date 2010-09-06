@@ -7,18 +7,13 @@ var fun = function (a) {
 fun();
 */
 
-fun = function () {
-    var y = 1;
-    eval("var x = 'oh yes'");
-    /*
-    var closure = function () {
-    var y = eval("x");
-    return y;
-    };
 
-    eval("var x = 'oh yes'");
-    return closure();
-    */
-};
+var outer = function(a, b) {
+    
+    var inner_1 = function() {
+        var inner_1_1 = function() {
+            return a;
+        }
+    }
 
-fun();
+}

@@ -1,6 +1,7 @@
-﻿open IronJS
+﻿
+open IronJS
 open IronJS.Ast
-open IronJS.Compiler
+//open IronJS.Compiler
 open System
 
 IO.Directory.SetCurrentDirectory(@"C:\Users\fredrikhm\Personal\IronJS\Src\IronJS")
@@ -15,6 +16,7 @@ let filters =
   ]
 let tree' = List.fold (fun t f -> f t) tree filters
 
+(*
 let compiled = 
   match tree' with
   | Ast.Function(scope, ast) -> 
@@ -31,3 +33,4 @@ let compiled =
 let env = new Types.Environment()
 let closure = new Types.Closure(env)
 compiled.DynamicInvoke(closure);
+*)

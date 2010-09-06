@@ -5,34 +5,6 @@
     open IronJS
     open IronJS.Utils
 
-    module Var = 
-
-      type Opts 
-        = IsParameter
-        | NeedsProxy
-        | IsClosedOver
-        | InitToUndefined
-        | ForceDynamic
-
-      let name          = Quad.fst
-      let index         = Quad.snd
-      let options       = Quad.trd
-      let assignedFrom  = Quad.fth
-
-      let isClosedOver (_, _, o:Set<_>, _)    = o.Contains Opts.IsClosedOver
-      let needsProxy (_, _, o:Set<_>, _)      = o.Contains Opts.NeedsProxy
-      let isParameter (_, _, o:Set<_>, _)     = o.Contains Opts.IsParameter
-      let forceDynamic (_, _, o:Set<_>, _)     = o.Contains Opts.ForceDynamic
-      let initToUndefined (_, _, o:Set<_>, _) = o.Contains Opts.InitToUndefined
-
-      let addOpt (n, i, o:Set<_>, a) opt      = n, i, o.Add opt, a
-      let addOpt2 opt (n, i, o:Set<_>, a)     = n, i, o.Add opt, a
-      let delOpt (n, i, o:Set<_>, a) opt      = n, i, o.Remove opt, a
-      let delOpt2 opt (n, i, o:Set<_>, a)     = n, i, o.Remove opt, a
-      let addAssign (n, i, o, a:Set<_>) tree  = n, i, o, a.Add tree
-
-      let newParam i n = n, i, set [Opts.IsParameter], Set.empty
-
     (*
     *)
     type BinaryOp 
@@ -54,7 +26,7 @@
       | PostInc
       | PostDec
       | Void
-        
+
     (*
     *)
     type Tree
@@ -78,63 +50,95 @@
       | Var         of Tree
       | Return      of Tree
       | With        of Tree * Tree
-      | Function    of Scope * Tree
+      | Function    of MetaData * Tree
       | Typed       of Types.JsType * Tree
       | Invoke      of Tree * Tree list
       | New         of Types.JsType * Option<Tree> * Option<Tree list>
       | Property    of Tree * string
 
-    and ScopeOpts
-      = Nothing
-
-    and EvalMode 
+    and VariableFlags 
       = Nothing = 0
-      | Inside = 1
-      | SaveNames = 2 
-      | RecursiveLookup = 4
-      
-    and Scope = {
-      Variables: Set<string * int * Set<Var.Opts> * Set<Tree>>
-      Closures: Set<string * int * int * int>
-      Options: Set<ScopeOpts>
-      WithLevel: int
-      EvalMode: EvalMode
-    } with
+      | Parameter = 1
+      | InitToUndefined = 2
+      | ForceDynamic = 4
 
-      member x.UpdateVariable name func = 
+    and Variable = {
+      Name: string
+      Index: int
+      Flags: VariableFlags
+      AssignedFrom: Set<Tree>
+      StaticType: Option<Types.JsType>
+    } with
+      member x.IsParameter = x.Flags.HasFlag(VariableFlags.Parameter)
+      member x.IsForcedDynamic = x.Flags.HasFlag(VariableFlags.ForceDynamic)
+      member x.InitToUndefined = x.Flags.HasFlag(VariableFlags.InitToUndefined)
+      member x.SetFlag flag = {x with Flags = x.Flags ||| flag}
+      member x.RemoveFlag flag = {x with Flags = (x.Flags ||| flag) ^^^ flag}
+      member x.AddAssignedFrom tree = {x with AssignedFrom = x.AssignedFrom.Add tree}
+
+      static member New name index flags = {
+        Name = name
+        Index = index
+        Flags = flags
+        AssignedFrom = Set.empty
+        StaticType = None
+      }
+
+      static member NewParam name index = 
+        Variable.New name index VariableFlags.Parameter
+
+    and Closure = {
+      Name: string
+      Indexes: int * int
+    }
+
+    and MetaDataFlags 
+      = Nothing = 0
+      | RecursiveLookup = 1
+      | RequiresParentScope = 2
+
+    and MetaData = {
+      Variables: Set<Variable>
+      Closures: Set<Closure>
+      Flags: MetaDataFlags
+      VariableIndexMap: Map<string, int>
+    } with
+      member x.SetFlag flag = {x with Flags = x.Flags ||| flag}
+      member x.RemoveFlag flag = {x with Flags = (x.Flags ||| flag) ^^^ flag}
+      member x.RequiresRecursiveVarLookup = x.Flags.HasFlag(MetaDataFlags.RecursiveLookup)
+
+      member x.AddVariable var = {x with Variables = x.Variables.Add var}
+      member x.AddClosure cls = {x with Closures = x.Closures.Add cls}
+      member x.VariableCount = x.Variables.Count
+      
+      member x.TryGetVariable name = 
+        Seq.tryFind (fun (var:Variable) -> var.Name = name) x.Variables
+        
+      member x.TryGetClosure name = 
+        Seq.tryFind (fun cls -> cls.Name = name) x.Closures
+
+      member x.UpdateVariable func name =
         match x.TryGetVariable name with
         | None -> failwith "Que?"
-        | Some(v) -> {x with Variables = x.Variables.Remove(v).Add(func v)}
-        
-      member x.AddVariable var = {x with Variables = x.Variables.Add(var)}
-      member x.AddClosure closure = {x with Closures = x.Closures.Add(closure)}
+        | Some(var) -> 
+          {x with
+            Variables = Set.add (func var) (Set.remove var x.Variables)
+          }
 
-      member x.TryGetVariable name = Seq.tryFind (fun (n, _, _, _) -> n = name) x.Variables
-      member x.TryGetClosure name = Seq.tryFind (fun (n, _, _, _) -> n = name) x.Closures
+      static member New paramNames = {
+        Variables =
+          ["~closure"] @ paramNames
+            |> Seq.mapi (fun index name -> Variable.NewParam name index)
+            |> Set.ofSeq
 
-      member x.AddOpt opt = {x with Options = x.Options.Add opt}
-      member x.VarCount = x.Variables.Count
-        
-      static member New parms = {
-        Closures = set[]
-        Variables = ["~closure"] @ parms |> Seq.mapi Var.newParam |> Set.ofSeq
-        Options = set[]
-        WithLevel = 0
-        EvalMode = EvalMode.Nothing
+        Closures = Set.empty
+        Flags = MetaDataFlags.Nothing
+        VariableIndexMap = Map.empty
       }
         
     (*
     *)
-    let private doInsideScope scopes scope func =
-      scopes     := scope :: !scopes
-      let result  = func()
-      let scope   = List.head !scopes
-      scopes     := List.tail !scopes
-      scope, result
-        
-    (*
-    *)
-    let walk func tree = 
+    let private _walk func tree = 
       match tree with
       | Identifier(_)
       | Boolean(_)
@@ -161,28 +165,34 @@
 
         New(type', ftree, itrees)
         
-      | Eval(tree)           -> Eval(func tree)
-      | Property(tree, name) -> Property(func tree, name)
-      | Assign(ltree, rtree) -> Assign(func ltree, (func rtree))
-      | Block(trees) -> Block([for tree in trees -> func tree])
-      | Var(tree) -> Var(func tree)
-      | Return(tree) -> Return(func tree)
-      | With(target, tree) -> With(func target, func tree)
-      | Function( scope, tree) -> Function(scope, func tree) 
-      | Invoke(tree, trees) -> Invoke(func tree, [for tree in trees -> func tree])
+      | Eval(tree)              -> Eval(func tree)
+      | Property(tree, name)    -> Property(func tree, name)
+      | Assign(ltree, rtree)    -> Assign(func ltree, (func rtree))
+      | Block(trees)            -> Block([for tree in trees -> func tree])
+      | Var(tree)               -> Var(func tree)
+      | Return(tree)            -> Return(func tree)
+      | With(target, tree)      -> With(func target, func tree)
+      | Function( scope, tree)  -> Function(scope, func tree) 
+      | Invoke(tree, trees)     -> Invoke(func tree, [for tree in trees -> func tree])
 
-    (*
-    *)
+        
+    let private _appendMetaData func scopes scope =
+      scopes     := scope :: !scopes
+      let result  = func()
+      let scope   = List.head !scopes
+      scopes     := List.tail !scopes
+      scope, result
+
     let analyzeAssignment tree =
-      let scopes = ref List.empty<Scope>
+      let metaDataChain = ref List.empty<MetaData>
 
       let rec analyze tree =
         match tree with
         | Assign(Identifier(name), rtree) ->
-          let scope = List.head !scopes
+          let metaData = List.head !metaDataChain
 
           //Update scopes
-          match scope.TryGetVariable name with
+          match metaData.TryGetVariable name with
           | None -> ()
           | _ ->  
 
@@ -191,134 +201,127 @@
               | Function(_, _) -> Typed(Types.JsType.Function, Pass)
               | _ -> rtree
 
-            scopes := scope.UpdateVariable name (fun v -> Var.addAssign v tree) :: List.tail !scopes
+            let metaData' = metaData.UpdateVariable (fun var -> var.AddAssignedFrom tree) name
+            metaDataChain := metaData' :: List.tail !metaDataChain
 
           //Return node
           Assign(Identifier(name), analyze rtree)
           
-        | Function(scope, tree) ->
-          let scope, tree = doInsideScope scopes scope (fun () -> analyze tree)
-          Function(scope, tree)
+        | Function(metaData, tree) ->
+          let metaData', tree' = _appendMetaData (fun () -> analyze tree) metaDataChain metaData 
+          Function(metaData', tree')
 
-        | _ -> walk analyze tree
+        | _ -> _walk analyze tree
 
       analyze tree
       
-    (*
-    *)
     let stripVarDeclarations tree =
-      let scopes = ref List.empty<Scope>
+      let metaDataChain = ref List.empty<MetaData>
 
-      let updateTopScope name opts =
-        if (!scopes).Length > 1 then 
-          let scope = List.head !scopes
-          scopes := scope.AddVariable (name, scope.VarCount, opts, set[]) :: List.tail !scopes
+      let addVariableToMetaData name flags =
+        if (!metaDataChain).Length > 1 then 
+          let metaData = List.head !metaDataChain
+          let metaData' = metaData.AddVariable (Variable.New name metaData.VariableCount flags)
+          metaDataChain := metaData' :: List.tail !metaDataChain
 
       let rec strip tree =
         match tree with
         | Var(Assign(Identifier(name), rtree)) ->
-          updateTopScope name (set[])
+          addVariableToMetaData name (VariableFlags.Nothing)
           Assign(Identifier(name), strip rtree)
 
         | Var(Identifier(name)) ->
-          updateTopScope name (set[Var.InitToUndefined])
+          addVariableToMetaData name (VariableFlags.InitToUndefined)
           Pass
 
-        | Function(scope, tree) ->
-          let scope, tree = doInsideScope scopes scope (fun () -> strip tree)
-          Function(scope, tree)
+        | Function(metaData, tree) ->
+          let metaData'1 , tree' = _appendMetaData (fun () -> strip tree) metaDataChain metaData 
+          let metaData'2 =
+            {metaData'1 with
+              VariableIndexMap = 
+                metaData'1.Variables
+                  |> Seq.map (fun var -> var.Name, var.Index)
+                  |> Map.ofSeq
+            }
+          Function(metaData'2, tree')
 
-        | tree -> walk strip tree
+        | tree -> _walk strip tree
 
       strip tree
-
+      
     let detectEval tree =
-      let scopes = ref List.empty<Scope>
+      let metaDataChain = ref List.empty<MetaData>
 
-      let forceDynamicVars (scope:Scope) =
-        let forceDynamic var =
-          match var with
-          | "~closure", _, _, _ -> var
-          | _ -> var |> Var.addOpt2 Var.ForceDynamic
+      let forceDynamicVariables metaData =
+        let forceDynamic (var:Variable) =
+          var.SetFlag VariableFlags.ForceDynamic
 
-        {scope
-          with 
-            Variables = Set.map forceDynamic scope.Variables
-            EvalMode = scope.EvalMode ||| EvalMode.SaveNames
-        }
+        let variables' =
+          metaData.Variables
+            |> Set.filter (fun (var:Variable) -> var.Name.[0] <> '~')
+            |> Set.map forceDynamic
+
+        {metaData with Variables = variables'}
 
       let rec detectEval' tree =
         match tree with
         | Invoke(Identifier("eval"), expr :: []) ->
-          let newScopes = [for scope in !scopes -> forceDynamicVars scope]
-          let topScope  = List.head newScopes
-          let topScope' = {topScope with EvalMode = topScope.EvalMode ||| EvalMode.RecursiveLookup}
-          scopes := topScope' :: List.tail newScopes
+          let metaDataChain'  = [for metaData in !metaDataChain -> forceDynamicVariables metaData]
+          let topMetaData     = (List.head metaDataChain').SetFlag MetaDataFlags.RecursiveLookup
+
+          metaDataChain := topMetaData :: (List.tail metaDataChain')
+
           Eval(expr)
 
-        | Function(scope, tree) ->
-          let scope, tree = doInsideScope scopes scope (fun () -> detectEval' tree)
-          Function(scope, tree)
+        | Function(metaData, tree) ->
+          let metaData', tree' = _appendMetaData (fun () -> detectEval' tree) metaDataChain metaData 
+          Function(metaData', tree')
 
-        | tree -> walk detectEval' tree
+        | tree -> _walk detectEval' tree
 
       detectEval' tree
-
-    (*
-    *)
+      
     let analyzeClosureScopes tree =
-      let scopes = ref List.empty<Scope>
+      let metaDataChain = ref List.empty<MetaData>
 
       let rec analyze tree =
         match tree with
         | Identifier(name) -> 
 
-          let scope = List.head !scopes
+          let metaData = List.head !metaDataChain
 
-          //Check if we have a local varible by name
-          match scope.TryGetVariable name with
+          match metaData.TryGetVariable name  with
           | None  -> 
-            //Check if we already have a closure variable for this name
-            match scope.TryGetClosure name with
+            match metaData.TryGetClosure name with
             | None  -> 
+
               //Build new scope objects with closure variables set
-              let _, newScopes = 
-                List.foldBack (fun (itm:Scope) (level, scopes) ->
-                  match level with
+              let state, metaDataChain' = 
+                List.foldBack (fun (metaData:MetaData) (state, metaDataAcc:MetaData list) ->
+                  match state with
                   //We havn't found the scope with the variable in yet
-                  | None  ->
+                  | None ->
+                    let state = 
+                      match metaData.TryGetVariable name with
+                      | None     -> None //Not in this scope either
+                      | Some(v)  -> Some(true, metaDataAcc.Length, v.Index) //Found in this scope
+                    state, metaData :: metaDataAcc
 
-                    match itm.TryGetVariable name with
-                    //Not in this scope either
-                    | None     ->  None, itm :: scopes
+                  | Some(true, fromScope:int, indexInScope:int) -> 
+                    let metaData' = metaData.SetFlag MetaDataFlags.RequiresParentScope
+                    Some(false, fromScope, indexInScope), metaData' :: metaDataAcc
 
-                    //Found in this scope
-                    | Some(v)  -> 
+                  | Some(false, fromScope:int, indexInScope:int) -> 
+                    state, metaData :: metaDataAcc
 
-                      //Update scope and add the Var.Opts.IsClosedOver
-                      //value to the local varible in this scope
-                      let scope = 
-                        if Var.isClosedOver v
-                          then itm
-                          else itm.UpdateVariable name (fun v -> Var.addOpt2 Var.Opts.IsClosedOver v)
-                          
-                      Some(scopes.Length, Quad.snd v), scope :: scopes
+                ) !metaDataChain (None, [])
 
-                  //We have found the scope
-                  | Some(fromScope, indexInScope)  -> 
+              match state with
+              | Some(false, fromScope, indexInScope) ->
+                  let metaData' = (List.head metaDataChain').AddClosure {Name = name; Indexes = (fromScope, indexInScope)}
+                  metaDataChain :=  metaData' :: (List.tail metaDataChain')
 
-                    //Make sure the current scope closes over the variable
-                    let scope = 
-                      match itm.TryGetClosure name with
-                      | Some(_) ->  itm
-                      | None    ->  itm.AddClosure (name, -1, fromScope, indexInScope)
-
-                    level, scope :: scopes
-
-                ) !scopes (None, [])
-
-              //Store updated scopes
-              scopes := newScopes
+              | _ -> ()
 
               //Return tree
               tree
@@ -328,16 +331,15 @@
 
           //Local variable exists
           | Some(_)   ->  tree
+          
+        | Function(metaData, tree) ->
+          let metaData', tree' = _appendMetaData (fun () -> analyze tree) metaDataChain metaData 
+          Function(metaData', tree')
 
-        | Function(scope, tree) ->
-          let scope, tree = doInsideScope scopes scope (fun () -> analyze tree)
-          Function(scope, tree)
-
-        | tree -> walk analyze tree
+        | tree -> _walk analyze tree
 
       analyze tree
           
-
     module Parsers =
 
       (*
@@ -391,7 +393,8 @@
           | ES3Parser.RETURN          -> Return(translate (child tok 0))
 
           | ES3Parser.FUNCTION -> 
-            Function(Scope.New [for x in (children (child tok 0)) -> text x], translate (child tok 1))
+            let parameterNames = [for x in (children (child tok 0)) -> text x]
+            Function(MetaData.New parameterNames , translate (child tok 1))
 
           | _ -> failwithf "No parser for token %s (%i)" (ES3Parser.tokenNames.[tok.Type]) tok.Type
   
@@ -401,6 +404,6 @@
         let parse str = 
           let lexer = new Xebic.ES3.ES3Lexer(new Antlr.Runtime.ANTLRStringStream(str))
           let parser = new Xebic.ES3.ES3Parser(new Antlr.Runtime.CommonTokenStream(lexer))
-          Function(Scope.New [], translate (parser.program().Tree :?> AntlrToken))
+          Function(MetaData.New [], translate (parser.program().Tree :?> AntlrToken))
 
 
