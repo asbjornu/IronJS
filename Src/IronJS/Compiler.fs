@@ -12,28 +12,19 @@
     //-------------------------------------------------------------------------
     type Target = {
       Ast: Ast.Tree
-      Scope: Ast.Scope
+      MetaData: Ast.MetaData
       Delegate: Types.ClrType
-      Closure: Types.ClrType
     } with
-      member x.ClosureTypeArgs = x.Closure.GetGenericArguments()
       member x.DelegateTypeArgs = x.Delegate.GetGenericArguments()
       member x.ParamType i = x.DelegateTypeArgs.[i]
       member x.ParamCount = x.DelegateTypeArgs.Length - 1
 
-    type Options = {
-      DynamicScopeLevel: int
-    }
-
     type Context = {
-      Options: Options
       Target: Target
-      VarMap: seq<string * int * Set<Var.Opts> * Option<Dlr.Expr>>
-      VarResolver: Context -> string -> Dlr.Expr
+      VarMap: seq<string * int * Set<VariableFlags> * Option<Dlr.Expr>>
       Scope: Dlr.ExprParam
       ReturnLabel: Dlr.Label
     } with
-      member x.ResolveVar name = x.VarResolver x name
       member x.Environment = Dlr.field x.Closure "Env"
       member x.Globals = Dlr.field x.Environment "Globals"
       member x.ScopeValues = Dlr.field x.Scope "Values"
@@ -49,10 +40,10 @@
     module Utils =
 
       let identifierIsGlobal (ctx:Context) name =
-        match ctx.Target.Scope.TryGetVariable name with
+        match ctx.Target.MetaData.TryGetVariable name with
         | Some(_) -> false
         | None ->
-          match ctx.Target.Scope.TryGetClosure name with
+          match ctx.Target.MetaData.TryGetClosure name with
           | Some(_) -> false
           | None -> true
 
@@ -136,7 +127,7 @@
       | Return(tree) -> _compileReturn ctx tree
       | New(type', funcTree, initTrees) -> _compileNew ctx type' funcTree initTrees
       | Property(tree, name) -> _compilePropertyAccess ctx tree name
-      | Identifier(name) -> ctx.ResolveVar name
+      | Identifier(name) -> _defaultVarResolver ctx name
       | Function(scope, tree) -> _compileFunction ctx scope tree
       | Invoke(callTree, argTrees) -> _compileInvoke ctx callTree argTrees
       | Block(trees) -> Dlr.block [for tree in trees -> compileAst ctx tree]
@@ -228,19 +219,18 @@
         
     //-------------------------------------------------------------------------
     // Compiles a function definition, e.g: var foo = function() { ... };
-    and private _compileFunction ctx scope tree =
+    and private _compileFunction ctx metaData tree =
       let closureType = typeof<Types.Closure>
 
       let target = {
         Ast = tree
-        Scope = scope
+        MetaData = metaData
         Delegate = null
-        Closure = closureType
       }
 
       let funCompiler = 
         new Func<Types.ClrType, Delegate>(
-          fun x -> compile {target with Delegate = x} {DynamicScopeLevel = -1}
+          fun x -> compile {target with Delegate = x}
         )
 
       let closureExpr = Dlr.newArgsT<Types.Closure> [ctx.Environment; ctx.Scopes; ctx.Scope]
@@ -255,7 +245,7 @@
       | Identifier(name) -> //Variable assignment: foo = 1
         if Utils.identifierIsGlobal ctx name 
           then Utils.Object.setProperty ctx.Globals name rexpr
-          else Utils.assign (ctx.ResolveVar name) rexpr
+          else Utils.assign (_defaultVarResolver ctx name) rexpr
 
       | Property(tree, name) -> //Property assignment: foo.bar = 1
         let target = compileAst ctx tree
@@ -270,79 +260,72 @@
       match Seq.tryFind (fun (n, _, _, _) -> n = name) ctx.VarMap with
       | Some(_, index, _, _) -> ctx.ScopeValue index
       | None -> 
-        match Seq.tryFind (fun (n, _, _, _) -> n = name) ctx.Target.Scope.Closures with
+        match ctx.Target.MetaData.TryGetClosure name with
         | None -> //Global
           Utils.Object.getProperty ctx.Globals name
-        | Some(_, _, fromScope, indexInScope) ->
+        | Some(closure) ->
+          let fromScope, indexInScope = closure.Indexes
           let scope = Dlr.access ctx.Scopes [Dlr.constant fromScope]
           Dlr.access (Dlr.field scope "Values") [Dlr.constant indexInScope]
 
     //-------------------------------------------------------------------------
     // Main compiler function that setups compilation and invokes compileAst
-    and compile (target:Target) (options:Options) =
+    and compile (target:Target) =
 
       //-------------------------------------------------------------------------
       // Resolves the JsType of every variable on target.Scope.Variables
       // and returns a seq<string * int * Set<Ast.Var.Opts> * Types.JsType>
       let resolveVarTypes (target:Target) =
 
-        
-        let activeVars = ref Set.empty
-        
-        let rec resolveVarType (name:string) =
+        let rec resolveVarType activeVars (name:string) =
           match name with
           | "~closure" -> Types.JsType.Closure
           | _ -> 
-            match target.Scope.TryGetVariable name with
-            | None -> //Not a normal variable, try closure
-              Types.JsType.Dynamic
+            match target.MetaData.TryGetVariable name with
+            | None -> Types.JsType.Dynamic //Not a local variable
+            | Some(var) -> //Normal variable
+              match var.StaticType with
+              | Some(type') -> type'
+              | None -> 
+                if Set.contains name activeVars then
+                  Types.JsType.Nothing
+                else
+                  let activeVars' = 
+                    Set.add var.Name activeVars
 
-            | Some(var) -> //Normal variable, 
-              let name, index, opts, assignedFrom = var
+                  let initialState = 
+                    if   var.IsForcedDynamic  then Types.JsType.Dynamic
+                    elif var.IsParameter      then Types.clrToJs (target.ParamType var.Index)
+                    elif var.InitToUndefined  then Types.JsType.Undefined
+                    else Types.JsType.Nothing 
 
-              //This mutable hack deals with undefined params
-              let paramType = ref Types.JsType.Nothing
-              if Var.isParameter var && index >= target.ParamCount
-                then paramType := Types.JsType.Undefined
-            
-              //Evaluate type of property
-              if Var.forceDynamic var             then Types.JsType.Dynamic
-              elif Var.isParameter var            then Types.clrToJs (target.ParamType index)
-              elif Set.contains name !activeVars  then Types.JsType.Nothing
-              elif assignedFrom.Count = 0         then Types.JsType.Undefined
-              else
-                activeVars := Set.add name !activeVars
-                let type' =               
-                  assignedFrom
-                    |>  Seq.map (fun tree -> resolveAstType tree resolveVarType)
-                    |>  Seq.fold (fun state type' -> type' ||| state) Types.JsType.Nothing
-                activeVars := Set.remove name !activeVars
-                type' ||| !paramType
+                  var.AssignedFrom
+                    |> Seq.map (fun tree -> resolveAstType tree (resolveVarType activeVars'))
+                    |> Seq.fold (fun state type' -> type' ||| state) initialState
 
-        target.Scope.Variables
-          |> Seq.map (fun (n, i, o, _) -> n, i, o, resolveVarType n)
+        target.MetaData.Variables
+          |> Seq.map (fun var -> var.Name, var.Index, resolveVarType Set.empty var.Name)
           #if DEBUG
           |> Seq.toArray
           #endif
         
       //-------------------------------------------------------------------------
       // Demotes parameters without arguments to normal locals
-      let demoteParamsWithoutArguments (name, index, opts:Set<_>, type') =
-        let opts = 
-          if Set.contains Var.IsParameter opts then
-            if index >= target.ParamCount 
-              then Set.add Var.InitToUndefined (Set.remove Var.IsParameter opts)
-              else Set.remove Var.InitToUndefined opts
-          else
-            opts
-
-        name, index, opts, type'
+      let demoteParamsWithoutArguments (var:Ast.Variable) =
+        if var.IsParameter then
+          if var.Index >= target.ParamCount then 
+            let removedParamFlag = var.RemoveFlag VariableFlags.Parameter
+            var.SetFlag VariableFlags.InitToUndefined
+          else 
+            var.RemoveFlag VariableFlags.InitToUndefined
+        else
+          var
 
       //-------------------------------------------------------------------------
       // Generates a variable map of type list<name * Variable> 
       let generateVarMap (target:Target) =
-        target
-          |>  resolveVarTypes
+        target.MetaData.Variables
+          |>  Seq.map demoteParamsWithoutArguments
           |>  Seq.map demoteParamsWithoutArguments
           |>  Seq.map (fun var ->
                 let name, index, opts, type' = var
@@ -390,26 +373,6 @@
         let args = [Dlr.constant ctx.Target.Scope.VarCount]
         let newScope = Dlr.newArgsT<Types.Scope> args
         Dlr.assign ctx.Scope newScope
-
-      //Store variable names for eval() scopes
-      let initForEval =
-        if ctx.Target.Scope.EvalMode.HasFlag(EvalMode.SaveNames) then
-          ctx.VarMap
-            |> Seq.filter notPrivate
-            |> Seq.map (fun (name, index, _ ,_ ) -> 
-                          let args = [Dlr.constant name; Dlr.constant index]
-                          let names = Dlr.field ctx.Scope "Names"
-                          Dlr.call names "Add" args
-                       )
-            #if DEBUG
-            |> Seq.toArray
-            #endif
-        else
-          [] 
-            |> Seq.ofList
-            #if DEBUG
-            |> Seq.toArray
-            #endif
 
       //Initilization for variables that need to be set to undefined
       let initUndefined =

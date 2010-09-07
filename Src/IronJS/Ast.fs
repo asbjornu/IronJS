@@ -75,6 +75,7 @@
       member x.SetFlag flag = {x with Flags = x.Flags ||| flag}
       member x.RemoveFlag flag = {x with Flags = (x.Flags ||| flag) ^^^ flag}
       member x.AddAssignedFrom tree = {x with AssignedFrom = x.AssignedFrom.Add tree}
+      member x.HasStaticType = x.StaticType <> None
 
       static member New name index flags = {
         Name = name
