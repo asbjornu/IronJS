@@ -5,16 +5,8 @@ open System
 
 IO.Directory.SetCurrentDirectory(@"C:\Users\fredrikhm\Personal\IronJS\Src\IronJS")
 
-let tree = Ast.Parsers.Ecma3.parse (IO.File.ReadAllText("Script.js"))
-let filters = 
-  [
-    Ast.stripVarDeclarations 1
-    Ast.detectEval
-    Ast.analyzeClosureScopes
-    Ast.analyzeAssignment
-    Ast.analyzeStaticTypes
-  ]
-let tree' = List.fold (fun t f -> f t) tree filters
+let tree  = Ast.Parsers.Ecma3.parse (IO.File.ReadAllText("Script.js"))
+let tree' = applyDefaultFilters 1 tree
 
 let compiled = 
   match tree' with
@@ -23,7 +15,6 @@ let compiled =
       Ast = ast
       MetaData = metaData
       Delegate = Types.Utils.createDelegateType [typeof<Types.Closure>; typeof<Types.Box>]
-      IndexOffset = 0
     }
 
     Compiler.compile target
@@ -31,4 +22,4 @@ let compiled =
 
 let env = new Types.Environment()
 let closure = new Types.Closure(env)
-compiled.DynamicInvoke(closure);
+compiled.DynamicInvoke(closure)

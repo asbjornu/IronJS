@@ -14,7 +14,6 @@
       Ast: Ast.Tree
       MetaData: Ast.MetaData
       Delegate: Types.ClrType
-      IndexOffset: int
     } with
       member x.ParamTypes = 
         Dlr.ArrayUtils.RemoveLast(
@@ -136,14 +135,10 @@
       | _ -> failwithf "Failed to compile %A" tree
       
     and eval (scope:Types.Scope) (closure:Types.Closure) (source:string) = 
-      let tree = Ast.Parsers.Ecma3.parse source
-
       let metaData, tree = 
-        match tree with
-        | Function(metaData, tree) -> metaData, tree
-        | _ -> failwith "Que?"
+        Ast.decomposeFunctionTree (Ast.Parsers.Ecma3.parse source)
 
-      let metaData'1 = {
+      let metaDataWithVars = {
         metaData with
           Variables = 
             scope.Names
@@ -152,29 +147,30 @@
               |> Set.ofSeq
       }
 
-      let filters = 
-        [
-          Ast.stripVarDeclarations 0;
-          Ast.detectEval;
-          Ast.analyzeClosureScopes;
-          Ast.analyzeAssignment;
-          Ast.analyzeStaticTypes
-        ]
+      let analyzed = 
+        Ast.applyDefaultFilters 0 (Function(metaDataWithVars, tree))
 
-      let analyzed = List.fold (fun t f -> f t) (Ast.Function(metaData'1, tree)) filters
       match analyzed with
-      | Function(metaData'2, tree'2) ->
+      | Function(metaData', tree') ->
         let compileTarget = {
-          Ast = tree'2
-          MetaData = metaData'2.SetFlag (MetaDataFlags.IsEval)
+          Ast = tree'
+          MetaData = metaData'.SetFlag (MetaDataFlags.IsEval)
           Delegate = typeof<Func<Types.Closure, Types.Scope, Types.Box>>
-          IndexOffset = scope.Values.Length
         }
 
+        //Update scope values
+        if metaData'.VariableCount > scope.Values.Length then
+          let newValues = Array.zeroCreate<Types.Box> metaData'.VariableCount
+          Array.Copy(scope.Values, newValues, scope.Values.Length)
+          scope.Values <- newValues
+          scope.Names <- metaData'.VariableIndexMap
+        
         let compiled:Delegate = compile compileTarget
         let result = compiled.DynamicInvoke(closure, scope)
         
-        Types.Undefined.Boxed
+        if result = null 
+          then Types.Undefined.Boxed
+          else Types.Utils.Box.boxValue result
 
       | _ -> failwith "Que?"
       
@@ -263,7 +259,6 @@
         Ast = tree
         MetaData = metaData
         Delegate = null
-        IndexOffset = 0
       }
 
       let funCompiler = 
@@ -288,7 +283,14 @@
       | Identifier(name) -> //Variable assignment: foo = 1
         if Utils.identifierIsGlobal ctx name 
           then Utils.Object.setProperty ctx.Globals name rexpr
-          else Utils.assign (_identifierResolver ctx name) rexpr
+          else 
+            let variable = _identifierResolver ctx name
+            let assign = Utils.assign variable rexpr
+            assign
+
+            //if ctx.Target.MetaData.IsEval 
+              //then Dlr.block [assign; variable]
+              //else assign
 
       | Property(tree, name) -> //Property assignment: foo.bar = 1
         let target = compileAst ctx tree
@@ -300,12 +302,27 @@
       
     //-------------------------------------------------------------------------
     and private _identifierResolver (ctx:Context) (name:string) =
+
       match ctx.Target.MetaData.TryGetVariable name with
       | Some(var) -> ctx.ScopeValue var.Index
       | None -> 
         match ctx.Target.MetaData.TryGetClosure name with
         | None -> //Global
-          Utils.Object.getProperty ctx.Globals name
+          let getGlobal = Utils.Object.getProperty ctx.Globals name
+
+          if ctx.Target.MetaData.RequiresRecursiveLookup then
+            let test = Dlr.call (Dlr.field ctx.Scope "Names") "ContainsKey" [Dlr.constant name]
+            let propertyInfo = typeof<Microsoft.FSharp.Collections.Map<string, int>>.GetProperty("Item")
+            let getLocal = 
+              (Dlr.access 
+                (ctx.ScopeValues)
+                [Dlr.Expr.MakeIndex(Dlr.field ctx.Scope "Names", propertyInfo, [Dlr.constant name])]
+              )
+
+            Dlr.ternary test getLocal getGlobal
+          else
+            getGlobal
+
         | Some(closure) ->
           let fromScope, indexInScope = closure.Indexes
           let scope = Dlr.access ctx.ParentScopes [Dlr.constant fromScope]
@@ -386,15 +403,7 @@
       //Initlization for Scope object
       let initScope = 
         if ctx.Target.MetaData.IsEval then
-          Dlr.blockTmpT<Types.Box array> (fun newArray ->
-            let newArraySize = ctx.Target.MetaData.VariableCount
-            let elementsToCopy = Dlr.constant ctx.Target.IndexOffset
-            [
-              Dlr.assign newArray (Dlr.newArrayBoundsT<Types.Box> (Dlr.constant newArraySize))
-              Dlr.callStaticT<System.Array> "Copy" [ctx.ScopeValues; newArray :> Dlr.Expr; elementsToCopy]
-              Dlr.assign ctx.ScopeValues newArray
-            ] |> Seq.ofList
-          )
+          Dlr.void'
         else
           let varIndexMap = Dlr.constant ctx.Target.MetaData.VariableIndexMap
           let varCount = Dlr.constant ctx.Target.MetaData.VariableCount
@@ -435,16 +444,28 @@
                         )
                       )
 
+      let returnExpr =
+        if ctx.Target.MetaData.IsEval
+          then []
+          else [Dlr.labelExprT<Types.Box> ctx.ReturnLabel] 
+
+      let functionBody = [compileAst ctx target.Ast]
+
       //Main function body
       let functionBody = 
-        [Dlr.labelExprT<Types.Box> ctx.ReturnLabel]
-          |> Seq.append [compileAst ctx target.Ast]
+        returnExpr
+          |> Seq.append functionBody
           |> Seq.append initUndefined
           |> Seq.append copyParameters
           |> Seq.append [initScope]
           |> Dlr.blockWithLocals (if ctx.Target.MetaData.IsEval then [] else [ctx.Scope])
 
-      let lambda = Dlr.lambda target.Delegate (Seq.append [ctx.Closure] parameterExprs) functionBody
+
+      let lambda = 
+        if ctx.Target.MetaData.IsEval then
+          Dlr.Expr.Lambda(functionBody, Seq.append [ctx.Closure] parameterExprs)
+        else
+          Dlr.lambda target.Delegate (Seq.append [ctx.Closure] parameterExprs) functionBody
 
       #if INTERACTIVE
       Dlr.Utils.printDebugView lambda

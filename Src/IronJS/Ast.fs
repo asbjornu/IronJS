@@ -293,7 +293,7 @@
         match tree with
         | Var(Assign(Identifier(name), rtree)) ->
           addVariableToMetaData name (VariableFlags.Nothing)
-          Assign(Identifier(name), strip rtree)
+          Block([Assign(Identifier(name), strip rtree); Pass])
 
         | Var(Identifier(name)) ->
           addVariableToMetaData name (VariableFlags.InitToUndefined)
@@ -406,7 +406,23 @@
         | tree -> _walk analyze tree
 
       analyze tree
-          
+
+    let applyDefaultFilters scopeLevel tree = 
+      let filters = [
+        stripVarDeclarations scopeLevel;
+        detectEval;
+        analyzeClosureScopes;
+        analyzeAssignment;
+        analyzeStaticTypes
+      ]
+
+      List.fold (fun t f -> f t) tree filters
+
+    let decomposeFunctionTree tree =
+      match tree with
+      | Function(metaData, tree) -> metaData, tree
+      | _ -> failwith "Que?"
+
     module Parsers =
 
       (*

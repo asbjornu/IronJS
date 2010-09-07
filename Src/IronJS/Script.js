@@ -9,8 +9,8 @@ fun();
 
 
 var outer = function (a, b) {
-    eval("var y = 1");
-    return y;
+    eval("var y = 'lol'");
+    return eval("var z = 'asdasd'");
 }
 
 var x = outer(3, 4);

@@ -251,6 +251,17 @@
           | JsType.Number   -> "Double"
           | _               -> "Clr"
 
+        let boxValue (value:obj) =
+          let type' = clrToJs (value.GetType())
+          let mutable box = new Box() 
+
+          match type' with
+          | JsType.Boolean -> box.Bool <- (value :?> bool)
+          | JsType.Number -> box.Double <- (value :?> double)
+          | _ -> box.Clr <- value
+          
+          box.Type <- type'
+          box
       //-------------------------------------------------------------------------
       // Functions and values for working with StrongBox<'a> objects
       module StrongBox =
