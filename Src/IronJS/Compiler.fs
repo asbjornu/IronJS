@@ -286,25 +286,7 @@
       // and returns a seq<string * int * Set<Ast.Var.Opts> * Types.JsType>
       let resolveVarTypes (target:Target) =
 
-        //-------------------------------------------------------------------------
-        // Resolves the type of an Ast.Tree object, invoking 'func'
-        // to resolve the type of Ast.Identifier objects
-        let rec resolveAstType tree func =
-          match tree with
-          | Ast.Identifier(name)          -> func name
-          | Ast.Boolean(_)                -> Types.JsType.Boolean
-          | Ast.String(_)                 -> Types.JsType.String
-          | Ast.Number(_)                 -> Types.JsType.Number
-          | Ast.Typed(type', _)           -> type'
-          | Ast.Null                      -> Types.JsType.Null
-          | Ast.Undefined                 -> Types.JsType.Undefined
-          | Ast.Function(_, _)            -> Types.JsType.Function
-          | Ast.Unary(op, tree)           -> resolveAstType tree func
-          | Ast.Binary(op, ltree, rtree)  -> resolveAstType ltree func ||| resolveAstType rtree func
-          | Ast.New(type', _, _)          -> type'
-          | Ast.Property(_, _)            -> Types.JsType.Dynamic
-          | _                             -> Types.JsType.Nothing
-
+        
         let activeVars = ref Set.empty
         
         let rec resolveVarType (name:string) =

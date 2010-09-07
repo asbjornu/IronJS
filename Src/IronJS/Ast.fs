@@ -174,14 +174,70 @@
       | With(target, tree)      -> With(func target, func tree)
       | Function( scope, tree)  -> Function(scope, func tree) 
       | Invoke(tree, trees)     -> Invoke(func tree, [for tree in trees -> func tree])
-
         
-    let private _appendMetaData func scopes scope =
-      scopes     := scope :: !scopes
-      let result  = func()
-      let scope   = List.head !scopes
-      scopes     := List.tail !scopes
-      scope, result
+    let private _pushMetaData metaData chain =
+      chain := metaData :: !chain
+
+    let private _popMetaData chain =
+      match !chain with
+      | [] -> failwith "Que?"
+      | metaData::chain' ->
+        chain := chain'
+        metaData
+
+    //-------------------------------------------------------------------------
+    // Resolves the type of an Ast.Tree object, invoking 'func'
+    // to resolve the type of Ast.Identifier objects
+    let rec resolveAstType tree func =
+      match tree with
+      | Identifier(name)          -> func name
+      | Boolean(_)                -> Types.JsType.Boolean
+      | String(_)                 -> Types.JsType.String
+      | Number(_)                 -> Types.JsType.Number
+      | Typed(type', _)           -> type'
+      | Null                      -> Types.JsType.Null
+      | Undefined                 -> Types.JsType.Undefined
+      | Function(_, _)            -> Types.JsType.Function
+      | Unary(op, tree)           -> resolveAstType tree func
+      | Binary(op, ltree, rtree)  -> resolveAstType ltree func ||| resolveAstType rtree func
+      | New(type', _, _)          -> type'
+      | Property(_, _)            -> Types.JsType.Dynamic
+      | _                         -> Types.JsType.Nothing
+
+    let analyzeStaticTypes tree =
+      let metaDataChain = ref List.empty<MetaData>
+
+      let rec analyze tree =
+        match tree with
+        | Function(metaData, tree) ->
+          let tree' = analyze tree
+
+          let typeResolver state tree =
+            state ||| resolveAstType tree (fun _ -> raise (new System.Exception()))
+
+          let variables' =
+            metaData.Variables
+              |>  Set.map (fun var ->
+                    try
+                      let staticType = 
+                        var.AssignedFrom
+                          |>  Seq.fold typeResolver Types.JsType.Nothing
+
+                      match staticType with
+                      | Types.JsType.Nothing -> var
+                      | _ ->  {var with 
+                                StaticType = Some(staticType); 
+                                AssignedFrom = Set.empty
+                              }
+                    with _ -> var
+                  )
+
+          let metaData' = {metaData with Variables = variables'}
+          Function(metaData', tree')
+
+        | _ -> _walk analyze tree
+
+      analyze tree
 
     let analyzeAssignment tree =
       let metaDataChain = ref List.empty<MetaData>
@@ -208,7 +264,9 @@
           Assign(Identifier(name), analyze rtree)
           
         | Function(metaData, tree) ->
-          let metaData', tree' = _appendMetaData (fun () -> analyze tree) metaDataChain metaData 
+          _pushMetaData metaData metaDataChain
+          let tree' = analyze tree
+          let metaData' = _popMetaData metaDataChain
           Function(metaData', tree')
 
         | _ -> _walk analyze tree
@@ -235,7 +293,9 @@
           Pass
 
         | Function(metaData, tree) ->
-          let metaData'1 , tree' = _appendMetaData (fun () -> strip tree) metaDataChain metaData 
+          _pushMetaData metaData metaDataChain
+          let tree' = strip tree
+          let metaData'1 = _popMetaData metaDataChain
           let metaData'2 =
             {metaData'1 with
               VariableIndexMap = 
@@ -274,7 +334,9 @@
           Eval(expr)
 
         | Function(metaData, tree) ->
-          let metaData', tree' = _appendMetaData (fun () -> detectEval' tree) metaDataChain metaData 
+          _pushMetaData metaData metaDataChain
+          let tree' = detectEval' tree
+          let metaData' = _popMetaData metaDataChain
           Function(metaData', tree')
 
         | tree -> _walk detectEval' tree
@@ -304,24 +366,20 @@
                     let state = 
                       match metaData.TryGetVariable name with
                       | None     -> None //Not in this scope either
-                      | Some(v)  -> Some(true, metaDataAcc.Length, v.Index) //Found in this scope
+                      | Some(v)  -> Some(metaDataAcc.Length, v.Index) //Found in this scope
                     state, metaData :: metaDataAcc
 
-                  | Some(true, fromScope:int, indexInScope:int) -> 
+                  | Some(fromScope:int, indexInScope:int) -> 
                     let metaData' = metaData.SetFlag MetaDataFlags.RequiresParentScope
-                    Some(false, fromScope, indexInScope), metaData' :: metaDataAcc
-
-                  | Some(false, fromScope:int, indexInScope:int) -> 
-                    state, metaData :: metaDataAcc
+                    Some(fromScope, indexInScope), metaData' :: metaDataAcc
 
                 ) !metaDataChain (None, [])
 
               match state with
-              | Some(false, fromScope, indexInScope) ->
+              | None -> ()
+              | Some(fromScope, indexInScope) ->
                   let metaData' = (List.head metaDataChain').AddClosure {Name = name; Indexes = (fromScope, indexInScope)}
                   metaDataChain :=  metaData' :: (List.tail metaDataChain')
-
-              | _ -> ()
 
               //Return tree
               tree
@@ -333,7 +391,9 @@
           | Some(_)   ->  tree
           
         | Function(metaData, tree) ->
-          let metaData', tree' = _appendMetaData (fun () -> analyze tree) metaDataChain metaData 
+          _pushMetaData metaData metaDataChain
+          let tree' = analyze tree
+          let metaData' = _popMetaData metaDataChain
           Function(metaData', tree')
 
         | tree -> _walk analyze tree

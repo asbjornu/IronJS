@@ -68,6 +68,7 @@
     <Compile Include="Dlr.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Ast.fs" />
+    <Compile Include="Compiler.fs" />
     <None Include="Script.fsx" />
     <Content Include="Script.js" />
     <Content Include="Notes.txt" />

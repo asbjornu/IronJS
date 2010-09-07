@@ -25,6 +25,7 @@ let filters =
     Ast.detectEval
     Ast.analyzeClosureScopes
     Ast.analyzeAssignment
+    Ast.analyzeStaticTypes
   ]
 let tree' = List.fold (fun t f -> f t) tree filters
 
@@ -46,5 +47,3 @@ let env = new Types.Environment()
 let closure = new Types.Closure(env)
 compiled.DynamicInvoke(closure);
 *)
-
-Map.empty<string, int>

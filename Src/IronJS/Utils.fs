@@ -22,4 +22,3 @@
       let fst (first, _, _)   = first
       let snd (_, second, _)  = second
       let trd (_, _, third)   = third
-

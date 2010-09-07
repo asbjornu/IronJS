@@ -206,10 +206,7 @@
       | JsType.ObjFuncArr
       | JsType.ObjFuncArrNull -> JsType.Object
 
-      | JsType.Dynamic 
-      | JsType.Nothing -> JsType.Dynamic
-
-      | _ -> failwithf "Invalid type (%A)" type'
+      | _ -> JsType.Dynamic
       
     //-------------------------------------------------------------------------
     // Converts a JsType enum value to a ClrType object
