@@ -128,7 +128,7 @@
 
       static member New paramNames = {
         Variables =
-          ["~closure"] @ paramNames
+          paramNames
             |> Seq.mapi (fun index name -> Variable.NewParam name index)
             |> Set.ofSeq
 

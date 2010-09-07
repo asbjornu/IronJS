@@ -8,32 +8,31 @@
     open IronJS.Aliases
     open IronJS.Utils
     open IronJS.Ast
-    
+
     //-------------------------------------------------------------------------
     type Target = {
       Ast: Ast.Tree
       MetaData: Ast.MetaData
       Delegate: Types.ClrType
     } with
-      member x.DelegateTypeArgs = x.Delegate.GetGenericArguments()
-      member x.ParamType i = x.DelegateTypeArgs.[i]
-      member x.ParamCount = x.DelegateTypeArgs.Length - 1
+      member x.ParamTypes = 
+        Dlr.ArrayUtils.RemoveLast(
+          Dlr.ArrayUtils.RemoveFirst(
+            x.Delegate.GetGenericArguments()))
+      member x.ParamType i = x.ParamTypes.[i]
+      member x.ParamCount = x.ParamTypes.Length
 
     type Context = {
       Target: Target
-      VarMap: seq<string * int * Set<VariableFlags> * Option<Dlr.Expr>>
       Scope: Dlr.ExprParam
+      Closure: Dlr.ExprParam
       ReturnLabel: Dlr.Label
     } with
       member x.Environment = Dlr.field x.Closure "Env"
       member x.Globals = Dlr.field x.Environment "Globals"
       member x.ScopeValues = Dlr.field x.Scope "Values"
       member x.ScopeValue i = Dlr.access x.ScopeValues [Dlr.constant i]
-      member x.Scopes = Dlr.field x.Closure "Scopes"
-      member x.Closure = 
-        match x.VarMap |> Seq.find (fun (n,_,_,_) -> n = "~closure") with
-        | _, _, _, Some(expr) -> expr
-        | _ -> failwith "Que?"
+      member x.ParentScopes = Dlr.field x.Closure "Scopes"
       
     //-------------------------------------------------------------------------
     // Utility functions for compiling IronJS ast trees
@@ -148,7 +147,7 @@
     // Compiles a call to eval, e.g: eval('foo = 1');
     and private _compileEval ctx evalTree =
       let invokeTarget = Dlr.constant (new Func<Types.Scope, Types.Closure, string, Types.Box>(eval))
-      let invokeArgs = [ctx.Scope :> Dlr.Expr; ctx.Closure; compileAst ctx evalTree]
+      let invokeArgs = [ctx.Scope :> Dlr.Expr; ctx.Closure :> Dlr.Expr; compileAst ctx evalTree]
       Dlr.invoke invokeTarget invokeArgs
       
     //-------------------------------------------------------------------------
@@ -233,7 +232,7 @@
           fun x -> compile {target with Delegate = x}
         )
 
-      let closureExpr = Dlr.newArgsT<Types.Closure> [ctx.Environment; ctx.Scopes; ctx.Scope]
+      let closureExpr = Dlr.newArgsT<Types.Closure> [ctx.Environment; ctx.ParentScopes; ctx.Scope]
       Dlr.newArgsT<Types.Function> [closureExpr; Dlr.constant funCompiler; Dlr.constant (0,0)]
       
     //-------------------------------------------------------------------------
@@ -257,60 +256,43 @@
       
     //-------------------------------------------------------------------------
     and private _defaultVarResolver (ctx:Context) (name:string) =
-      match Seq.tryFind (fun (n, _, _, _) -> n = name) ctx.VarMap with
-      | Some(_, index, _, _) -> ctx.ScopeValue index
+      match ctx.Target.MetaData.TryGetVariable name with
+      | Some(var) -> ctx.ScopeValue var.Index
       | None -> 
         match ctx.Target.MetaData.TryGetClosure name with
         | None -> //Global
           Utils.Object.getProperty ctx.Globals name
         | Some(closure) ->
           let fromScope, indexInScope = closure.Indexes
-          let scope = Dlr.access ctx.Scopes [Dlr.constant fromScope]
+          let scope = Dlr.access ctx.ParentScopes [Dlr.constant fromScope]
           Dlr.access (Dlr.field scope "Values") [Dlr.constant indexInScope]
 
     //-------------------------------------------------------------------------
-    // Main compiler function that setups compilation and invokes compileAst
-    and compile (target:Target) =
-
+    // Generates a variable map of type list<name * Variable> 
+    and resolveVariableTypes (target:Target) =
       //-------------------------------------------------------------------------
-      // Resolves the JsType of every variable on target.Scope.Variables
-      // and returns a seq<string * int * Set<Ast.Var.Opts> * Types.JsType>
-      let resolveVarTypes (target:Target) =
+      let rec resolveVarType activeVars name =
+        match target.MetaData.TryGetVariable name with
+        | None -> Types.JsType.Dynamic //Not a local variable
+        | Some(var) -> //Normal variable
+          match var.StaticType with
+          | Some(type') -> type'
+          | None -> 
+            if Set.contains name activeVars then
+              Types.JsType.Nothing
+            else
+              let activeVars' = Set.add var.Name activeVars
+              let initialState = 
+                if   var.IsForcedDynamic  then Types.JsType.Dynamic
+                elif var.InitToUndefined  then Types.JsType.Undefined
+                elif var.IsParameter      then Types.clrToJs (target.ParamType var.Index)
+                else Types.JsType.Nothing 
 
-        let rec resolveVarType activeVars (name:string) =
-          match name with
-          | "~closure" -> Types.JsType.Closure
-          | _ -> 
-            match target.MetaData.TryGetVariable name with
-            | None -> Types.JsType.Dynamic //Not a local variable
-            | Some(var) -> //Normal variable
-              match var.StaticType with
-              | Some(type') -> type'
-              | None -> 
-                if Set.contains name activeVars then
-                  Types.JsType.Nothing
-                else
-                  let activeVars' = 
-                    Set.add var.Name activeVars
-
-                  let initialState = 
-                    if   var.IsForcedDynamic  then Types.JsType.Dynamic
-                    elif var.IsParameter      then Types.clrToJs (target.ParamType var.Index)
-                    elif var.InitToUndefined  then Types.JsType.Undefined
-                    else Types.JsType.Nothing 
-
-                  var.AssignedFrom
-                    |> Seq.map (fun tree -> resolveAstType tree (resolveVarType activeVars'))
-                    |> Seq.fold (fun state type' -> type' ||| state) initialState
-
-        target.MetaData.Variables
-          |> Seq.map (fun var -> var.Name, var.Index, resolveVarType Set.empty var.Name)
-          #if DEBUG
-          |> Seq.toArray
-          #endif
+              var.AssignedFrom
+                |> Seq.map (fun tree -> resolveAstType tree (resolveVarType activeVars'))
+                |> Seq.fold (fun state type' -> type' ||| state) initialState
         
       //-------------------------------------------------------------------------
-      // Demotes parameters without arguments to normal locals
       let demoteParamsWithoutArguments (var:Ast.Variable) =
         if var.IsParameter then
           if var.Index >= target.ParamCount then 
@@ -321,67 +303,56 @@
         else
           var
 
-      //-------------------------------------------------------------------------
-      // Generates a variable map of type list<name * Variable> 
-      let generateVarMap (target:Target) =
-        target.MetaData.Variables
-          |>  Seq.map demoteParamsWithoutArguments
-          |>  Seq.map demoteParamsWithoutArguments
-          |>  Seq.map (fun var ->
-                let name, index, opts, type' = var
-                let type' = Types.jsToClr type'
+      {target with 
+        MetaData =
+          {target.MetaData with
+            Variables = 
+              target.MetaData.Variables
+                |> Seq.map demoteParamsWithoutArguments
+                |> Seq.map (fun var -> {var with StaticType = Some(resolveVarType Set.empty var.Name)})
+                |> Set.ofSeq
+          }
+      }
 
-                let varExpr = 
-                  if Var.isParameter var
-                    then Some(Dlr.param name type' :> Dlr.Expr)
-                    else None
-
-                name, index, opts, varExpr
-              )
-
-          |>  Array.ofSeq
+    //-------------------------------------------------------------------------
+    // Main compiler function that setups compilation and invokes compileAst
+    and compile (target:Target) =
         
       //-------------------------------------------------------------------------
-      // Functions used to filter/extract values out of Variable quads
-      let isLocal var =
-        match var with
-        | _, _, _, None -> true
-        | _ -> false
-
+      // Functions used to filter/extract values out of Variables
       let toExpr var = 
         match var with
         | _, _, _, Some(expr) -> expr
         | _ -> failwith "Que?"
 
-      let toIndex (_, index, _, _) = index
-      let hasOpt opt (_, _, o, _) = Set.contains opt o
-      let notPrivate (name:string, _, _, _) = name.[0] <> '~'
+      let isLocal (var:Variable) = not var.IsParameter
+      let getIndex (var:Variable) = var.Index
+      let hasFlag flag (var:Variable) = var.Flags.HasFlag(flag)
+      let notPrivate (var:Variable) = var.Name.[0] <> '~'
           
       //-------------------------------------------------------------------------
       // Main Context
       let ctx = {
-        Options = options
-        Target = target
-        VarMap = generateVarMap target
-        VarResolver = _defaultVarResolver
+        Target = resolveVariableTypes target
         Scope = Dlr.paramT<Types.Scope> "~scope"
+        Closure = Dlr.paramT<Types.Closure> "~closure"
         ReturnLabel = Dlr.labelT<Types.Box> "~return"
       }
 
       //Initlization for Scope object
       let initScope = 
-        let args = [Dlr.constant ctx.Target.Scope.VarCount]
+        let args = [Dlr.constant ctx.Target.MetaData.VariableCount]
         let newScope = Dlr.newArgsT<Types.Scope> args
         Dlr.assign ctx.Scope newScope
 
       //Initilization for variables that need to be set to undefined
       let initUndefined =
-        ctx.VarMap
-          |> Seq.filter (hasOpt Var.InitToUndefined)
-          |> Seq.map (fun (_, index, _, _)->
+        ctx.Target.MetaData.Variables
+          |> Seq.filter (hasFlag VariableFlags.InitToUndefined)
+          |> Seq.map (fun var->
                         (Utils.Box.setType 
                           (Types.JsType.Undefined)
-                          (ctx.ScopeValue index)
+                          (ctx.ScopeValue var.Index)
                         )
                      )
           #if DEBUG
@@ -389,12 +360,9 @@
           #endif
       
       //Parameter variables
-      let parameters =
-        ctx.VarMap
-          |> Seq.filter (hasOpt Var.IsParameter)
-          |> Seq.sortBy toIndex
-          |> Seq.map toExpr
-          |> Seq.cast<Dlr.ExprParam>
+      let parameterExprs =
+        ctx.Target.ParamTypes
+          |> Seq.mapi (fun i type' -> Dlr.param (sprintf "param%i" i) type')
           #if DEBUG
           |> Seq.toArray
           #endif
@@ -404,11 +372,10 @@
         [Dlr.labelExprT<Types.Box> ctx.ReturnLabel]
           |> Seq.append [compileAst ctx target.Ast]
           |> Seq.append initUndefined
-          |> Seq.append initForEval
           |> Seq.append [initScope]
           |> Dlr.blockWithLocals [ctx.Scope]
 
-      let lambda = Dlr.lambda target.Delegate parameters functionBody
+      let lambda = Dlr.lambda target.Delegate (Seq.append [ctx.Closure] parameterExprs) functionBody
 
       #if INTERACTIVE
       Dlr.Utils.printDebugView lambda

@@ -18,3 +18,5 @@ var outer = function (a, b) {
     }
 
 }
+
+outer(1, 2);
