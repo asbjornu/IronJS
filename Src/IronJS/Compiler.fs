@@ -371,11 +371,13 @@
       //Initlization for Scope object
       let initScope = 
         if ctx.Target.MetaData.IsEval then
-          Dlr.blockTmpT<Types.Box array> (fun tmp ->
+          Dlr.blockTmpT<Types.Box array> (fun newArray ->
+            let newArraySize = ctx.Target.MetaData.VariableCount + ctx.Target.IndexOffset
+            let elementsToCopy = Dlr.constant ctx.Target.IndexOffset
             [
-              Dlr.assign tmp (Dlr.Expr.NewArrayBounds(typeof<Types.Box>, Dlr.constant (ctx.Target.MetaData.VariableCount + ctx.Target.IndexOffset)))
-              Dlr.callStaticT<System.Array> "Copy" [Dlr.field ctx.Scope "Values"; tmp :> Dlr.Expr; Dlr.constant ctx.Target.IndexOffset]
-              Dlr.assign (Dlr.field ctx.Scope "Values") tmp
+              Dlr.assign newArray (Dlr.newArrayBoundsT<Types.Box> (Dlr.constant newArraySize))
+              Dlr.callStaticT<System.Array> "Copy" [ctx.ScopeValues; newArray :> Dlr.Expr; elementsToCopy]
+              Dlr.assign ctx.ScopeValues newArray
             ] |> Seq.ofList
           )
         else

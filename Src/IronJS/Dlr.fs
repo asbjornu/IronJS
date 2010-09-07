@@ -191,6 +191,9 @@
     let newArrayItems typ (exprs:Et seq) = Et.NewArrayInit(typ, exprs) :> Et
     let newArrayItemsT<'a> = newArrayItems typeof<'a>
 
+    let newArrayBounds typ (size:Expr) = Expr.NewArrayBounds(typ, size)
+    let newArrayBoundsT<'a> = newArrayBounds typeof<'a>
+
     //Exceptions
     //let throw (typ:System.Type) (args:Et seq) = Et.Throw(newArgs typ args) :> Et
     let catchVar (var:EtParam) body = Et.Catch(var, body)
