@@ -126,7 +126,7 @@
       | Return(tree) -> _compileReturn ctx tree
       | New(type', funcTree, initTrees) -> _compileNew ctx type' funcTree initTrees
       | Property(tree, name) -> _compilePropertyAccess ctx tree name
-      | Identifier(name) -> _defaultVarResolver ctx name
+      | Identifier(name) -> _identifierResolver ctx name
       | Function(scope, tree) -> _compileFunction ctx scope tree
       | Invoke(callTree, argTrees) -> _compileInvoke ctx callTree argTrees
       | Block(trees) -> Dlr.block [for tree in trees -> compileAst ctx tree]
@@ -219,8 +219,6 @@
     //-------------------------------------------------------------------------
     // Compiles a function definition, e.g: var foo = function() { ... };
     and private _compileFunction ctx metaData tree =
-      let closureType = typeof<Types.Closure>
-
       let target = {
         Ast = tree
         MetaData = metaData
@@ -229,11 +227,16 @@
 
       let funCompiler = 
         new Func<Types.ClrType, Delegate>(
-          fun x -> compile {target with Delegate = x}
+          fun delegateType -> compile {target with Delegate = delegateType}
         )
 
-      let closureExpr = Dlr.newArgsT<Types.Closure> [ctx.Environment; ctx.ParentScopes; ctx.Scope]
-      Dlr.newArgsT<Types.Function> [closureExpr; Dlr.constant funCompiler; Dlr.constant (0,0)]
+      let closureArgs = 
+        //if target.MetaData.Flags.HasFlag(MetaDataFlags.RequiresParentScope) 
+          (*then*) [ctx.Environment; ctx.ParentScopes; ctx.Scope :> Dlr.Expr]
+          //else [ctx.Environment; ctx.ParentScopes]
+
+      let closureExpr = Dlr.newArgsT<Types.Closure> closureArgs
+      Dlr.newArgsT<Types.Function> [closureExpr; Dlr.constant funCompiler]
       
     //-------------------------------------------------------------------------
     // Compiles an assignment operation, e.g: foo = 1; or foo.bar = 1;
@@ -244,7 +247,7 @@
       | Identifier(name) -> //Variable assignment: foo = 1
         if Utils.identifierIsGlobal ctx name 
           then Utils.Object.setProperty ctx.Globals name rexpr
-          else Utils.assign (_defaultVarResolver ctx name) rexpr
+          else Utils.assign (_identifierResolver ctx name) rexpr
 
       | Property(tree, name) -> //Property assignment: foo.bar = 1
         let target = compileAst ctx tree
@@ -255,7 +258,7 @@
       | _ -> failwithf "Failed to compile assign for: %A" ltree
       
     //-------------------------------------------------------------------------
-    and private _defaultVarResolver (ctx:Context) (name:string) =
+    and private _identifierResolver (ctx:Context) (name:string) =
       match ctx.Target.MetaData.TryGetVariable name with
       | Some(var) -> ctx.ScopeValue var.Index
       | None -> 
@@ -341,8 +344,9 @@
 
       //Initlization for Scope object
       let initScope = 
-        let args = [Dlr.constant ctx.Target.MetaData.VariableCount]
-        let newScope = Dlr.newArgsT<Types.Scope> args
+        let varIndexMap = Dlr.constant ctx.Target.MetaData.VariableIndexMap
+        let varCount = Dlr.constant ctx.Target.MetaData.VariableCount
+        let newScope = Dlr.newArgsT<Types.Scope> [varCount; varIndexMap]
         Dlr.assign ctx.Scope newScope
 
       //Initilization for variables that need to be set to undefined
@@ -363,15 +367,25 @@
       let parameterExprs =
         ctx.Target.ParamTypes
           |> Seq.mapi (fun i type' -> Dlr.param (sprintf "param%i" i) type')
-          #if DEBUG
           |> Seq.toArray
-          #endif
+
+      //Copy parameter values into Scope.Value array
+      let copyParameters =
+        ctx.Target.MetaData.Variables
+          |> Set.filter (hasFlag VariableFlags.Parameter)
+          |> Seq.map  (fun var ->
+                        (Utils.assign  
+                          (_identifierResolver ctx var.Name)
+                          (parameterExprs.[var.Index])
+                        )
+                      )
 
       //Main function body
       let functionBody = 
         [Dlr.labelExprT<Types.Box> ctx.ReturnLabel]
           |> Seq.append [compileAst ctx target.Ast]
           |> Seq.append initUndefined
+          |> Seq.append copyParameters
           |> Seq.append [initScope]
           |> Dlr.blockWithLocals [ctx.Scope]
 

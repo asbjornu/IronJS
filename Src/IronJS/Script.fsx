@@ -18,7 +18,6 @@ open System
 
 IO.Directory.SetCurrentDirectory(@"C:\Users\fredrikhm\Personal\IronJS\Src\IronJS")
 
-let tree = Ast.Parsers.Ecma3.parse (IO.File.ReadAllText("Script.js"))
 let filters = 
   [
     Ast.stripVarDeclarations
@@ -27,7 +26,7 @@ let filters =
     Ast.analyzeAssignment
     Ast.analyzeStaticTypes
   ]
-let tree' = List.fold (fun t f -> f t) tree filters
+let tree' = List.fold (fun t f -> f t) (Ast.Parsers.Ecma3.parse (IO.File.ReadAllText("Script.js"))) filters
 
 let compiled = 
   match tree' with
@@ -44,3 +43,5 @@ let compiled =
 let env = new Types.Environment()
 let closure = new Types.Closure(env)
 compiled.DynamicInvoke(closure);
+
+env.Globals.Get("x").Double

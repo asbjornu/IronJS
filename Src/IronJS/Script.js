@@ -15,8 +15,12 @@ var outer = function (a, b) {
             var y = c;
             return a;
         }
+
+        return inner_1_1(5);
     }
+
+    return inner_1();
 
 }
 
-outer(1, 2);
+var x = outer(3, 4);

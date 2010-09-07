@@ -107,15 +107,13 @@
     and [<AllowNullLiteral>] Function =
       inherit Object
 
-      val mutable FuncKey : int * int
       val mutable Closure : Closure
       val mutable Compile : Func<ClrType, Delegate>
 
-      new(closure, compile, funcKey) = {
+      new(closure, compile) = {
         inherit Object()
         Closure = closure
         Compile = compile
-        FuncKey = funcKey
       }
 
       member x.CompileAs<'a when 'a :> Delegate>() =
@@ -132,6 +130,11 @@
         Scopes = Dlr.ArrayUtils.Append(scopes, nextScope)
       }
 
+      new (env, scopes) = {
+        Env = env
+        Scopes = scopes
+      }
+
       new (env) = {
         Env = env
         Scopes = [||]
@@ -140,11 +143,11 @@
     //-------------------------------------------------------------------------
     // 
     and Scope =
-      val mutable Names : CDict<string, int>
+      val mutable Names : Map<string, int>
       val mutable Values : Box array
 
-      new (values) = {
-        Names = new CDict<string, int>()
+      new (values, names) = {
+        Names = names
         Values = Array.zeroCreate<Box> values
       }
       
