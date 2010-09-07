@@ -7,10 +7,14 @@ var fun = function (a) {
 fun();
 */
 
-
 var outer = function (a, b) {
-    eval("var y = 'lol'");
-    return eval("var z = 'asdasd'");
+    var y = 2;
+
+    var inner3 = function () {
+        return eval("y");
+    }
+
+    return inner3();
 }
 
 var x = outer(3, 4);

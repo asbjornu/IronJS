@@ -3,7 +3,16 @@
         <script type="text/javascript">
 
             //define var in eval + closure
-            var foo = function () { return 2; }
+
+
+            var foo = function () {
+                alert(zzz);
+                function zzz() {
+                    
+                };
+            }
+
+            foo();
 
             var bar = function () {
                 alert(eval("var x = 'baaar';"));

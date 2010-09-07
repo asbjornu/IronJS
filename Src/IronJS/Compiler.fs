@@ -137,14 +137,25 @@
     and eval (scope:Types.Scope) (closure:Types.Closure) (source:string) = 
       let metaData, tree = 
         Ast.decomposeFunctionTree (Ast.Parsers.Ecma3.parse source)
+        
+      let closures =
+        closure.Scopes
+          |> Seq.mapi (fun index scope -> seq {for kvp in scope.Names -> {Name = kvp.Key; Indexes = (index, kvp.Value)}})
+          |> Seq.concat
+          |> Seq.groupBy (fun cls -> cls.Name)
+          |> Seq.map (fun (_, clsSeq) -> Seq.maxBy (fun cls -> fst cls.Indexes) clsSeq)
+          |> Set.ofSeq
+
+      let variables =
+        scope.Names
+          |> Map.toSeq
+          |> Seq.map (fun (n, i) -> Variable.NewTyped n i Types.JsType.Dynamic)
+          |> Set.ofSeq
 
       let metaDataWithVars = {
         metaData with
-          Variables = 
-            scope.Names
-              |> Map.toSeq
-              |> Seq.map (fun (n, i) -> Variable.NewTyped n i Types.JsType.Dynamic)
-              |> Set.ofSeq
+          Closures = closures
+          Variables = variables
       }
 
       let analyzed = 
@@ -155,10 +166,10 @@
         let compileTarget = {
           Ast = tree'
           MetaData = metaData'.SetFlag (MetaDataFlags.IsEval)
-          Delegate = typeof<Func<Types.Closure, Types.Scope, Types.Box>>
+          Delegate = typeof<Func<Types.Closure, Types.Scope, Types.ClrObject>>
         }
 
-        //Update scope values
+        //Update scope values + names
         if metaData'.VariableCount > scope.Values.Length then
           let newValues = Array.zeroCreate<Types.Box> metaData'.VariableCount
           Array.Copy(scope.Values, newValues, scope.Values.Length)
@@ -267,9 +278,9 @@
         )
 
       let closureArgs = 
-        //if target.MetaData.Flags.HasFlag(MetaDataFlags.RequiresParentScope) 
-          (*then*) [ctx.Environment; ctx.ParentScopes; ctx.Scope :> Dlr.Expr]
-          //else [ctx.Environment; ctx.ParentScopes]
+        if target.MetaData.Flags.HasFlag(MetaDataFlags.RequiresParentScope) 
+          then [ctx.Environment; ctx.ParentScopes; ctx.Scope :> Dlr.Expr]
+          else [ctx.Environment; ctx.ParentScopes]
 
       let closureExpr = Dlr.newArgsT<Types.Closure> closureArgs
       Dlr.newArgsT<Types.Function> [closureExpr; Dlr.constant funCompiler]
@@ -444,17 +455,16 @@
                         )
                       )
 
+      //Eval:ed environments are not allowed to have a return statement
       let returnExpr =
         if ctx.Target.MetaData.IsEval
           then []
           else [Dlr.labelExprT<Types.Box> ctx.ReturnLabel] 
 
-      let functionBody = [compileAst ctx target.Ast]
-
       //Main function body
       let functionBody = 
         returnExpr
-          |> Seq.append functionBody
+          |> Seq.append [compileAst ctx target.Ast]
           |> Seq.append initUndefined
           |> Seq.append copyParameters
           |> Seq.append [initScope]

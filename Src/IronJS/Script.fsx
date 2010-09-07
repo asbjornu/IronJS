@@ -38,3 +38,5 @@ let closure = new Types.Closure(env)
 compiled.DynamicInvoke(closure)
 
 env.Globals.Get("x").Type
+env.Globals.Get("x").Double
+  

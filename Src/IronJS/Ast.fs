@@ -328,7 +328,7 @@
             |> Set.filter (fun (var:Variable) -> var.Name.[0] <> '~')
             |> Set.map forceDynamic
 
-        {metaData with Variables = variables'}
+        {metaData with Variables = variables'}.SetFlag MetaDataFlags.RequiresParentScope
 
       let rec detectEval' tree =
         match tree with
@@ -360,35 +360,48 @@
           let metaData = List.head !metaDataChain
 
           match metaData.TryGetVariable name  with
-          | None  -> 
+          | None -> 
             match metaData.TryGetClosure name with
-            | None  -> 
+            | None -> 
 
-              //Build new scope objects with closure variables set
-              let state, metaDataChain' = 
-                List.foldBack (fun (metaData:MetaData) (state, metaDataAcc:MetaData list) ->
-                  match state with
-                  //We havn't found the scope with the variable in yet
-                  | None ->
-                    let state = 
-                      match metaData.TryGetVariable name with
-                      | None     -> None //Not in this scope either
-                      | Some(v)  -> Some(metaDataAcc.Length, v.Index) //Found in this scope
-                    state, metaData :: metaDataAcc
+              let hasVariable (metaData:MetaData) =
+                match metaData.TryGetVariable name  with
+                | None -> 
+                  match metaData.TryGetClosure name with
+                  | None -> false
+                  | _ -> true 
+                | _ -> true
 
-                  | Some(fromScope:int, indexInScope:int) -> 
-                    let metaData' = metaData.SetFlag MetaDataFlags.RequiresParentScope
-                    Some(fromScope, indexInScope), metaData' :: metaDataAcc
-
-                ) !metaDataChain (None, [])
-
-              match state with
+              match Seq.tryFindIndex hasVariable !metaDataChain with
               | None -> ()
-              | Some(fromScope, indexInScope) ->
-                  let metaData' = (List.head metaDataChain').AddClosure {Name = name; Indexes = (fromScope, indexInScope)}
-                  metaDataChain :=  metaData' :: (List.tail metaDataChain')
+              | Some(index) ->
+                let varHolder = (!metaDataChain).[index]
 
-              //Return tree
+                match varHolder.TryGetVariable name with
+                | None ->
+                  match varHolder.TryGetClosure name with
+                  | None -> failwith "Que?"
+                  | Some(cls) -> metaDataChain := metaData.AddClosure cls :: List.tail !metaDataChain
+
+                | Some(var) ->
+                  //Conver to array for fast indexed access/updates
+                  let metaDataArray = Array.ofList (!metaDataChain)
+
+                  //Make metadata before the one containing the variable to require parents scope
+                  metaDataArray.[index-1] <- metaDataArray.[index-1].SetFlag (MetaDataFlags.RequiresParentScope)
+
+                  //Resolve the count of functions that have the RequiresParentScope 
+                  //flag set that are at the holders level or above
+                  let level = 
+                    (metaDataArray 
+                      |> Seq.skip index 
+                      |> Seq.filter (fun x -> x.RequiresParentScope)
+                      |> List.ofSeq).Length
+
+                  //Add closure to current array
+                  metaDataArray.[0] <- metaDataArray.[0].AddClosure {Name=name;Indexes=(level, var.Index)}
+                  metaDataChain := List.ofArray metaDataArray
+
               tree
 
             //Already have variable as closure
