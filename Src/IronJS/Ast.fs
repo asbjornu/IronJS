@@ -88,6 +88,9 @@
       static member NewParam name index = 
         Variable.New name index VariableFlags.Parameter
 
+      static member NewTyped name index type' =
+        {Variable.New name index VariableFlags.Nothing with StaticType = Some(type')}
+
     and Closure = {
       Name: string
       Indexes: int * int

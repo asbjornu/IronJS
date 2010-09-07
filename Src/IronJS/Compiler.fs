@@ -137,6 +137,21 @@
       
     and eval (scope:Types.Scope) (closure:Types.Closure) (source:string) = 
       let tree = Ast.Parsers.Ecma3.parse source
+
+      let metaData, tree = 
+        match tree with
+        | Function(metaData, tree) -> metaData, tree
+        | _ -> failwith "Que?"
+
+      let metaData'1 = {
+        metaData with
+          Variables = 
+            scope.Names
+              |> Map.toSeq
+              |> Seq.map (fun (n, i) -> Variable.NewTyped n i Types.JsType.Dynamic)
+              |> Set.ofSeq
+      }
+
       let filters = 
         [
           Ast.stripVarDeclarations 0;
@@ -145,23 +160,23 @@
           Ast.analyzeAssignment;
           Ast.analyzeStaticTypes
         ]
-      let analyzed = List.fold (fun t f -> f t) tree filters
+
+      let analyzed = List.fold (fun t f -> f t) (Ast.Function(metaData'1, tree)) filters
       match analyzed with
-      | Function(metaData, tree) ->
+      | Function(metaData'2, tree'2) ->
         let compileTarget = {
-          Ast = tree
-          MetaData = metaData.SetFlag (MetaDataFlags.IsEval)
+          Ast = tree'2
+          MetaData = metaData'2.SetFlag (MetaDataFlags.IsEval)
           Delegate = typeof<Func<Types.Closure, Types.Scope, Types.Box>>
           IndexOffset = scope.Values.Length
         }
 
-        let compiled = compile compileTarget
-
-        ()
+        let compiled:Delegate = compile compileTarget
+        let result = compiled.DynamicInvoke(closure, scope)
+        
+        Types.Undefined.Boxed
 
       | _ -> failwith "Que?"
-
-      Types.Undefined.Boxed
       
     //-------------------------------------------------------------------------
     // Compiles a return statement, e.g: return 1;
@@ -286,7 +301,7 @@
     //-------------------------------------------------------------------------
     and private _identifierResolver (ctx:Context) (name:string) =
       match ctx.Target.MetaData.TryGetVariable name with
-      | Some(var) -> ctx.ScopeValue (var.Index + ctx.Target.IndexOffset)
+      | Some(var) -> ctx.ScopeValue var.Index
       | None -> 
         match ctx.Target.MetaData.TryGetClosure name with
         | None -> //Global
@@ -372,7 +387,7 @@
       let initScope = 
         if ctx.Target.MetaData.IsEval then
           Dlr.blockTmpT<Types.Box array> (fun newArray ->
-            let newArraySize = ctx.Target.MetaData.VariableCount + ctx.Target.IndexOffset
+            let newArraySize = ctx.Target.MetaData.VariableCount
             let elementsToCopy = Dlr.constant ctx.Target.IndexOffset
             [
               Dlr.assign newArray (Dlr.newArrayBoundsT<Types.Box> (Dlr.constant newArraySize))
@@ -402,9 +417,12 @@
       
       //Parameter variables
       let parameterExprs =
-        ctx.Target.ParamTypes
-          |> Seq.mapi (fun i type' -> Dlr.param (sprintf "param%i" i) type')
-          |> Seq.toArray
+        if ctx.Target.MetaData.IsEval then
+          [|ctx.Scope|]
+        else
+          ctx.Target.ParamTypes
+            |> Seq.mapi (fun i type' -> Dlr.param (sprintf "param%i" i) type')
+            |> Seq.toArray
 
       //Copy parameter values into Scope.Value array
       let copyParameters =
@@ -424,7 +442,7 @@
           |> Seq.append initUndefined
           |> Seq.append copyParameters
           |> Seq.append [initScope]
-          |> Dlr.blockWithLocals [ctx.Scope]
+          |> Dlr.blockWithLocals (if ctx.Target.MetaData.IsEval then [] else [ctx.Scope])
 
       let lambda = Dlr.lambda target.Delegate (Seq.append [ctx.Closure] parameterExprs) functionBody
 
