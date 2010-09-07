@@ -14,6 +14,7 @@
       Ast: Ast.Tree
       MetaData: Ast.MetaData
       Delegate: Types.ClrType
+      IndexOffset: int
     } with
       member x.ParamTypes = 
         Dlr.ArrayUtils.RemoveLast(
@@ -136,6 +137,30 @@
       
     and eval (scope:Types.Scope) (closure:Types.Closure) (source:string) = 
       let tree = Ast.Parsers.Ecma3.parse source
+      let filters = 
+        [
+          Ast.stripVarDeclarations 0;
+          Ast.detectEval;
+          Ast.analyzeClosureScopes;
+          Ast.analyzeAssignment;
+          Ast.analyzeStaticTypes
+        ]
+      let analyzed = List.fold (fun t f -> f t) tree filters
+      match analyzed with
+      | Function(metaData, tree) ->
+        let compileTarget = {
+          Ast = tree
+          MetaData = metaData.SetFlag (MetaDataFlags.IsEval)
+          Delegate = typeof<Func<Types.Closure, Types.Scope, Types.Box>>
+          IndexOffset = scope.Values.Length
+        }
+
+        let compiled = compile compileTarget
+
+        ()
+
+      | _ -> failwith "Que?"
+
       Types.Undefined.Boxed
       
     //-------------------------------------------------------------------------
@@ -223,6 +248,7 @@
         Ast = tree
         MetaData = metaData
         Delegate = null
+        IndexOffset = 0
       }
 
       let funCompiler = 
@@ -260,7 +286,7 @@
     //-------------------------------------------------------------------------
     and private _identifierResolver (ctx:Context) (name:string) =
       match ctx.Target.MetaData.TryGetVariable name with
-      | Some(var) -> ctx.ScopeValue var.Index
+      | Some(var) -> ctx.ScopeValue (var.Index + ctx.Target.IndexOffset)
       | None -> 
         match ctx.Target.MetaData.TryGetClosure name with
         | None -> //Global
@@ -344,10 +370,19 @@
 
       //Initlization for Scope object
       let initScope = 
-        let varIndexMap = Dlr.constant ctx.Target.MetaData.VariableIndexMap
-        let varCount = Dlr.constant ctx.Target.MetaData.VariableCount
-        let newScope = Dlr.newArgsT<Types.Scope> [varCount; varIndexMap]
-        Dlr.assign ctx.Scope newScope
+        if ctx.Target.MetaData.IsEval then
+          Dlr.blockTmpT<Types.Box array> (fun tmp ->
+            [
+              Dlr.assign tmp (Dlr.Expr.NewArrayBounds(typeof<Types.Box>, Dlr.constant (ctx.Target.MetaData.VariableCount + ctx.Target.IndexOffset)))
+              Dlr.callStaticT<System.Array> "Copy" [Dlr.field ctx.Scope "Values"; tmp :> Dlr.Expr; Dlr.constant ctx.Target.IndexOffset]
+              Dlr.assign (Dlr.field ctx.Scope "Values") tmp
+            ] |> Seq.ofList
+          )
+        else
+          let varIndexMap = Dlr.constant ctx.Target.MetaData.VariableIndexMap
+          let varCount = Dlr.constant ctx.Target.MetaData.VariableCount
+          let newScope = Dlr.newArgsT<Types.Scope> [varCount; varIndexMap]
+          Dlr.assign ctx.Scope newScope
 
       //Initilization for variables that need to be set to undefined
       let initUndefined =
@@ -356,7 +391,7 @@
           |> Seq.map (fun var->
                         (Utils.Box.setType 
                           (Types.JsType.Undefined)
-                          (ctx.ScopeValue var.Index)
+                          (_identifierResolver ctx var.Name)
                         )
                      )
           #if DEBUG

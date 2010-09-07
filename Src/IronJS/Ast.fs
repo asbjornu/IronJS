@@ -97,6 +97,7 @@
       = Nothing = 0
       | RecursiveLookup = 1
       | RequiresParentScope = 2
+      | IsEval = 4
 
     and MetaData = {
       Variables: Set<Variable>
@@ -106,7 +107,9 @@
     } with
       member x.SetFlag flag = {x with Flags = x.Flags ||| flag}
       member x.RemoveFlag flag = {x with Flags = (x.Flags ||| flag) ^^^ flag}
-      member x.RequiresRecursiveVarLookup = x.Flags.HasFlag(MetaDataFlags.RecursiveLookup)
+      member x.RequiresRecursiveLookup = x.Flags.HasFlag(MetaDataFlags.RecursiveLookup)
+      member x.RequiresParentScope = x.Flags.HasFlag(MetaDataFlags.RequiresParentScope)
+      member x.IsEval = x.Flags.HasFlag(MetaDataFlags.IsEval)
 
       member x.AddVariable var = {x with Variables = x.Variables.Add var}
       member x.AddClosure cls = {x with Closures = x.Closures.Add cls}
@@ -274,11 +277,11 @@
 
       analyze tree
       
-    let stripVarDeclarations tree =
+    let stripVarDeclarations topScopeLevel tree =
       let metaDataChain = ref List.empty<MetaData>
 
       let addVariableToMetaData name flags =
-        if (!metaDataChain).Length > 1 then 
+        if (!metaDataChain).Length > topScopeLevel then 
           let metaData = List.head !metaDataChain
           let metaData' = metaData.AddVariable (Variable.New name metaData.VariableCount flags)
           metaDataChain := metaData' :: List.tail !metaDataChain

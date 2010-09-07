@@ -9,18 +9,8 @@ fun();
 
 
 var outer = function (a, b) {
-
-    var inner_1 = function () {
-        var inner_1_1 = function (c) {
-            var y = c;
-            return a;
-        }
-
-        return inner_1_1(5);
-    }
-
-    return inner_1();
-
+    eval("var y = 1");
+    return y;
 }
 
 var x = outer(3, 4);

@@ -104,7 +104,7 @@
 
     //Static function call
     let callStatic (typ:System.Type) name (args:Et seq) = 
-      match typ.GetMethod(name) with
+      match typ.GetMethod(name, [|for arg in args -> arg.Type|]) with
       | null -> failwith "No method named '%s' found" name
       | m -> Et.Call(null, m, args) :> Et
 
